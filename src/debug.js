@@ -3,6 +3,8 @@ const params = new URLSearchParams(window.location.search);
 
 export const DEBUG = {
   test: params.has('test'),
+  // bucle con setTimeout para capturas en navegador headless (?headless=1)
+  headless: params.has('headless') || params.has('test'),
   // dibuja los cuerpos de Matter encima del arte (?debug=1); ?nodebug=1 lo apaga
   physics: params.has('debug'),
   // número inicial de elotes para pruebas (?elotes=1)

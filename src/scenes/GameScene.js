@@ -20,6 +20,7 @@ export default class GameScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor('#87b7e0');
+    this.cameras.main.fadeIn(300);
     this.sky = new SkyCycle(this, { farDay: 'fondo-tarde', farNight: 'fondo-noche' });
 
     this.startX = 120;

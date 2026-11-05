@@ -5,6 +5,7 @@ import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
 import GameOverScene from './scenes/GameOverScene.js';
 import TitleScene from './scenes/TitleScene.js';
+import PauseScene from './scenes/PauseScene.js';
 import { DEBUG } from './debug.js';
 import '@fontsource/fredoka/400.css';
 import '@fontsource/fredoka/600.css';
@@ -54,9 +55,9 @@ const config = {
   },
   fps: {
     target: 60,
-    forceSetTimeOut: DEBUG.test,
+    forceSetTimeOut: DEBUG.headless,
   },
-  scene: [BootScene, TitleScene, GameScene, UIScene, GameOverScene],
+  scene: [BootScene, TitleScene, GameScene, UIScene, PauseScene, GameOverScene],
 };
 
 new Phaser.Game(config);

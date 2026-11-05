@@ -1,7 +1,14 @@
 // Efectos de sonido sintetizados con Web Audio (sin archivos) y vibración.
 
 let ctx = null;
-let muted = false;
+const MUTE_KEY = 'elotero.mute';
+let muted = (() => {
+  try {
+    return localStorage.getItem(MUTE_KEY) === '1';
+  } catch {
+    return false;
+  }
+})();
 
 /** Debe llamarse desde un gesto del usuario (toque) para desbloquear audio en móvil. */
 export function unlockAudio() {
@@ -15,6 +22,15 @@ export function unlockAudio() {
 
 export function setMuted(v) {
   muted = v;
+  try {
+    localStorage.setItem(MUTE_KEY, v ? '1' : '0');
+  } catch {
+    /* sin almacenamiento */
+  }
+}
+
+export function isMuted() {
+  return muted;
 }
 
 function tone({ freq = 440, to = null, dur = 0.1, type = 'square', vol = 0.12, delay = 0 }) {
