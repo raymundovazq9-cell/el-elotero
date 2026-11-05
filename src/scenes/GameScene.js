@@ -14,6 +14,7 @@ import { DEBUG, isBrakeScripted, isGasScripted } from '../debug.js';
 import { Sfx, vibrate, unlockAudio } from '../audio.js';
 import { Music } from '../music.js';
 import { Save } from '../save.js';
+import { dailyMissions, missionDone, todayKey } from '../data/missions.js';
 import CartView from '../views/CartView.js';
 import RoadView from '../views/RoadView.js';
 import Scenery from '../world/Scenery.js';
@@ -60,7 +61,8 @@ export default class GameScene extends Phaser.Scene {
     this.particles = new Particles(this, this.cart);
 
     // ganancias de la partida (elotes al banco), por concepto
-    this.earned = { recogidos: 0, metros: 0, marometas: 0, aire: 0, ventas: 0 };
+    this.earned = { recogidos: 0, metros: 0, marometas: 0, aire: 0, ventas: 0, misiones: 0 };
+    this.missionsDone = [];
     this.nextCheckpoint = SCORE.checkpointMeters;
     this.checkpoints = 0;
     this.flips = 0;
@@ -201,7 +203,7 @@ export default class GameScene extends Phaser.Scene {
 
   get earnedTotal() {
     const e = this.earned;
-    return e.recogidos + e.metros + e.marometas + e.aire + e.ventas;
+    return e.recogidos + e.metros + e.marometas + e.aire + e.ventas + e.misiones;
   }
 
   getStats() {
@@ -215,6 +217,7 @@ export default class GameScene extends Phaser.Scene {
       sales: this.sales,
       robos: this.obstacles.robos,
       saltos: this.obstacles.saltos,
+      lost: this.elotes.lost,
       braking: this.braking,
       gas: this.pedals.gas,
       airborne: this.tricks.airborne,
@@ -226,6 +229,15 @@ export default class GameScene extends Phaser.Scene {
     if (this.banked) return;
     this.banked = true;
     const meters = this.meters;
+    // misiones del día cumplidas en esta partida
+    const key = DEBUG.missionSeed || todayKey();
+    const stats = this.getStats();
+    for (const m of dailyMissions(key)) {
+      if (Save.missionsDone(key).includes(m.id) || !missionDone(m, stats)) continue;
+      Save.markMission(key, m.id);
+      this.earned.misiones += m.premio;
+      this.missionsDone.push(m);
+    }
     Save.addBank(this.earnedTotal);
     this.isRecord = Save.setBest(this.level.id, meters);
     Save.addTotals({ runs: 1, meters, elotes: this.earnedTotal, marometas: this.flips, ventas: this.sales });
@@ -248,7 +260,7 @@ export default class GameScene extends Phaser.Scene {
     this.over = true;
     this.setBraking(false);
     this.bankRun();
-    this.final = { ...this.getStats(), reason, isRecord: this.isRecord, best: Save.bestFor(this.level.id), bank: Save.bank };
+    this.final = { ...this.getStats(), reason, isRecord: this.isRecord, best: Save.bestFor(this.level.id), bank: Save.bank, missions: this.missionsDone };
     this.events.emit('gameover', reason);
     if (DEBUG.test) console.log(`[test] GAMEOVER reason=${reason} ${JSON.stringify(this.final)}`);
     this.cameras.main.shake(300, 0.012);

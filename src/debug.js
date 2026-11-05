@@ -3,6 +3,8 @@ const params = new URLSearchParams(window.location.search);
 
 export const DEBUG = {
   test: params.has('test'),
+  // semilla de las misiones del día para pruebas (?mseed=x)
+  missionSeed: params.get('mseed'),
   // escena inicial para capturas (?scene=Garage) y pestaña de la tienda (?tab=mejoras)
   scene: params.get('scene'),
   tab: params.get('tab'),

@@ -14,7 +14,7 @@ function defaults() {
     upgrades: {}, // { [cartId]: { piernas: 0, llantas: 0, suspension: 0, canasta: 0, frenos: 0 } }
     clothes: { owned: ['sombrero-paja', 'mandil-blanco', 'playera-azul'], equipped: { sombrero: 'paja', mandil: 'blanco', playera: 'azul' } },
     best: {}, // { [levelId]: metros }
-    missions: { date: '', progress: {}, claimed: [] },
+    missions: { date: '', done: [] },
     totals: { runs: 0, meters: 0, elotes: 0, marometas: 0, ventas: 0 },
   };
 }
@@ -120,6 +120,25 @@ class SaveStore {
   equip(type, id) {
     this.data.clothes.equipped = { ...this.data.clothes.equipped, [type]: id };
     this.persist();
+  }
+
+  /** Misiones cumplidas hoy (se reinicia al cambiar la fecha). */
+  missionsDone(dateKey) {
+    const m = this.data.missions;
+    if (m.date !== dateKey) {
+      this.data.missions = { date: dateKey, done: [] };
+      this.persist();
+    }
+    return this.data.missions.done || [];
+  }
+
+  markMission(dateKey, id) {
+    const done = this.missionsDone(dateKey);
+    if (done.includes(id)) return false;
+    done.push(id);
+    this.data.missions.done = done;
+    this.persist();
+    return true;
   }
 
   addTotals(partial) {

@@ -17,6 +17,7 @@ const LINES = [
   ['marometas', 'Marometas'],
   ['aire', 'Tiempo en el aire'],
   ['ventas', 'Ventas a clientes'],
+  ['misiones', 'Misiones cumplidas'],
 ];
 
 export default class GameOverScene extends Phaser.Scene {
@@ -25,7 +26,7 @@ export default class GameOverScene extends Phaser.Scene {
   }
 
   create(data) {
-    const { meters = 0, earned = {}, total = 0, reason = '', isRecord = false, best = 0, bank = 0, level = 'callejon' } = data || {};
+    const { meters = 0, earned = {}, total = 0, reason = '', isRecord = false, best = 0, bank = 0, level = 'callejon', missions = [] } = data || {};
     const dark = textStyle(24, COLORS.negro, { stroke: COLORS.cremaHex, strokeThickness: 2 });
 
     const cx = GAME_WIDTH / 2;
@@ -62,6 +63,9 @@ export default class GameOverScene extends Phaser.Scene {
     items.push(this.add.text(290, y + 14, `+${total}`, textStyle(44, COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 6 })).setOrigin(1, 0.5));
     items.push(svgImage(this, 332, y + 14, 'elote').setScale(0.8));
 
+    missions.forEach((m, i) => {
+      items.push(this.add.text(-180, 80 + i * 24, `✓ ${m.texto}`, textStyle(16, COLORS.verdeHex, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(0.5));
+    });
     items.push(this.add.text(-180, 40, `Banco: ${bank}`, textStyle(26, COLORS.negro, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(0.5));
     items.push(svgImage(this, -180 + 80 + String(bank).length * 7, 40, 'elote').setScale(0.6));
 

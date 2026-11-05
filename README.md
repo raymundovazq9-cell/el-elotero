@@ -1,18 +1,43 @@
 # El Elotero 🌽
 
-Juego para celular (pantalla vertical) hecho con **Phaser 4 + Matter.js + Vite**.
-Un elotero baja las calles empinadas de un barrio empujando su carrito lleno de
-elotes. Los golpes tiran elotes; pierdes si se caen todos o si el carrito se voltea.
+Juego para celular (pantalla **horizontal**) hecho con **Phaser 4 + Matter.js + Vite**,
+al estilo *Hill Climb Racing*: un elotero recorre las colinas del barrio con su
+carrito, recoge elotes (la moneda del juego), esquiva doñas, cholos y la camioneta
+del gas, y compra carritos, mejoras y ropa en la tienda.
 
-**Puntaje = metros recorridos × elotes que llevas + bono por tiempo en el aire.**
+Pierdes si el carrito cae de cabeza, si se te caen todos los elotes del carrito o si
+te quedas atorado 6 segundos sin avanzar (se cansa el elotero).
 
 ## Controles
 
-- **FRENO** (pedal izquierdo): frena hasta una velocidad mínima; nunca te detienes.
-- **ACELERAR** (pedal derecho): empuja más fuerte; sirve para saltar más lejos.
-- Sin pedal el carrito rueda solo por la bajada.
-- En el aire: FRENO inclina hacia atrás y ACELERAR hacia adelante (controlas el aterrizaje).
+- **FRENO** (pedal izquierdo): frena; si lo mantienes, da reversa lenta para despegarte.
+- **ACELERAR** (pedal derecho): empuja. Sin pedal, el carrito rueda solo y puede regresarse en una subida.
+- En el aire: **ACELERAR** levanta la nariz (caballito) y **FRENO** la baja. Una vuelta completa es una *marometa*.
 - En computadora: flechas ← → o A / D.
+
+## Economía
+
+| Qué | Elotes |
+|---|---|
+| Elote recogido (en el piso o en los arcos de las crestas) | +1 |
+| Cada 100 m | +5, +10, +15… |
+| Marometa | +10 |
+| Tiempo en el aire | +2 por segundo (saltos de más de 0.7 s) |
+| Venta a un cliente (pasar lento junto a él) | +3 |
+| Misión del día cumplida | 60 a 200 |
+
+Los elotes **del carrito** son las vidas: se caen con los golpes, los cholos te los
+quitan si pasas lento y las bolsas de elotes reponen dos.
+
+## Tienda
+
+- **Carritos**: carrito clásico, triciclo, bici-carro, motocarro y camioneta. Cada uno con su física (`src/data/carts.js`).
+- **Mejoras** (6 niveles cada una): piernas, llantas, suspensión, canasta y frenos (`src/data/upgrades.js`).
+- **Ropa**: sombreros, mandiles y playeras, solo adorno (`src/data/clothes.js`).
+- **Lugar**: Callejón (gratis), Mercado y Feria, cada uno con su récord (`src/data/levels.js`).
+- **Misiones**: tres al día, cada una se cumple en una sola partida (`src/data/missions.js`).
+
+El progreso se guarda en `localStorage` (`elotero.save`).
 
 ## Correr en la computadora
 
@@ -25,70 +50,58 @@ Abre <http://localhost:5173>.
 
 ## Probar en el celular (misma WiFi)
 
-`npm run dev` ya expone el servidor en la red local. En la terminal aparece algo como:
+`npm run dev` expone el servidor en la red local. En la terminal aparece algo como:
 
 ```
 ➜  Network: http://192.168.1.206:5173/
 ```
 
-Abre esa dirección en el navegador del celular. Si no carga, revisa que el
+Abre esa dirección en el celular y gíralo en horizontal. Si no carga, revisa que el
 firewall de macOS permita conexiones entrantes a Node.
 
 ## Arte
 
-Todo el arte del juego son SVG en `public/assets/svg/` (contorno grueso, estilo
-caricatura). Se rasterizan a 2× para pantallas retina y se muestran a escala 0.5
-con `svgImage()` de `src/assets.js`, así que **1 unidad del SVG = 1 px del juego**.
+Todo el arte son SVG en `public/assets/svg/` (contorno grueso, estilo caricatura).
+Se rasterizan a 2× para pantallas retina y se muestran a escala 0.5, así que
+**1 unidad del SVG = 1 px del juego**. Para cambiar un dibujo basta con editar el SVG
+y recargar; la lista de recursos está en `src/assets.js`.
 
-| Archivo | Qué es | Notas |
-|---|---|---|
-| `carrito.svg` | Carrito (160×100) | El centro del chasis físico está en (80, 67) |
-| `rueda.svg` | Rueda (40×40) | Radio físico 17 px |
-| `elotero-torso.svg`, `elotero-pierna.svg` | Elotero | Cadera en (40, 86) del torso; pierna pivota en (8, 2) |
-| `elote.svg` | Elote (24×24) | Se muestra a 0.42 para el radio físico de 9 px |
-| `tope.svg`, `perro.svg`, `coche.svg` | Obstáculos | |
-| `casa-detalles-*.svg`, `casa-ventanas-*.svg` | Casas | La pared de color se genera por código en `Scenery.wallTexture` |
-| `poste.svg`, `puesto.svg`, `senora.svg` | Escenografía | |
-| `cerros.svg`, `nube.svg` | Fondo lejano | |
+| Archivo | Qué es |
+|---|---|
+| `carrito`, `triciclo`, `bici-carro`, `motocarro`, `camioneta` | los cinco modelos (el punto de origen de cada uno está en `carts.js`) |
+| `rueda`, `elote` | rueda (se escala por radio) y elote |
+| `elotero-cabeza`, `elotero-pierna`, `playera-*`, `mandil-*`, `sombrero-*` | el elotero por capas |
+| `tope`, `coche`, `poste-caido`, `camioneta-gas`, `perro`, `dona`, `cholo`, `cliente`, `chile`, `bolsa` | obstáculos y personajes |
+| `casa-*`, `poste`, `puesto*`, `senora`, `lona`, `rueda-fortuna`, `carpa`, `cerros`, `nube` | escenografía |
 
-Para cambiar un dibujo basta con editar el SVG; si cambias el tamaño, ajusta el
-origen en la vista correspondiente (`src/views/`).
+El cable de la CFE, el papel picado, los focos de la feria y el empedrado se dibujan por código.
 
-### Fondos generados con IA (opcional)
+## Parámetros de depuración (query string)
 
-Se generaron dos panoramas en Canva (cerros con casitas e iglesia, de tarde y de
-noche). Para usarlos descárgalos como PNG de ~1776×896 a
-`public/assets/bg/fondo-tarde.png` y `public/assets/bg/fondo-noche.png` y pon
-`AI_BACKGROUNDS = true` en `src/assets.js`. Si no existen se usa `cerros.svg`.
-
-## Modo de prueba (depuración)
-
-Parámetros en la URL:
-
-- `?test=1` — salta la pantalla de inicio, usa una semilla fija y escribe estadísticas en la consola cada segundo (incluye número de objetos y cuerpos para detectar fugas).
-- `&brake=3000-5000` / `&gas=6000-9000` — simula los pedales en esos intervalos (ms).
-- `&elotes=3` — elotes iniciales.
-- `&gameover=5000` — fuerza game over a los N ms.
-- `&sky=340` — fija los metros del ciclo de cielo (340 = noche).
-- `?debug=1` — dibuja los cuerpos de Matter encima del arte.
-- `?headless=1` — bucle con setTimeout (para capturas en navegador sin pantalla).
+| Parámetro | Efecto |
+|---|---|
+| `?debug=1` | dibuja los cuerpos físicos encima del arte |
+| `?test=1` | arranca directo en el juego con semilla fija y escribe `[test]` en consola cada segundo |
+| `&auto=1` | piloto automático: acelera en el piso y nivela en el aire |
+| `&gas=0-3000,5000-8000` / `&brake=…` | guiones de pedales en ms de juego |
+| `&cart=motocarro` `&level=feria` `&up=piernas:3,canasta:6` `&wear=sombrero:lucha` | carrito, escenario, mejoras y ropa de la prueba |
+| `&phys=wheelAccel:0.05` | sobreescribe parámetros físicos del carrito |
+| `&bank=5000` `&reset=1` | banco para pruebas de tienda / borrar el guardado |
+| `?scene=Garage&tab=mejoras&headless=1` | abrir una escena directo (capturas) |
+| `&notopes=1` `&sky=330` `&elotes=1` `&gameover=5000` `&mseed=x` | sin topes, hora del día fija, elotes iniciales, forzar game over, semilla de misiones |
 
 ## Estructura
 
 ```
 src/
-  main.js             configuración de Phaser (540x960, Matter, escenas)
-  config.js           constantes de balance (velocidades, tamaños, elotes)
-  theme.js            paleta, fuente Fredoka, fases del cielo
-  assets.js           lista de SVG y helper svgImage()
-  audio.js            efectos de sonido Web Audio y vibración
-  music.js            loop de cumbia sintetizado (bajo, güiro, campana, melodía)
-  debug.js            parámetros de prueba por URL
-  scenes/             Boot, Title, Game, UI (HUD + pedales), Pause, GameOver
-  objects/            física y reglas: Road, Cart, EloteManager, Obstacles, Difficulty
-  views/              dibujo sincronizado con la física: CartView, EloteroView, EloteView, RoadView
-  world/              Scenery (casas, postes, puestos, gente, papel picado), SkyCycle, Particles
-  ui/widgets.js       botones, paneles, tarjetas, papel picado
+  config.js            constantes de física y economía
+  debug.js             parámetros de depuración
+  save.js              progreso en localStorage
+  data/                carritos, mejoras, ropa, escenarios, misiones
+  objects/             Terrain (colinas), Cart, EloteManager, Actors, Stall, Tricks
+  views/               CartView, EloteroView, EloteroTorso, EloteView, RoadView, CartPreview
+  world/               Scenery (temas), SkyCycle, Particles
+  scenes/              Boot, Title, Garage (tienda), Game, UI, Pause, GameOver
+  ui/widgets.js        botones, paneles, papel picado
+  audio.js, music.js   efectos y cumbia sintetizados con Web Audio
 ```
-
-Para ajustar la sensación del juego edita `src/config.js` y `src/objects/Difficulty.js`.

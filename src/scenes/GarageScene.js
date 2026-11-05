@@ -12,12 +12,14 @@ import { makeButton, makeIconButton, makePanel, iconMusic } from '../ui/widgets.
 import { setMuted, isMuted, Sfx, unlockAudio } from '../audio.js';
 import { Music } from '../music.js';
 import { DEBUG } from '../debug.js';
+import { dailyMissions, todayKey } from '../data/missions.js';
 
 const TABS = [
   { id: 'carrito', label: 'CARRITO' },
   { id: 'mejoras', label: 'MEJORAS' },
   { id: 'ropa', label: 'ROPA' },
   { id: 'lugar', label: 'LUGAR' },
+  { id: 'misiones', label: 'MISIONES' },
 ];
 
 const PANEL_X = 400; // inicio del panel derecho
@@ -57,8 +59,8 @@ export default class GarageScene extends Phaser.Scene {
     // pestañas
     this.tabButtons = {};
     TABS.forEach((t, i) => {
-      const x = PANEL_X + 70 + i * 135;
-      this.tabButtons[t.id] = makeButton(this, x, 108, 128, 48, COLORS.naranja, t.label, () => this.setTab(t.id), { fontSize: 21 });
+      const x = PANEL_X + 56 + i * 108;
+      this.tabButtons[t.id] = makeButton(this, x, 108, 102, 48, COLORS.naranja, t.label, () => this.setTab(t.id), { fontSize: 17 });
     });
     makePanel(this, PANEL_X + PANEL_W / 2, 306, PANEL_W, 326, 0x000000, 0.35, 22);
 
@@ -126,6 +128,24 @@ export default class GarageScene extends Phaser.Scene {
     else if (this.tab === 'mejoras') this.renderUpgrades();
     else if (this.tab === 'ropa') this.renderClothes();
     else if (this.tab === 'lugar') this.renderLevels();
+    else if (this.tab === 'misiones') this.renderMissions();
+  }
+
+  /** Las tres misiones del día con su premio y si ya se cumplieron. */
+  renderMissions() {
+    const key = DEBUG.missionSeed || todayKey();
+    const done = Save.missionsDone(key);
+    this.content.push(this.add.text(PANEL_X + PANEL_W / 2, ROWS_Y - 14, 'Misiones de hoy (cada una se cumple en una sola partida)', textStyle(16, COLORS.cremaHex)).setOrigin(0.5));
+    dailyMissions(key).forEach((m, i) => {
+      const ok = done.includes(m.id);
+      const y = this.row(i + 0.6, m.texto, ok ? 'Cumplida' : `Premio: ${m.premio} elotes`, {
+        color: ok ? COLORS.verde : COLORS.azul,
+        label: ok ? '✓ LISTA' : `${m.premio}`,
+        disabled: true,
+      });
+      if (!ok) this.content.push(svgImage(this, PANEL_X + PANEL_W - 190, y, 'elote').setScale(0.5));
+      this.content[this.content.length - (ok ? 1 : 2)].setAlpha(1);
+    });
   }
 
   /** Tres columnas (sombreros, mandiles, playeras) con una ficha por prenda. */
