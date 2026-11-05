@@ -85,6 +85,6 @@ export default class GameOverScene extends Phaser.Scene {
     this.scene.stop('UI');
     this.scene.stop('GameOver');
     this.scene.stop('Game');
-    this.scene.start(this.scene.manager.keys.Garage ? 'Garage' : 'Title');
+    this.scene.start('Garage');
   }
 }

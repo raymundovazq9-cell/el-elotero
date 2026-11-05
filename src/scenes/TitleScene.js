@@ -101,6 +101,6 @@ export default class TitleScene extends Phaser.Scene {
     unlockAudio();
     Sfx.inicio();
     this.cameras.main.fadeOut(250);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Game'));
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Garage'));
   }
 }

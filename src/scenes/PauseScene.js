@@ -18,7 +18,7 @@ export default class PauseScene extends Phaser.Scene {
 
     makeButton(this, cx, cy - 60, 300, 76, COLORS.verde, 'CONTINUAR', () => this.resume());
     makeButton(this, cx, cy + 36, 300, 76, COLORS.naranja, 'REINICIAR', () => this.restart());
-    makeButton(this, cx, cy + 132, 300, 76, COLORS.azul, 'MENÚ', () => this.menu());
+    makeButton(this, cx, cy + 132, 300, 76, COLORS.azul, 'TIENDA', () => this.menu());
 
     const mk = () =>
       makeIconButton(this, cx + 160, cy - 150, 28, COLORS.amarillo, iconMusic(isMuted()), () => {
@@ -45,6 +45,6 @@ export default class PauseScene extends Phaser.Scene {
     this.scene.stop('UI');
     this.scene.stop();
     this.scene.stop('Game');
-    this.scene.start('Title');
+    this.scene.start('Garage');
   }
 }

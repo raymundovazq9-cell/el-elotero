@@ -3,6 +3,9 @@ const params = new URLSearchParams(window.location.search);
 
 export const DEBUG = {
   test: params.has('test'),
+  // escena inicial para capturas (?scene=Garage) y pestaña de la tienda (?tab=mejoras)
+  scene: params.get('scene'),
+  tab: params.get('tab'),
   // borra el progreso guardado al cargar (?reset=1)
   reset: params.has('reset'),
   // escenario a cargar directo en pruebas (?level=feria)

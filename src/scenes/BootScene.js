@@ -43,6 +43,6 @@ export default class BootScene extends Phaser.Scene {
     } catch {
       /* seguimos con la fuente de respaldo */
     }
-    this.scene.start(DEBUG.test ? 'Game' : 'Title');
+    this.scene.start(DEBUG.test ? 'Game' : DEBUG.scene || 'Title');
   }
 }
