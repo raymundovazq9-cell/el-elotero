@@ -9,6 +9,7 @@ import { DEBUG, isBrakeScripted, isGasScripted } from '../debug.js';
 import { Sfx, vibrate, unlockAudio } from '../audio.js';
 import CartView from '../views/CartView.js';
 import RoadView from '../views/RoadView.js';
+import Scenery from '../world/Scenery.js';
 import EloteView from '../views/EloteView.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -26,6 +27,7 @@ export default class GameScene extends Phaser.Scene {
       DEBUG.test ? 'elotero' : undefined,
       new RoadView(this)
     );
+    this.scenery = new Scenery(this, this.road);
     this.road.buildStraight(-400, 300, 900, 20);
 
     this.cart = new Cart(this, this.startX, 440);
@@ -73,6 +75,7 @@ export default class GameScene extends Phaser.Scene {
       this.obstacles.destroy();
       this.cartView.destroy();
       this.eloteView.destroy();
+      this.scenery.destroy();
     });
 
     this.scene.launch('UI');

@@ -233,7 +233,9 @@ export default class Road {
       const dist = (length * i) / steps;
       points.push({ x: fromX + Math.cos(rad) * dist, y: fromY + Math.sin(rad) * dist });
     }
-    return this.buildChunk(points);
+    const chunk = this.buildChunk(points);
+    this.scene.events.emit('chunk', chunk);
+    return chunk;
   }
 
   /** Altura de la calle (y) en una X dada, buscando en los tramos vivos. */

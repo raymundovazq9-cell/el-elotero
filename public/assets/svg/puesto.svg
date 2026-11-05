@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 130 120" width="130" height="120">
+  <!-- patas -->
+  <rect x="14" y="70" width="6" height="50" fill="#6b3e1e" stroke="#1a1a1a" stroke-width="2"/>
+  <rect x="110" y="70" width="6" height="50" fill="#6b3e1e" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- mesa con mantel -->
+  <rect x="8" y="64" width="114" height="12" fill="#e4007c" stroke="#1a1a1a" stroke-width="3"/>
+  <rect x="10" y="76" width="110" height="30" fill="#f7f7f7" stroke="#1a1a1a" stroke-width="2.5"/>
+  <!-- comal y ollas -->
+  <ellipse cx="50" cy="62" rx="22" ry="6" fill="#444" stroke="#1a1a1a" stroke-width="2.5"/>
+  <rect x="84" y="46" width="22" height="18" rx="3" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="2.5"/>
+  <!-- toldo -->
+  <rect x="2" y="6" width="126" height="26" rx="4" fill="#f7c948" stroke="#1a1a1a" stroke-width="3"/>
+  <g fill="#e63946"><rect x="18" y="8" width="16" height="22"/><rect x="50" y="8" width="16" height="22"/><rect x="82" y="8" width="16" height="22"/><rect x="112" y="8" width="14" height="22"/></g>
+  <path d="M2 32 L10 40 L18 32 L26 40 L34 32 L42 40 L50 32 L58 40 L66 32 L74 40 L82 32 L90 40 L98 32 L106 40 L114 32 L122 40 L128 32" fill="none" stroke="#1a1a1a" stroke-width="2.5"/>
+  <rect x="6" y="32" width="5" height="34" fill="#6b3e1e" stroke="#1a1a1a" stroke-width="2"/>
+  <rect x="119" y="32" width="5" height="34" fill="#6b3e1e" stroke="#1a1a1a" stroke-width="2"/>
+</svg>

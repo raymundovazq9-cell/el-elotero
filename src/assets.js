@@ -12,6 +12,13 @@ export const SVG_ASSETS = [
   { key: 'tope', url: 'assets/svg/tope.svg', scale: SVG_SCALE },
   { key: 'perro', url: 'assets/svg/perro.svg', scale: SVG_SCALE },
   { key: 'coche', url: 'assets/svg/coche.svg', scale: SVG_SCALE },
+  { key: 'casa-detalles-a', url: 'assets/svg/casa-detalles-a.svg', scale: SVG_SCALE },
+  { key: 'casa-detalles-b', url: 'assets/svg/casa-detalles-b.svg', scale: SVG_SCALE },
+  { key: 'casa-ventanas-a', url: 'assets/svg/casa-ventanas-a.svg', scale: SVG_SCALE },
+  { key: 'casa-ventanas-b', url: 'assets/svg/casa-ventanas-b.svg', scale: SVG_SCALE },
+  { key: 'poste', url: 'assets/svg/poste.svg', scale: SVG_SCALE },
+  { key: 'puesto', url: 'assets/svg/puesto.svg', scale: SVG_SCALE },
+  { key: 'senora', url: 'assets/svg/senora.svg', scale: SVG_SCALE },
 ];
 
 export const IMAGE_ASSETS = [];
