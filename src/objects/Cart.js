@@ -23,6 +23,7 @@ export default class Cart {
   constructor(scene, x, y, spec = CART) {
     this.scene = scene;
     this.spec = { ...CART, ...spec };
+    this.baseWallHeight = spec.baseWallHeight ?? this.spec.wallHeight;
     const m = scene.matter;
     const c = this.spec;
 

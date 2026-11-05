@@ -9,6 +9,16 @@ export const DEBUG = {
   level: params.get('level'),
   // carrito a usar en pruebas (?cart=motocarro)
   cart: params.get('cart'),
+  // niveles de mejora para pruebas (?up=piernas:3,canasta:6)
+  upgrades: Object.fromEntries(
+    (params.get('up') || '')
+      .split(',')
+      .filter(Boolean)
+      .map((kv) => {
+        const [k, v] = kv.split(':');
+        return [k, Number(v)];
+      })
+  ),
   // parámetros físicos del carrito a sobreescribir en pruebas (?phys=wheelAccel:0.05,density:0.004)
   phys: Object.fromEntries(
     (params.get('phys') || '')

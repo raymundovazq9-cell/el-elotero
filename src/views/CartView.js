@@ -24,6 +24,24 @@ export default class CartView {
     );
     this.elotero = new EloteroView(scene, cart, vista.elotero);
 
+    // paredes extra (mejora de canasta): tablitas encima de las paredes dibujadas
+    const extra = (cart.spec.wallHeight || 0) - (cart.baseWallHeight || cart.spec.wallHeight);
+    this.walls = null;
+    if (extra > 0) {
+      const g = scene.add.graphics().setDepth(0.1);
+      const spec = cart.spec;
+      const wx = (spec.boxWidth || spec.bodyWidth) / 2 - spec.wallThickness / 2;
+      const top = -(spec.bodyHeight / 2 + (cart.baseWallHeight || 0)) + 2;
+      for (const side of [-1, 1]) {
+        const x = (spec.boxX || 0) + side * wx;
+        g.fillStyle(0x8b4513, 1);
+        g.lineStyle(3, 0x1a1a1a, 1);
+        g.fillRoundedRect(x - spec.wallThickness / 2, top - extra, spec.wallThickness, extra + 4, 2);
+        g.strokeRoundedRect(x - spec.wallThickness / 2, top - extra, spec.wallThickness, extra + 4, 2);
+      }
+      this.walls = g;
+    }
+
     if (!scene.textures.exists('vapor')) {
       const g = scene.make.graphics({ x: 0, y: 0, add: false });
       g.fillStyle(0xffffff, 1);
@@ -55,6 +73,7 @@ export default class CartView {
   sync(delta = 16) {
     const b = this.cart.chassis;
     this.body.setPosition(b.position.x, b.position.y).setRotation(b.angle);
+    if (this.walls) this.walls.setPosition(b.position.x, b.position.y).setRotation(b.angle);
     this.cart.wheels.forEach((w, i) => {
       this.wheels[i].setPosition(w.position.x, w.position.y).setRotation(w.angle);
     });
@@ -71,6 +90,7 @@ export default class CartView {
   }
 
   destroy() {
+    if (this.walls) this.walls.destroy();
     this.body.destroy();
     this.wheels.forEach((w) => w.destroy());
     this.elotero.destroy();

@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT, PX_PER_METER, SCORE } from '../config.js';
 import Terrain from '../objects/Terrain.js';
 import { levelById } from '../data/levels.js';
 import { cartById } from '../data/carts.js';
+import { applyUpgrades } from '../data/upgrades.js';
 import Cart from '../objects/Cart.js';
 import Stall from '../objects/Stall.js';
 import Tricks from '../objects/Tricks.js';
@@ -43,10 +44,16 @@ export default class GameScene extends Phaser.Scene {
     this.road.start(-500, 1100);
 
     this.cartData = cartById((data && data.cart) || Save.data.cart);
-    this.cart = new Cart(this, this.startX, this.road.surfaceYAt(this.startX) - 70, { ...this.cartData.fisica, ...DEBUG.phys });
+    const levels = Object.keys(DEBUG.upgrades).length ? DEBUG.upgrades : Save.upgradesFor(this.cartData.id);
+    this.upgraded = applyUpgrades(this.cartData.fisica, levels);
+    this.cart = new Cart(this, this.startX, this.road.surfaceYAt(this.startX) - 70, { ...this.upgraded.fisica, ...DEBUG.phys });
     this.stall = new Stall(this, this.cart);
     this.tricks = new Tricks(this, this.cart);
-    this.elotes = new EloteManager(this, this.cart, this.road);
+    this.elotes = new EloteManager(this, this.cart, this.road, {
+      start: this.upgraded.startElotes,
+      max: this.upgraded.maxElotes,
+      shakeFactor: this.upgraded.shakeFactor,
+    });
     this.obstacles = new Obstacles(this, this.cart, this.road, this.elotes);
     this.cartView = new CartView(this, this.cart, this.cartData.vista);
     this.eloteView = new EloteView(this, this.elotes);

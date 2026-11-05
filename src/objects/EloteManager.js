@@ -29,7 +29,7 @@ export function labelOf(body) {
  * caen y los que se pueden recoger en la calle (sensores estáticos).
  */
 export default class EloteManager {
-  constructor(scene, cart, road) {
+  constructor(scene, cart, road, opts = {}) {
     this.scene = scene;
     this.cart = cart;
     this.road = road;
@@ -37,9 +37,10 @@ export default class EloteManager {
     this.pickups = new Set();
     this.lost = 0;
     this.picked = 0;
-    this.maxCount = ELOTES.max;
+    this.maxCount = opts.max ?? ELOTES.max;
+    this.shakeFactor = opts.shakeFactor ?? 1;
 
-    const start = DEBUG.startElotes ?? ELOTES.start;
+    const start = DEBUG.startElotes ?? opts.start ?? ELOTES.start;
     for (let i = 0; i < start; i++) this.spawnInCart(i);
 
     scene.events.on('chunk', this.onChunk, this);
@@ -188,6 +189,7 @@ export default class EloteManager {
   /** Impulso aleatorio a los elotes (golpes fuertes). */
   shake(strength = 4) {
     const m = this.scene.matter.body;
+    strength *= this.shakeFactor;
     for (const e of this.elotes) {
       m.setVelocity(e, {
         x: e.velocity.x + (Math.random() - 0.5) * strength,
