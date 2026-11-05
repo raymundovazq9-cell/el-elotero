@@ -6,6 +6,12 @@ import { svgImage } from '../assets.js';
 
 export const BEST_KEY = 'elotero.best';
 
+const TITLES = {
+  volcadura: '¡SE VOLTEÓ!',
+  'sin-elotes': '¡SIN ELOTES!',
+  cansado: '¡SE CANSÓ!',
+};
+
 export function loadBest() {
   try {
     return Number(localStorage.getItem(BEST_KEY) || 0);
@@ -41,7 +47,7 @@ export default class GameOverScene extends Phaser.Scene {
     const card = this.add.container(cx, cy).setScale(0.6).setAlpha(0);
     const cardBg = makeCard(this, 0, 0, 600, 440);
     const title = this.add
-      .text(0, -170, reason === 'volcadura' ? '¡SE VOLTEÓ!' : '¡SIN ELOTES!', textStyle(50, COLORS.rosaHex, { fontStyle: '700' }))
+      .text(0, -170, TITLES[reason] || '¡SIN ELOTES!', textStyle(50, COLORS.rosaHex, { fontStyle: '700' }))
       .setOrigin(0.5);
     const line1 = this.add.text(-30, -108, `${meters} m  ×  ${elotes}`, textStyle(36, COLORS.negro, { stroke: COLORS.cremaHex })).setOrigin(0.5);
     const icon = svgImage(this, 70, -108, 'elote').setScale(0.7);

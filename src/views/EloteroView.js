@@ -5,6 +5,7 @@ import Phaser from 'phaser';
 const HIP_LOCAL = { x: -98, y: 2 };
 const LEAN = -0.22; // inclinación hacia adelante (rad)
 const STRIDE_PX = 90; // avance por zancada
+const LEG_LEN = 44; // largo de la pierna en px (origen en la cadera)
 
 /** El elotero empujando el carrito: torso con cabeza y brazos, dos piernas animadas. */
 export default class EloteroView {
@@ -41,11 +42,21 @@ export default class EloteroView {
     const y = b.position.y + HIP_LOCAL.x * sin + HIP_LOCAL.y * cos;
     this.container.setPosition(x, y).setRotation(b.angle);
 
-    const vx = Math.max(0, this.cart.speedX);
+    const vx = Math.abs(this.cart.speedX);
     this.phase += ((vx * 60) / STRIDE_PX) * Math.PI * 2 * (delta / 1000);
 
     const targetAir = this.cart.grounded ? 0 : 1;
     this.airBlend = Phaser.Math.Linear(this.airBlend, targetAir, 0.15);
+
+    // las piernas se estiran o encogen para pisar el suelo bajo la cadera
+    const road = this.scene.road;
+    const gy = road && road.surfaceYAt ? road.surfaceYAt(x) : null;
+    let legScale = 1;
+    if (gy !== null && this.cart.grounded) legScale = Phaser.Math.Clamp((gy - y) / LEG_LEN, 0.6, 1.35);
+    this.legScale = Phaser.Math.Linear(this.legScale || 1, legScale, 0.25);
+    const svgScale = 0.5 * this.legScale;
+    this.legFront.setScale(0.5, svgScale);
+    this.legBack.setScale(0.5, svgScale);
 
     const swing = Math.sin(this.phase) * 0.65 * (1 - this.airBlend);
     const tuck = -0.9 * this.airBlend;

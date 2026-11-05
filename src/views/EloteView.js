@@ -13,8 +13,8 @@ export default class EloteView {
     for (const body of this.elotes.pickups) {
       alive.add(body.id);
       if (!this.pickupImages.has(body.id)) {
-        const img = svgImage(this.scene, body.position.x, body.position.y, 'elote').setDepth(-3).setScale(0.55);
-        this.scene.tweens.add({ targets: img, scale: 0.65, y: img.y - 6, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        const img = svgImage(this.scene, body.position.x, body.position.y, 'elote').setDepth(-3).setScale(0.36).setRotation(-0.5);
+        this.scene.tweens.add({ targets: img, scale: 0.42, y: img.y - 6, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         this.pickupImages.set(body.id, img);
       }
     }
@@ -33,7 +33,7 @@ export default class EloteView {
       alive.add(body.id);
       let img = this.images.get(body.id);
       if (!img) {
-        img = svgImage(this.scene, 0, 0, 'elote').setDepth(1).setScale(0.42);
+        img = svgImage(this.scene, 0, 0, 'elote').setDepth(1).setScale(0.27);
         this.images.set(body.id, img);
       }
       img.setPosition(body.position.x, body.position.y).setRotation(body.angle);

@@ -19,7 +19,7 @@ export const ROAD = {
   slopeStep: 7, // cambio máximo de pendiente entre segmentos (grados)
   segmentMin: 120, // largo mínimo de un segmento de la polilínea
   segmentMax: 260,
-  friction: 0.9,
+  friction: 1.6, // mayor que la de las llantas: Matter usa el mínimo de los dos
 };
 
 export const CART = {
@@ -33,29 +33,29 @@ export const CART = {
   suspensionStiffness: 0.35,
   suspensionDamping: 0.12,
   density: 0.004,
-  wheelFriction: 0.95,
-  // velocidad angular de las ruedas (rad/frame aprox. en Matter)
-  wheelSpeedMax: 0.72,
-  wheelSpeedCoast: 0.5, // tope de velocidad de ruedas cuando no se pisa nada (rueda libre)
-  airTilt: 0.07, // velocidad angular aplicada en el aire con los pedales
+  wheelFriction: 1.3,
+  // velocidad angular de las ruedas (rad/paso de Matter)
+  wheelSpeedMax: 0.62, // con ACELERAR
+  wheelAccel: 0.06, // cuánto sube por paso al acelerar
+  wheelSpeedReverse: -0.22, // reversa lenta al mantener FRENO
+  wheelBrakeRate: 0.05, // cuánto baja por paso al frenar
+  airTilt: 0.04, // velocidad angular en el aire con los pedales
   airTiltMin: 100, // ms en el aire antes de permitir inclinar
-  wheelSpeedBrake: 0.14,
-  wheelAccel: 0.012,
-  wheelBrakeRate: 0.04,
-  // velocidad lineal mínima garantizada (px/step) en X
-  minSpeedX: 2.2,
-  maxSpeedX: 15,
-  tipAngleDeg: 75,
-  tipTimeMs: 400,
+  maxSpeedX: 16,
+  tipAngleDeg: 100,
+  tipTimeMs: 500,
+  stallMs: 6000, // sin avanzar este tiempo = se cansó el elotero
 };
 
 export const ELOTES = {
   start: 6,
   max: 12,
-  radius: 9,
+  width: 24, // cuerpo del elote suelto (rectángulo con chaflán)
+  height: 12,
+  radius: 9, // radio del sensor de los recogibles
   density: 0.0008,
-  friction: 0.3,
-  restitution: 0.3,
+  friction: 0.5,
+  restitution: 0.1,
   lostDistance: 170, // px desde el chasis para darse por perdido
 };
 

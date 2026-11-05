@@ -39,14 +39,30 @@ export default class EloteManager {
 
   /** Posición local (en el marco del carrito) para el elote número i. */
   slotLocal(i) {
-    const r = ELOTES.radius;
-    const perRow = 4;
+    const perRow = 3;
     const row = Math.floor(i / perRow);
     const col = i % perRow;
-    const spacing = r * 2 + 2;
-    const x = (col - (perRow - 1) / 2) * spacing + (row % 2 ? r : 0);
-    const y = -(CART.bodyHeight / 2 + r + 1) - row * (r * 2 - 1);
+    const spacing = ELOTES.width + 3;
+    const x = (col - (perRow - 1) / 2) * spacing + (row % 2 ? 6 : 0);
+    const y = -(CART.bodyHeight / 2 + ELOTES.height / 2 + 1) - row * (ELOTES.height + 1);
     return { x, y };
+  }
+
+  /** Cuerpo de un elote suelto: rectángulo con esquinas redondeadas que rueda y se tumba. */
+  makeEloteBody(x, y) {
+    const body = this.scene.matter.add.rectangle(x, y, ELOTES.width, ELOTES.height, {
+      chamfer: { radius: 5 },
+      density: ELOTES.density,
+      friction: ELOTES.friction,
+      frictionAir: 0.012,
+      restitution: ELOTES.restitution,
+      label: 'elote',
+      render: { fillColor: COLOR_ELOTE, lineColor: COLOR_ELOTE_LINE },
+    });
+    const v = this.cart.chassis.velocity;
+    this.scene.matter.body.setVelocity(body, { x: v.x, y: v.y });
+    this.scene.matter.body.setAngle(body, this.cart.chassis.angle);
+    return body;
   }
 
   toWorld(local) {
@@ -61,16 +77,7 @@ export default class EloteManager {
 
   spawnInCart(i) {
     const p = this.toWorld(this.slotLocal(i));
-    const body = this.scene.matter.add.circle(p.x, p.y, ELOTES.radius, {
-      density: ELOTES.density,
-      friction: ELOTES.friction,
-      frictionAir: 0.005,
-      restitution: ELOTES.restitution,
-      label: 'elote',
-      render: { fillColor: COLOR_ELOTE, lineColor: COLOR_ELOTE_LINE },
-    });
-    const v = this.cart.chassis.velocity;
-    this.scene.matter.body.setVelocity(body, { x: v.x, y: v.y });
+    const body = this.makeEloteBody(p.x, p.y);
     this.elotes.push(body);
     return body;
   }
@@ -132,18 +139,9 @@ export default class EloteManager {
       return;
     }
     // aparece arriba del carrito y cae dentro de la caja
-    const local = { x: 0, y: -(CART.bodyHeight / 2 + CART.wallHeight + ELOTES.radius + 6) };
+    const local = { x: 0, y: -(CART.bodyHeight / 2 + CART.wallHeight + ELOTES.height + 6) };
     const p = this.toWorld(local);
-    const body = this.scene.matter.add.circle(p.x, p.y, ELOTES.radius, {
-      density: ELOTES.density,
-      friction: ELOTES.friction,
-      frictionAir: 0.005,
-      restitution: ELOTES.restitution,
-      label: 'elote',
-      render: { fillColor: COLOR_ELOTE, lineColor: COLOR_ELOTE_LINE },
-    });
-    const v = this.cart.chassis.velocity;
-    this.scene.matter.body.setVelocity(body, { x: v.x, y: v.y });
+    const body = this.makeEloteBody(p.x, p.y);
     this.elotes.push(body);
     this.picked++;
     this.scene.events.emit('elote-picked', this.count);

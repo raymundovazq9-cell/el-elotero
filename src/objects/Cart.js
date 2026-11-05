@@ -7,14 +7,24 @@ const COLOR_WALL = 0xd9a520;
 const COLOR_WHEEL = 0x333333;
 
 /**
- * Carrito del elotero: chasis compuesto (base + paredes) y dos ruedas unidas
- * con constraints tipo resorte (suspensión).
+ * Carrito del elotero: chasis compuesto (base + paredes) y ruedas unidas con
+ * constraints tipo resorte (suspensión). Manejo tipo Hill Climb: ACELERAR
+ * hace girar las ruedas, FRENO las detiene y luego da reversa lenta, y sin
+ * pedal el carrito rueda libre (puede pararse o regresarse en una subida).
+ * En el aire, ACELERAR levanta la nariz y FRENO la baja.
  */
 export default class Cart {
-  constructor(scene, x, y) {
+  /**
+   * @param {Phaser.Scene} scene
+   * @param {number} x
+   * @param {number} y
+   * @param {object} [spec] parámetros físicos (por defecto CART de config.js)
+   */
+  constructor(scene, x, y, spec = CART) {
     this.scene = scene;
+    this.spec = { ...CART, ...spec };
     const m = scene.matter;
-    const c = CART;
+    const c = this.spec;
 
     const base = m.bodies.rectangle(0, 0, c.bodyWidth, c.bodyHeight, {
       density: c.density,
@@ -37,7 +47,7 @@ export default class Cart {
     this.chassis = m.body.create({
       parts: [base, wallL, wallR],
       friction: 0.3,
-      frictionAir: 0.008,
+      frictionAir: 0.006,
       collisionFilter: { group: GROUP_CART },
       label: 'cart',
       render: { fillColor: COLOR_BODY, lineColor: 0x6b4a00 },
@@ -45,13 +55,16 @@ export default class Cart {
     m.body.setPosition(this.chassis, { x, y });
     m.world.add(this.chassis);
 
-    this.wheels = [-1, 1].map((side) => {
-      const wx = x + side * c.wheelOffsetX;
-      const wy = y + c.wheelOffsetY;
-      const wheel = m.add.circle(wx, wy, c.wheelRadius, {
+    const wheelSpecs = c.wheels || [
+      { x: -c.wheelOffsetX, y: c.wheelOffsetY, r: c.wheelRadius },
+      { x: c.wheelOffsetX, y: c.wheelOffsetY, r: c.wheelRadius },
+    ];
+    this.wheelSpecs = wheelSpecs;
+    this.wheels = wheelSpecs.map((ws) => {
+      const wheel = m.add.circle(x + ws.x, y + ws.y, ws.r, {
         friction: c.wheelFriction,
-        frictionStatic: 1,
-        density: c.density * 2.5,
+        frictionStatic: 1.2,
+        density: c.density * 1.6,
         restitution: 0.05,
         collisionFilter: { group: GROUP_CART },
         label: 'wheel',
@@ -59,14 +72,15 @@ export default class Cart {
       });
       // resorte principal: ancla en el chasis justo arriba de la rueda
       m.add.constraint(this.chassis, wheel, 0, c.suspensionStiffness, {
-        pointA: { x: side * c.wheelOffsetX, y: c.wheelOffsetY },
+        pointA: { x: ws.x, y: ws.y },
         damping: c.suspensionDamping,
         render: { visible: false },
       });
-      // brazo rígido-ish para que la rueda no se vaya hacia adelante/atrás
-      const armLen = Math.hypot(c.wheelOffsetX * 1.4, c.wheelOffsetY);
+      // brazo para que la rueda no se vaya hacia adelante/atrás
+      const anchor = { x: -Math.sign(ws.x || 1) * Math.abs(ws.x) * 0.4, y: 0 };
+      const armLen = Math.hypot(ws.x - anchor.x, ws.y - anchor.y);
       m.add.constraint(this.chassis, wheel, armLen, 0.9, {
-        pointA: { x: -side * c.wheelOffsetX * 0.4, y: 0 },
+        pointA: anchor,
         damping: 0.05,
         render: { visible: false },
       });
@@ -75,15 +89,21 @@ export default class Cart {
 
     this.braking = false;
     this.throttle = 0; // -1 freno, 0 libre, 1 acelerar
+    this.boost = 1; // multiplicador temporal de velocidad (chile)
     this.airMs = 0;
     this.tipTimer = 0;
     this.tipped = false;
     this.grounded = true;
-    this.groundLabels = new Set(['road', 'tope', 'coche']);
+    this.chassisContact = false;
+    this.groundLabels = new Set(['road', 'tope', 'coche', 'camioneta', 'poste-caido']);
     scene.matter.world.on('collisionactive', this.onCollisionActive, this);
     scene.matter.world.on('collisionstart', this.onCollisionActive, this);
     scene.matter.world.on('collisionstart', this.onCollisionStart, this);
     this.lastBump = 0;
+  }
+
+  isMine(body) {
+    return this.wheels.includes(body) || body === this.chassis || body.parent === this.chassis;
   }
 
   /** Avisa de golpes contra topes/coches (para sonido y vibración), con límite de frecuencia. */
@@ -93,10 +113,11 @@ export default class Cart {
     for (const pair of event.pairs) {
       const a = pair.bodyA;
       const b = pair.bodyB;
-      const mine = this.wheels.includes(a) || this.wheels.includes(b) || a.parent === this.chassis || b.parent === this.chassis;
-      if (!mine) continue;
-      const other = this.wheels.includes(a) || a.parent === this.chassis ? b : a;
-      if (other.label === 'tope' || other.label === 'coche') {
+      const mineA = this.isMine(a);
+      const mineB = this.isMine(b);
+      if (!mineA && !mineB) continue;
+      const other = mineA ? b : a;
+      if (other.label === 'tope' || other.label === 'coche' || other.label === 'camioneta' || other.label === 'poste-caido') {
         this.lastBump = now;
         this.scene.events.emit('bump', other.label);
         return;
@@ -111,19 +132,21 @@ export default class Cart {
       const b = pair.bodyB;
       const wheelA = this.wheels.includes(a);
       const wheelB = this.wheels.includes(b);
-      if (!wheelA && !wheelB) continue;
-      const other = wheelA ? b : a;
+      const chassisA = a === this.chassis || a.parent === this.chassis;
+      const chassisB = b === this.chassis || b.parent === this.chassis;
+      if (!wheelA && !wheelB && !chassisA && !chassisB) continue;
+      const other = wheelA || chassisA ? b : a;
       const label = other.label !== 'Body' ? other.label : other.parent && other.parent.label;
-      if (this.groundLabels.has(label)) {
-        this.grounded = true;
-        return;
-      }
+      if (!this.groundLabels.has(label)) continue;
+      if (wheelA || wheelB) this.grounded = true;
+      else this.chassisContact = true;
     }
   }
 
   /** Llamar al final del update de la escena, después de leer `grounded`. */
   endStep() {
     this.grounded = false;
+    this.chassisContact = false;
   }
 
   get x() {
@@ -134,6 +157,13 @@ export default class Cart {
   }
   get angleDeg() {
     return Phaser.Math.RadToDeg(this.chassis.angle);
+  }
+  get speedX() {
+    return this.chassis.velocity.x;
+  }
+  get speed() {
+    const v = this.chassis.velocity;
+    return Math.hypot(v.x, v.y);
   }
 
   setBraking(v) {
@@ -148,53 +178,40 @@ export default class Cart {
 
   update(deltaMs) {
     const m = this.scene.matter;
-    const c = CART;
+    const c = this.spec;
 
-    // ruedas: frenar, acelerar o rodar libres
     for (const w of this.wheels) {
       const cur = w.angularVelocity;
       let next = cur;
-      if (this.throttle < 0) {
-        const target = c.wheelSpeedBrake;
-        next = cur > target ? Math.max(target, cur - c.wheelBrakeRate) : target;
-      } else if (this.throttle > 0) {
-        const target = c.wheelSpeedMax;
-        next = cur < target ? Math.min(target, cur + c.wheelAccel * 1.5) : cur;
-      } else {
-        // rueda libre: la bajada lo lleva poco a poco a la velocidad de crucero
-        const target = c.wheelSpeedCoast;
-        if (cur < target) next = Math.min(target, cur + c.wheelAccel * 0.6);
-        else if (cur > target + 0.05) next = Math.max(target, cur - c.wheelAccel * 0.3);
+      if (this.throttle > 0) {
+        const target = c.wheelSpeedMax * this.boost;
+        if (cur < target) next = Math.min(target, cur + c.wheelAccel * this.boost);
+      } else if (this.throttle < 0) {
+        // frena hasta detenerse y luego reversa lenta
+        const target = c.wheelSpeedReverse;
+        if (cur > target) next = Math.max(target, cur - c.wheelBrakeRate);
       }
       if (next !== cur) m.body.setAngularVelocity(w, next);
-      w.friction = this.braking ? c.wheelFriction : c.wheelFriction * 0.6;
     }
 
-    // en el aire los pedales inclinan el carrito
+    // en el aire los pedales inclinan el carrito: acelerar = nariz arriba, freno = nariz abajo
     if (!this.grounded) {
       this.airMs += deltaMs;
       if (this.airMs > c.airTiltMin && this.throttle !== 0) {
-        const target = this.throttle * c.airTilt;
-        m.body.setAngularVelocity(this.chassis, Phaser.Math.Linear(this.chassis.angularVelocity, target, 0.2));
+        const target = -this.throttle * c.airTilt;
+        m.body.setAngularVelocity(this.chassis, Phaser.Math.Linear(this.chassis.angularVelocity, target, 0.18));
       }
     } else {
       this.airMs = 0;
     }
 
-    // velocidad mínima garantizada / máxima
+    // velocidad máxima
     const v = this.chassis.velocity;
-    if (v.x < c.minSpeedX) {
-      m.body.setVelocity(this.chassis, { x: c.minSpeedX, y: v.y });
-      for (const w of this.wheels) {
-        if (w.velocity.x < c.minSpeedX) m.body.setVelocity(w, { x: c.minSpeedX, y: w.velocity.y });
-      }
-    } else if (v.x > c.maxSpeedX) {
-      m.body.setVelocity(this.chassis, { x: c.maxSpeedX, y: v.y });
-    }
+    if (v.x > c.maxSpeedX) m.body.setVelocity(this.chassis, { x: c.maxSpeedX, y: v.y });
 
-    // volcadura
+    // volcadura: de cabeza y tocando el piso con el chasis (en el aire se puede dar la vuelta)
     const a = Math.abs(Phaser.Math.Angle.WrapDegrees(this.angleDeg));
-    if (a > c.tipAngleDeg) {
+    if (a > c.tipAngleDeg && this.chassisContact) {
       this.tipTimer += deltaMs;
       if (this.tipTimer >= c.tipTimeMs) this.tipped = true;
     } else {
@@ -202,7 +219,10 @@ export default class Cart {
     }
   }
 
-  get speedX() {
-    return this.chassis.velocity.x;
+  destroy() {
+    const w = this.scene.matter.world;
+    w.off('collisionactive', this.onCollisionActive, this);
+    w.off('collisionstart', this.onCollisionActive, this);
+    w.off('collisionstart', this.onCollisionStart, this);
   }
 }

@@ -46,6 +46,7 @@ export default class UIScene extends Phaser.Scene {
     ev.on('elote-full', () => this.showFloat('Carrito lleno', '#dddddd'));
     ev.on('perro-hit', () => this.showFloat('¡Guau! ¡Perro!', '#ff9f43'));
     ev.on('landed', (gained) => this.showFloat(`¡Aire! +${gained}`, '#9be7ff'));
+    ev.on('stall-warning', () => this.showFloat('¡Se está cansando! Dale ACELERAR o reversa', '#ffb347'));
     ev.on('gameover', () => {
       this.releaseAll();
       this.hint.setVisible(false);

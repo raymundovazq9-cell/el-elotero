@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT, PX_PER_METER, SCORE } from '../config.js';
 import Terrain from '../objects/Terrain.js';
 import { levelById } from '../data/levels.js';
 import Cart from '../objects/Cart.js';
+import Stall from '../objects/Stall.js';
 import EloteManager from '../objects/EloteManager.js';
 import Obstacles from '../objects/Obstacles.js';
 import { difficultyAt } from '../objects/Difficulty.js';
@@ -36,9 +37,10 @@ export default class GameScene extends Phaser.Scene {
       this.level
     );
     this.scenery = new Scenery(this, this.road);
-    this.road.start(-500, 800);
+    this.road.start(-500, 1100);
 
     this.cart = new Cart(this, this.startX, this.road.surfaceYAt(this.startX) - 60);
+    this.stall = new Stall(this, this.cart);
     this.elotes = new EloteManager(this, this.cart, this.road);
     this.obstacles = new Obstacles(this, this.cart, this.road, this.elotes);
     this.cartView = new CartView(this, this.cart);
@@ -65,6 +67,7 @@ export default class GameScene extends Phaser.Scene {
       Sfx.perro();
       vibrate([60, 40, 80]);
     });
+    this.events.on('stall', () => this.gameOver('cansado'));
     this.events.on('gameover', () => {
       Music.stop();
       Sfx.gameOver();
@@ -89,6 +92,7 @@ export default class GameScene extends Phaser.Scene {
     this.events.once('shutdown', () => {
       this.game.events.off('blur', onBlur);
       this.elotes.destroy();
+      this.cart.destroy();
       this.obstacles.destroy();
       this.cartView.destroy();
       this.eloteView.destroy();
@@ -194,6 +198,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.cart.update(delta);
+    if (!this.over) this.stall.update(delta);
     this.elotes.update();
     this.obstacles.update(delta);
     if (this.cart.grounded && !this.over) {
