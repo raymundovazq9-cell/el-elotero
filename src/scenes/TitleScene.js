@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 import { loadBest } from './GameOverScene.js';
 import { unlockAudio, Sfx, setMuted, isMuted } from '../audio.js';
+import { Music } from '../music.js';
 import { COLORS, textStyle } from '../theme.js';
 import { svgImage } from '../assets.js';
 import SkyCycle from '../world/SkyCycle.js';
@@ -95,9 +96,16 @@ export default class TitleScene extends Phaser.Scene {
       .text(cx, 560, 'FRENO a la izquierda  ·  ACELERAR a la derecha', textStyle(18, COLORS.cremaHex))
       .setOrigin(0.5);
 
-    this.input.once('pointerdown', () => unlockAudio());
+    this.input.once('pointerdown', () => {
+      unlockAudio();
+      Music.setVolume(0.35);
+      Music.start();
+    });
     this.cameras.main.fadeIn(350);
-    this.events.once('shutdown', () => this.sky.destroy());
+    this.events.once('shutdown', () => {
+      this.sky.destroy();
+      Music.stop();
+    });
   }
 
   play() {

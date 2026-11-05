@@ -7,6 +7,7 @@ import Obstacles from '../objects/Obstacles.js';
 import { difficultyAt } from '../objects/Difficulty.js';
 import { DEBUG, isBrakeScripted, isGasScripted } from '../debug.js';
 import { Sfx, vibrate, unlockAudio } from '../audio.js';
+import { Music } from '../music.js';
 import CartView from '../views/CartView.js';
 import RoadView from '../views/RoadView.js';
 import Scenery from '../world/Scenery.js';
@@ -60,9 +61,17 @@ export default class GameScene extends Phaser.Scene {
       vibrate([60, 40, 80]);
     });
     this.events.on('gameover', () => {
+      Music.stop();
       Sfx.gameOver();
       vibrate([120, 60, 200]);
     });
+    Music.setVolume(0.5);
+    Music.start();
+    this.time.delayedCall(400, () => Sfx.silbato());
+    this.events.on('pause', () => Music.stop());
+    this.events.on('resume', () => Music.start());
+    this.events.once('shutdown', () => Music.stop());
+    this.clacDist = 0;
 
     this.braking = false;
     this.pedals = { brake: false, gas: false };
@@ -180,6 +189,13 @@ export default class GameScene extends Phaser.Scene {
     this.cart.update(delta);
     this.elotes.update();
     this.obstacles.update(delta);
+    if (this.cart.grounded && !this.over) {
+      this.clacDist += this.cart.speedX;
+      if (this.clacDist > 90) {
+        this.clacDist = 0;
+        Sfx.clac();
+      }
+    }
     this.updateAir(delta);
     this.cartView.sync(delta);
     this.eloteView.sync();

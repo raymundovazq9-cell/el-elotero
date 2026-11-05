@@ -20,6 +20,10 @@ export function unlockAudio() {
   }
 }
 
+export function getContext() {
+  return ctx;
+}
+
 export function setMuted(v) {
   muted = v;
   try {
@@ -95,6 +99,15 @@ export const Sfx = {
   gameOver() {
     tone({ freq: 400, to: 200, dur: 0.25, type: 'square', vol: 0.1 });
     tone({ freq: 300, to: 120, dur: 0.4, type: 'square', vol: 0.1, delay: 0.25 });
+  },
+  /** Silbato del elotero (sube y baja). */
+  silbato() {
+    tone({ freq: 900, to: 1500, dur: 0.18, type: 'sine', vol: 0.12 });
+    tone({ freq: 1500, to: 1000, dur: 0.22, type: 'sine', vol: 0.12, delay: 0.18 });
+  },
+  /** Traqueteo suave de las ruedas sobre el empedrado. */
+  clac() {
+    noise({ dur: 0.025, vol: 0.035 });
   },
   inicio() {
     tone({ freq: 523, dur: 0.08, type: 'square', vol: 0.08 });
