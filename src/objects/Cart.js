@@ -18,16 +18,19 @@ export default class Cart {
 
     const base = m.bodies.rectangle(0, 0, c.bodyWidth, c.bodyHeight, {
       density: c.density,
+      label: 'cart',
       render: { fillColor: COLOR_BODY, lineColor: 0x6b4a00 },
     });
     const wallY = -(c.bodyHeight / 2 + c.wallHeight / 2) + 2;
     const wallX = c.bodyWidth / 2 - c.wallThickness / 2;
     const wallL = m.bodies.rectangle(-wallX, wallY, c.wallThickness, c.wallHeight, {
       density: c.density * 0.25,
+      label: 'cart',
       render: { fillColor: COLOR_WALL, lineColor: 0x6b4a00 },
     });
     const wallR = m.bodies.rectangle(wallX, wallY, c.wallThickness, c.wallHeight, {
       density: c.density * 0.25,
+      label: 'cart',
       render: { fillColor: COLOR_WALL, lineColor: 0x6b4a00 },
     });
 

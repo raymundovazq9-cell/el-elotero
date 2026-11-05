@@ -34,7 +34,9 @@ export default class UIScene extends Phaser.Scene {
       .setOrigin(0.5);
     this.time.delayedCall(3500, () => this.hint.setVisible(false));
 
-    this.floatTexts = [];
+    this.game_.events.on('elote-lost', () => this.showFloat('¡Se cayó un elote!', '#ff6b6b'));
+    this.game_.events.on('elote-picked', () => this.showFloat('¡+1 elote!', '#ffe680'));
+    this.game_.events.on('elote-full', () => this.showFloat('Carrito lleno', '#dddddd'));
   }
 
   showFloat(msg, color = '#ffffff') {

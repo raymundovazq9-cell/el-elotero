@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, PX_PER_METER } from '../config.js';
 import Road from '../objects/Road.js';
 import Cart from '../objects/Cart.js';
+import EloteManager from '../objects/EloteManager.js';
+import { difficultyAt } from '../objects/Difficulty.js';
 import { DEBUG, isBrakeScripted } from '../debug.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -21,7 +23,7 @@ export default class GameScene extends Phaser.Scene {
     this.road.buildStraight(-400, 300, 900, 20);
 
     this.cart = new Cart(this, this.startX, 440);
-    this.elotes = 6;
+    this.elotes = new EloteManager(this, this.cart, this.road);
     this.bonus = 0;
 
     this.braking = false;
@@ -42,6 +44,10 @@ export default class GameScene extends Phaser.Scene {
     this.cart.setBraking(v);
   }
 
+  difficultyAt(meters) {
+    return difficultyAt(meters);
+  }
+
   get meters() {
     return Math.max(0, Math.floor((this.cart.x - this.startX) / PX_PER_METER));
   }
@@ -49,8 +55,8 @@ export default class GameScene extends Phaser.Scene {
   getStats() {
     return {
       meters: this.meters,
-      elotes: this.elotes,
-      score: this.meters * this.elotes + this.bonus,
+      elotes: this.elotes.count,
+      score: this.meters * this.elotes.count + this.bonus,
       braking: this.braking,
     };
   }
@@ -68,6 +74,7 @@ export default class GameScene extends Phaser.Scene {
       }
     }
     this.cart.update(delta);
+    this.elotes.update();
 
     const cam = this.cameras.main;
     this.road.update(cam.scrollX);
