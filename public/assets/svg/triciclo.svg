@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" width="200" height="110">
+  <!-- centro del chasis físico: (104, 70). Caja al frente (x 76..176), asiento atrás. -->
+  <!-- rueda delantera lejana (la cercana es la imagen 'rueda') -->
+  <circle cx="160" cy="98" r="15" fill="#1f1f1f" stroke="#111" stroke-width="2"/>
+  <circle cx="160" cy="98" r="8" fill="#555" stroke="#111" stroke-width="2"/>
+  <!-- cuadro trasero -->
+  <path d="M38 98 L58 52 L76 60" stroke="#2e8b57" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M38 98 L50 90 L76 76" stroke="#2e8b57" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M58 52 L50 90" stroke="#2e8b57" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <!-- pedales -->
+  <circle cx="50" cy="90" r="6" fill="#2b2b2b" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- asiento -->
+  <path d="M44 48 L66 48 L62 42 L48 42 Z" fill="#2b2b2b" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+  <line x1="56" y1="48" x2="58" y2="56" stroke="#2b2b2b" stroke-width="4"/>
+  <!-- manubrio hacia la caja -->
+  <path d="M70 40 L84 36" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M66 42 L70 40" stroke="#c0392b" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <path d="M84 36 L86 46" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- panel trasero de la caja -->
+  <rect x="80" y="36" width="92" height="22" fill="#d08a4a" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="80" y1="47" x2="172" y2="47" stroke="#b5733a" stroke-width="2"/>
+  <!-- paredes -->
+  <rect x="76" y="32" width="9" height="28" rx="2" fill="#8b4513" stroke="#1a1a1a" stroke-width="3"/>
+  <rect x="167" y="32" width="9" height="28" rx="2" fill="#8b4513" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- base de la caja -->
+  <rect x="76" y="57" width="100" height="26" rx="4" fill="#2e8b57" stroke="#1a1a1a" stroke-width="3"/>
+  <line x1="76" y1="66" x2="176" y2="66" stroke="#1f6b41" stroke-width="2"/>
+  <line x1="76" y1="75" x2="176" y2="75" stroke="#1f6b41" stroke-width="2"/>
+  <!-- letrero -->
+  <rect x="96" y="61" width="60" height="18" rx="4" fill="#fff4d6" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="126" y="75" font-family="Arial, Helvetica, sans-serif" font-size="13" font-weight="bold" fill="#2e8b57" text-anchor="middle">ELOTES</text>
+  <!-- olla al frente -->
+  <rect x="150" y="12" width="28" height="24" rx="5" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="3"/>
+  <ellipse cx="164" cy="12" rx="15" ry="4" fill="#c7d0da" stroke="#1a1a1a" stroke-width="2.5"/>
+  <circle cx="164" cy="8" r="3" fill="#2b2b2b"/>
+  <!-- horquilla delantera -->
+  <path d="M152 83 L152 98" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/>
+  <!-- eje trasero -->
+  <line x1="30" y1="98" x2="46" y2="98" stroke="#2b2b2b" stroke-width="4" stroke-linecap="round"/>
+</svg>

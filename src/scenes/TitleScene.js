@@ -5,6 +5,8 @@ import { unlockAudio, Sfx, setMuted, isMuted } from '../audio.js';
 import { Music } from '../music.js';
 import { COLORS, textStyle } from '../theme.js';
 import { svgImage } from '../assets.js';
+import { buildCartPreview } from '../views/CartPreview.js';
+import { cartById } from '../data/carts.js';
 import SkyCycle from '../world/SkyCycle.js';
 import { makeButton, makeIconButton, drawPapelPicado, iconMusic } from '../ui/widgets.js';
 
@@ -57,21 +59,9 @@ export default class TitleScene extends Phaser.Scene {
     this.add.text(cx, 178, 'Sube y baja las colinas del barrio sin tirar los elotes', textStyle(24, COLORS.blanco)).setOrigin(0.5);
     this.tweens.add({ targets: title, scale: 1.04, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
-    // elotero con carrito
-    const cart = this.add.container(cx + 260, STREET_Y - 2);
-    const carrito = svgImage(this, 0, 0, 'carrito').setOrigin(80 / 160, 67 / 100);
-    const w1 = svgImage(this, -44, 26, 'rueda');
-    const w2 = svgImage(this, 44, 26, 'rueda');
-    const elotes = [];
-    for (let i = 0; i < 7; i++) {
-      const e = svgImage(this, -36 + (i % 4) * 24 + (i >= 4 ? 12 : 0), -24 - Math.floor(i / 4) * 17, 'elote').setScale(0.42);
-      elotes.push(e);
-    }
-    const legB = svgImage(this, -98, 2, 'elotero-pierna').setOrigin(8 / 20, 2 / 46).setRotation(0.5);
-    const legF = svgImage(this, -98, 2, 'elotero-pierna').setOrigin(8 / 20, 2 / 46).setRotation(-0.4);
-    const torso = svgImage(this, -98, 2, 'elotero-torso').setOrigin(40 / 80, 86 / 100).setRotation(-0.22);
-    cart.add([legB, torso, legF, carrito, w1, w2, ...elotes]);
-    this.tweens.add({ targets: [w1, w2], rotation: Math.PI * 2, duration: 1400, repeat: -1 });
+    // elotero con carrito (el modelo activo)
+    const cart = buildCartPreview(this, cartById(Save.data.cart), { x: cx + 260, y: STREET_Y - 2, elotes: 7 });
+    cart.spin();
     this.tweens.add({ targets: cart, y: STREET_Y - 6, duration: 260, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
     // botones

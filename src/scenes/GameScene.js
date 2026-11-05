@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, PX_PER_METER, SCORE } from '../config.js';
 import Terrain from '../objects/Terrain.js';
 import { levelById } from '../data/levels.js';
+import { cartById } from '../data/carts.js';
 import Cart from '../objects/Cart.js';
 import Stall from '../objects/Stall.js';
 import Tricks from '../objects/Tricks.js';
@@ -41,12 +42,13 @@ export default class GameScene extends Phaser.Scene {
     this.scenery = new Scenery(this, this.road);
     this.road.start(-500, 1100);
 
-    this.cart = new Cart(this, this.startX, this.road.surfaceYAt(this.startX) - 60);
+    this.cartData = cartById((data && data.cart) || Save.data.cart);
+    this.cart = new Cart(this, this.startX, this.road.surfaceYAt(this.startX) - 70, { ...this.cartData.fisica, ...DEBUG.phys });
     this.stall = new Stall(this, this.cart);
     this.tricks = new Tricks(this, this.cart);
     this.elotes = new EloteManager(this, this.cart, this.road);
     this.obstacles = new Obstacles(this, this.cart, this.road, this.elotes);
-    this.cartView = new CartView(this, this.cart);
+    this.cartView = new CartView(this, this.cart, this.cartData.vista);
     this.eloteView = new EloteView(this, this.elotes);
     this.particles = new Particles(this, this.cart);
 
@@ -151,6 +153,18 @@ export default class GameScene extends Phaser.Scene {
     this.setPedals(v, this.pedals.gas);
   }
 
+  /** Piloto de pruebas: gas en el piso; en el aire nivela con los pedales. */
+  autoDrive() {
+    if (this.cart.grounded) {
+      this.setPedals(false, true);
+      return;
+    }
+    const pitch = this.cart.chassis.angle - (this.cart.groundAngle || 0);
+    if (pitch < -0.3) this.setPedals(true, false); // nariz arriba: freno la baja
+    else if (pitch > 0.3) this.setPedals(false, true); // nariz abajo: gas la sube
+    else this.setPedals(false, false);
+  }
+
   difficultyAt(meters) {
     return difficultyAt(meters);
   }
@@ -218,13 +232,14 @@ export default class GameScene extends Phaser.Scene {
   update(time, delta) {
     if (DEBUG.test && !this.over) {
       this.testClock = (this.testClock || 0) + delta;
-      this.setPedals(isBrakeScripted(this.testClock), isGasScripted(this.testClock));
+      if (DEBUG.auto) this.autoDrive();
+      else this.setPedals(isBrakeScripted(this.testClock), isGasScripted(this.testClock));
       if (DEBUG.forceGameOverAt !== null && this.testClock >= DEBUG.forceGameOverAt) this.gameOver('volcadura');
       if (!this.nextLog || this.testClock >= this.nextLog) {
         this.nextLog = (this.nextLog || 0) + 1000;
         const c = this.cart;
         console.log(
-          `[test] t=${Math.round(this.testClock)} x=${c.x.toFixed(0)} y=${c.y.toFixed(0)} vx=${c.speedX.toFixed(2)} ang=${c.angleDeg.toFixed(1)} brake=${this.braking} perros=${this.obstacles.hits} lost=${this.elotes.lost} picked=${this.elotes.picked} objs=${this.children.length} bodies=${this.matter.world.getAllBodies().length} stats=${JSON.stringify(this.getStats())}`
+          `[test] t=${Math.round(this.testClock)} x=${c.x.toFixed(0)} y=${c.y.toFixed(0)} vx=${c.speedX.toFixed(2)} ang=${c.angleDeg.toFixed(1)} g=${c.grounded} brake=${this.braking} perros=${this.obstacles.hits} lost=${this.elotes.lost} picked=${this.elotes.picked} objs=${this.children.length} bodies=${this.matter.world.getAllBodies().length} stats=${JSON.stringify(this.getStats())}`
         );
       }
     }
@@ -236,6 +251,7 @@ export default class GameScene extends Phaser.Scene {
       this.keyboardWasDown = kBrake || kGas;
     }
 
+    this.cart.groundAngle = Math.atan(this.road.slopeAt(this.cart.x));
     this.cart.update(delta);
     if (!this.over) this.stall.update(delta);
     this.elotes.update();

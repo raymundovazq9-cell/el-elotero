@@ -32,13 +32,15 @@ export default class Cart {
       render: { fillColor: COLOR_BODY, lineColor: 0x6b4a00 },
     });
     const wallY = -(c.bodyHeight / 2 + c.wallHeight / 2) + 2;
-    const wallX = c.bodyWidth / 2 - c.wallThickness / 2;
-    const wallL = m.bodies.rectangle(-wallX, wallY, c.wallThickness, c.wallHeight, {
+    const boxX = c.boxX || 0;
+    const boxW = c.boxWidth || c.bodyWidth;
+    const wallX = boxW / 2 - c.wallThickness / 2;
+    const wallL = m.bodies.rectangle(boxX - wallX, wallY, c.wallThickness, c.wallHeight, {
       density: c.density * 0.25,
       label: 'cart',
       render: { fillColor: COLOR_WALL, lineColor: 0x6b4a00 },
     });
-    const wallR = m.bodies.rectangle(wallX, wallY, c.wallThickness, c.wallHeight, {
+    const wallR = m.bodies.rectangle(boxX + wallX, wallY, c.wallThickness, c.wallHeight, {
       density: c.density * 0.25,
       label: 'cart',
       render: { fillColor: COLOR_WALL, lineColor: 0x6b4a00 },
@@ -70,18 +72,10 @@ export default class Cart {
         label: 'wheel',
         render: { fillColor: COLOR_WHEEL, lineColor: 0x000000 },
       });
-      // resorte principal: ancla en el chasis justo arriba de la rueda
+      // una sola unión (pivote con algo de resorte) en el centro de la rueda
       m.add.constraint(this.chassis, wheel, 0, c.suspensionStiffness, {
         pointA: { x: ws.x, y: ws.y },
         damping: c.suspensionDamping,
-        render: { visible: false },
-      });
-      // brazo para que la rueda no se vaya hacia adelante/atrás
-      const anchor = { x: -Math.sign(ws.x || 1) * Math.abs(ws.x) * 0.4, y: 0 };
-      const armLen = Math.hypot(ws.x - anchor.x, ws.y - anchor.y);
-      m.add.constraint(this.chassis, wheel, armLen, 0.9, {
-        pointA: anchor,
-        damping: 0.05,
         render: { visible: false },
       });
       return wheel;
@@ -180,12 +174,16 @@ export default class Cart {
     const m = this.scene.matter;
     const c = this.spec;
 
+    // anti-caballito: con la nariz muy levantada respecto al piso, el empuje baja
+    const pitch = this.chassis.angle - (this.groundAngle || 0);
+    const gasFactor = this.grounded ? 1 - Phaser.Math.Clamp((-pitch - 0.35) / 0.45, 0, 1) : 1;
+
     for (const w of this.wheels) {
       const cur = w.angularVelocity;
       let next = cur;
-      if (this.throttle > 0) {
+      if (this.throttle > 0 && gasFactor > 0) {
         const target = c.wheelSpeedMax * this.boost;
-        if (cur < target) next = Math.min(target, cur + c.wheelAccel * this.boost);
+        if (cur < target) next = Math.min(target, cur + c.wheelAccel * this.boost * gasFactor);
       } else if (this.throttle < 0) {
         // frena hasta detenerse y luego reversa lenta
         const target = c.wheelSpeedReverse;

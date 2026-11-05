@@ -6,6 +6,10 @@ export const SVG_SCALE = 2;
 export const SVG_ASSETS = [
   { key: 'elote', url: 'assets/svg/elote.svg', scale: SVG_SCALE },
   { key: 'carrito', url: 'assets/svg/carrito.svg', scale: SVG_SCALE },
+  { key: 'triciclo', url: 'assets/svg/triciclo.svg', scale: SVG_SCALE },
+  { key: 'bici-carro', url: 'assets/svg/bici-carro.svg', scale: SVG_SCALE },
+  { key: 'motocarro', url: 'assets/svg/motocarro.svg', scale: SVG_SCALE },
+  { key: 'camioneta', url: 'assets/svg/camioneta.svg', scale: SVG_SCALE },
   { key: 'rueda', url: 'assets/svg/rueda.svg', scale: SVG_SCALE },
   { key: 'elotero-torso', url: 'assets/svg/elotero-torso.svg', scale: SVG_SCALE },
   { key: 'elotero-pierna', url: 'assets/svg/elotero-pierna.svg', scale: SVG_SCALE },

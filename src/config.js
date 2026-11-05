@@ -25,8 +25,10 @@ export const ROAD = {
 export const CART = {
   bodyWidth: 110,
   bodyHeight: 26,
-  wallHeight: 24,
+  wallHeight: 32,
   wallThickness: 8,
+  boxX: 0, // centro de la caja de elotes respecto al chasis
+  boxWidth: 110,
   wheelRadius: 17,
   wheelOffsetX: 44,
   wheelOffsetY: 26,
@@ -40,7 +42,7 @@ export const CART = {
   wheelSpeedReverse: -0.22, // reversa lenta al mantener FRENO
   wheelBrakeRate: 0.05, // cuánto baja por paso al frenar
   airTilt: 0.04, // velocidad angular en el aire con los pedales
-  airTiltMin: 100, // ms en el aire antes de permitir inclinar
+  airTiltMin: 220, // ms en el aire antes de permitir inclinar (los brinquitos no cuentan)
   maxSpeedX: 16,
   tipAngleDeg: 100,
   tipTimeMs: 500,
@@ -53,9 +55,9 @@ export const ELOTES = {
   width: 24, // cuerpo del elote suelto (rectángulo con chaflán)
   height: 12,
   radius: 9, // radio del sensor de los recogibles
-  density: 0.0008,
-  friction: 0.5,
-  restitution: 0.1,
+  density: 0.0012,
+  friction: 0.8,
+  restitution: 0.05,
   lostDistance: 170, // px desde el chasis para darse por perdido
 };
 

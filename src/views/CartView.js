@@ -1,20 +1,28 @@
-import { svgImage } from '../assets.js';
+import { svgImage, SVG_SCALE } from '../assets.js';
 import EloteroView from './EloteroView.js';
 
-/** Origen de la imagen del carrito en coordenadas de la imagen (centro del chasis físico). */
-const ORIGIN = { x: 80 / 160, y: 67 / 100 };
-/** Posición del bote de vapor relativa al chasis. */
-const POT_LOCAL = { x: 62, y: -55 };
+const WHEEL_IMAGE_R = 17; // radio físico para el que se dibujó rueda.svg
 
 /** Dibuja el carrito, las ruedas, el elotero y el vapor siguiendo los cuerpos de Matter. */
 export default class CartView {
-  constructor(scene, cart) {
+  /**
+   * @param {Phaser.Scene} scene
+   * @param {import('../objects/Cart.js').default} cart
+   * @param {object} vista datos de dibujo del modelo (data/carts.js → vista)
+   */
+  constructor(scene, cart, vista) {
     this.scene = scene;
     this.cart = cart;
+    this.vista = vista;
 
-    this.body = svgImage(scene, 0, 0, 'carrito').setOrigin(ORIGIN.x, ORIGIN.y).setDepth(0);
-    this.wheels = cart.wheels.map(() => svgImage(scene, 0, 0, 'rueda').setDepth(0.5));
-    this.elotero = new EloteroView(scene, cart);
+    this.body = svgImage(scene, 0, 0, vista.cuerpo).setDepth(0);
+    this.body.setOrigin((vista.origen.x * SVG_SCALE) / this.body.width, (vista.origen.y * SVG_SCALE) / this.body.height);
+    this.wheels = cart.wheelSpecs.map((ws) =>
+      svgImage(scene, 0, 0, 'rueda')
+        .setScale((ws.r / WHEEL_IMAGE_R) * (1 / SVG_SCALE))
+        .setDepth(0.5)
+    );
+    this.elotero = new EloteroView(scene, cart, vista.elotero);
 
     if (!scene.textures.exists('vapor')) {
       const g = scene.make.graphics({ x: 0, y: 0, add: false });
@@ -50,7 +58,7 @@ export default class CartView {
     this.cart.wheels.forEach((w, i) => {
       this.wheels[i].setPosition(w.position.x, w.position.y).setRotation(w.angle);
     });
-    const pot = this.local(POT_LOCAL.x, POT_LOCAL.y);
+    const pot = this.local(this.vista.olla.x, this.vista.olla.y);
     this.steam.setPosition(pot.x, pot.y);
     this.elotero.sync(delta);
   }

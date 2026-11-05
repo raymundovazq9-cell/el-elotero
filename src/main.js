@@ -64,5 +64,6 @@ const config = {
 if (DEBUG.reset) Save.reset();
 if (DEBUG.bank !== null) Save.addBank(DEBUG.bank - Save.bank);
 if (DEBUG.level) Save.select('level', DEBUG.level);
+if (DEBUG.cart) Save.select('cart', DEBUG.cart);
 
 new Phaser.Game(config);

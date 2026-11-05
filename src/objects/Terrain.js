@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { ROAD, GAME_WIDTH } from '../config.js';
 import { SAFE_METERS, MAX_METERS } from './Difficulty.js';
+import { DEBUG } from '../debug.js';
 
 const COLOR_ROAD = 0x5a5a5a;
 const COLOR_ROAD_LINE = 0x2e2e2e;
@@ -48,7 +49,11 @@ export default class Terrain {
 
   ampMul(x) {
     const t = this.level.terreno;
-    return Math.min(t.maxMul, 1 + t.crecimiento * Math.max(0, this.metersAt(x)));
+    const grow = Math.min(t.maxMul, 1 + t.crecimiento * Math.max(0, this.metersAt(x)));
+    // entrada suave: las colinas crecen de 0 a 1 en los primeros 500 px después del piso plano
+    const k = Phaser.Math.Clamp((x - this.profileStartX) / 500, 0, 1);
+    const ease = k * k * (3 - 2 * k);
+    return grow * ease;
   }
 
   /** Altura (y) del perfil puro en x, antes de rasgos. */
@@ -77,10 +82,7 @@ export default class Terrain {
   start(fromX, length) {
     const endX = fromX + length;
     this.profileStartX = endX;
-    // ajusta la base para que profile(endX) == base
-    const y0 = this.profile(endX);
-    this.level = { ...this.level, terreno: { ...this.level.terreno, base: this.level.terreno.base * 2 - y0 } };
-    const y = this.profile(endX);
+    const y = this.profile(endX); // == base, porque la amplitud arranca en 0
     const points = [];
     const steps = Math.ceil(length / 100);
     for (let i = 0; i <= steps; i++) points.push({ x: fromX + (length * i) / steps, y });
@@ -147,7 +149,7 @@ export default class Terrain {
         };
         const diffT = Phaser.Math.Clamp(meters / MAX_METERS, 0, 1);
 
-        if (Math.abs(slope) < 0.3 && hit(r.tope)) {
+        if (Math.abs(slope) < 0.3 && hit(DEBUG.noTopes ? 0 : r.tope)) {
           const mid = (x + nx) / 2;
           const a = Math.atan(slope);
           const radius = 12 + 8 * diffT;

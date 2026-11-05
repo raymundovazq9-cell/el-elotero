@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 110" width="200" height="110">
+  <!-- centro del chasis físico: (100, 70). Canasta sobre la rueda delantera (x 105..175). -->
+  <!-- cuadro -->
+  <path d="M50 100 L62 44 L128 52 L162 100" stroke="#e4007c" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M50 100 L86 86 L62 44" stroke="#e4007c" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M86 86 L128 52" stroke="#e4007c" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <!-- pedales -->
+  <circle cx="86" cy="86" r="7" fill="#2b2b2b" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- asiento -->
+  <path d="M50 42 L72 42 L68 36 L54 36 Z" fill="#2b2b2b" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+  <line x1="62" y1="42" x2="62" y2="48" stroke="#2b2b2b" stroke-width="4"/>
+  <!-- manubrio -->
+  <path d="M128 52 L124 38" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M124 38 L110 34" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <path d="M110 34 L104 32" stroke="#c0392b" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <!-- soporte de la canasta -->
+  <path d="M140 62 L140 78 L162 100" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round" fill="none"/>
+  <!-- panel trasero de la canasta -->
+  <rect x="109" y="38" width="62" height="24" fill="#d8b36a" stroke="#1a1a1a" stroke-width="2"/>
+  <g stroke="#b58d45" stroke-width="2">
+    <line x1="109" y1="46" x2="171" y2="46"/><line x1="109" y1="54" x2="171" y2="54"/>
+    <line x1="121" y1="38" x2="121" y2="62"/><line x1="133" y1="38" x2="133" y2="62"/><line x1="145" y1="38" x2="145" y2="62"/><line x1="157" y1="38" x2="157" y2="62"/>
+  </g>
+  <!-- paredes de la canasta -->
+  <rect x="105" y="34" width="9" height="30" rx="2" fill="#b58d45" stroke="#1a1a1a" stroke-width="3"/>
+  <rect x="166" y="34" width="9" height="30" rx="2" fill="#b58d45" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- base de la canasta -->
+  <rect x="105" y="62" width="70" height="16" rx="4" fill="#c9a054" stroke="#1a1a1a" stroke-width="3"/>
+  <line x1="105" y1="70" x2="175" y2="70" stroke="#a37b35" stroke-width="2"/>
+  <!-- letrero colgante -->
+  <rect x="112" y="80" width="56" height="16" rx="4" fill="#fff4d6" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="140" y="92" font-family="Arial, Helvetica, sans-serif" font-size="12" font-weight="bold" fill="#e4007c" text-anchor="middle">ELOTES</text>
+  <!-- olla al frente -->
+  <rect x="152" y="12" width="26" height="22" rx="5" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="3"/>
+  <ellipse cx="165" cy="12" rx="14" ry="4" fill="#c7d0da" stroke="#1a1a1a" stroke-width="2.5"/>
+  <circle cx="165" cy="8" r="3" fill="#2b2b2b"/>
+</svg>

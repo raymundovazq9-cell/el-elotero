@@ -1,9 +1,21 @@
-import { ELOTES, CART } from '../config.js';
+import { ELOTES } from '../config.js';
 import { DEBUG } from '../debug.js';
 
 const COLOR_ELOTE = 0xf5d547;
 const COLOR_ELOTE_LINE = 0xb08a00;
 const COLOR_PICKUP = 0xfff3b0;
+
+/** Posición local (en el marco del carrito) del elote número i para una caja dada. */
+export function slotLocalFor(spec, i) {
+  const inner = (spec.boxWidth || spec.bodyWidth) - spec.wallThickness * 2 - 4;
+  const perRow = Math.max(1, Math.floor(inner / (ELOTES.width + 3)));
+  const row = Math.floor(i / perRow);
+  const col = i % perRow;
+  const spacing = ELOTES.width + 3;
+  const x = (spec.boxX || 0) + (col - (perRow - 1) / 2) * spacing + (row % 2 ? 6 : 0);
+  const y = -(spec.bodyHeight / 2 + ELOTES.height / 2 + 1) - row * (ELOTES.height + 1);
+  return { x, y };
+}
 
 /** Devuelve la etiqueta útil de un cuerpo (o de su compuesto padre). */
 export function labelOf(body) {
@@ -38,15 +50,8 @@ export default class EloteManager {
     return this.elotes.length;
   }
 
-  /** Posición local (en el marco del carrito) para el elote número i. */
   slotLocal(i) {
-    const perRow = 3;
-    const row = Math.floor(i / perRow);
-    const col = i % perRow;
-    const spacing = ELOTES.width + 3;
-    const x = (col - (perRow - 1) / 2) * spacing + (row % 2 ? 6 : 0);
-    const y = -(CART.bodyHeight / 2 + ELOTES.height / 2 + 1) - row * (ELOTES.height + 1);
-    return { x, y };
+    return slotLocalFor(this.cart.spec, i);
   }
 
   /** Cuerpo de un elote suelto: rectángulo con esquinas redondeadas que rueda y se tumba. */
@@ -55,7 +60,7 @@ export default class EloteManager {
       chamfer: { radius: 5 },
       density: ELOTES.density,
       friction: ELOTES.friction,
-      frictionAir: 0.012,
+      frictionAir: 0.02,
       restitution: ELOTES.restitution,
       label: 'elote',
       render: { fillColor: COLOR_ELOTE, lineColor: COLOR_ELOTE_LINE },
@@ -143,7 +148,8 @@ export default class EloteManager {
   /** Mete un elote suelto nuevo al carrito (vida extra). Devuelve false si está lleno. */
   addToCart() {
     if (this.count >= this.maxCount) return false;
-    const local = { x: 0, y: -(CART.bodyHeight / 2 + CART.wallHeight + ELOTES.height + 6) };
+    const spec = this.cart.spec;
+    const local = { x: spec.boxX || 0, y: -(spec.bodyHeight / 2 + spec.wallHeight + ELOTES.height + 6) };
     const p = this.toWorld(local);
     const body = this.makeEloteBody(p.x, p.y);
     this.elotes.push(body);

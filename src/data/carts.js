@@ -1,0 +1,167 @@
+// Modelos de carrito. `fisica` se mezcla sobre CART de config.js; `vista` dice
+// cómo dibujarlo: imagen del cuerpo, punto de la imagen que coincide con el
+// centro del chasis físico, posición de la olla y modo/posición del elotero.
+//   boxX / boxWidth: dónde van las paredes y los elotes respecto al centro del chasis.
+//   elotero.modo: 'empujando' (corre detrás) | 'montado' (pedalea sentado) | 'manejando' (va en la cabina)
+
+export const CARTS = [
+  {
+    id: 'carrito',
+    nombre: 'Carrito',
+    descripcion: 'El clásico de madera. Lo empujas con tus piernas.',
+    precio: 0,
+    fisica: {
+      bodyWidth: 110,
+      bodyHeight: 26,
+      wallHeight: 32,
+      boxX: 0,
+      boxWidth: 110,
+      density: 0.004,
+      wheels: [
+        { x: -44, y: 26, r: 17 },
+        { x: 44, y: 26, r: 17 },
+      ],
+      wheelSpeedMax: 0.62,
+      wheelAccel: 0.06,
+      wheelFriction: 1.3,
+      suspensionStiffness: 0.35,
+      suspensionDamping: 0.12,
+      maxSpeedX: 16,
+      airTilt: 0.04,
+    },
+    vista: {
+      cuerpo: 'carrito',
+      origen: { x: 80, y: 67 },
+      olla: { x: 62, y: -55 },
+      elotero: { modo: 'empujando', x: -98, y: 2 },
+    },
+  },
+  {
+    id: 'triciclo',
+    nombre: 'Triciclo',
+    descripcion: 'Tres ruedas y caja al frente. Pesado pero no se voltea fácil.',
+    precio: 600,
+    fisica: {
+      bodyWidth: 150,
+      bodyHeight: 26,
+      wallHeight: 34,
+      boxX: 22,
+      boxWidth: 100,
+      density: 0.0045,
+      wheels: [
+        { x: -66, y: 28, r: 16 },
+        { x: 48, y: 28, r: 16 },
+      ],
+      wheelSpeedMax: 0.6,
+      wheelAccel: 0.055,
+      wheelFriction: 1.35,
+      suspensionStiffness: 0.4,
+      suspensionDamping: 0.14,
+      maxSpeedX: 15,
+      airTilt: 0.034,
+    },
+    vista: {
+      cuerpo: 'triciclo',
+      origen: { x: 104, y: 70 },
+      olla: { x: 60, y: -52 },
+      elotero: { modo: 'montado', x: -50, y: -22 },
+    },
+  },
+  {
+    id: 'bici',
+    nombre: 'Bici-carro',
+    descripcion: 'Bicicleta con canasta. Rápida y ligera, pero se encabrita.',
+    precio: 1200,
+    fisica: {
+      bodyWidth: 130,
+      bodyHeight: 16,
+      wallHeight: 36,
+      boxX: 40,
+      boxWidth: 70,
+      density: 0.003,
+      wheels: [
+        { x: -50, y: 30, r: 19 },
+        { x: 62, y: 30, r: 19 },
+      ],
+      wheelSpeedMax: 0.74,
+      wheelAccel: 0.06,
+      wheelFriction: 1.25,
+      suspensionStiffness: 0.45,
+      suspensionDamping: 0.1,
+      maxSpeedX: 18,
+      airTilt: 0.05,
+    },
+    vista: {
+      cuerpo: 'bici-carro',
+      origen: { x: 100, y: 70 },
+      olla: { x: 65, y: -52 },
+      elotero: { modo: 'montado', x: -38, y: -30 },
+    },
+  },
+  {
+    id: 'motocarro',
+    nombre: 'Motocarro',
+    descripcion: 'Con motor: ya no dependes de tus piernas. Sube casi todo.',
+    precio: 3000,
+    fisica: {
+      bodyWidth: 170,
+      bodyHeight: 26,
+      wallHeight: 36,
+      boxX: -45,
+      boxWidth: 90,
+      density: 0.005,
+      wheels: [
+        { x: -42, y: 30, r: 18 },
+        { x: 70, y: 30, r: 18 },
+      ],
+      wheelSpeedMax: 0.82,
+      wheelAccel: 0.07,
+      wheelFriction: 1.35,
+      suspensionStiffness: 0.42,
+      suspensionDamping: 0.15,
+      maxSpeedX: 19,
+      airTilt: 0.035,
+    },
+    vista: {
+      cuerpo: 'motocarro',
+      origen: { x: 115, y: 70 },
+      olla: { x: -10, y: -56 },
+      elotero: { modo: 'manejando', x: 32, y: -22 },
+    },
+  },
+  {
+    id: 'camioneta',
+    nombre: 'Camioneta',
+    descripcion: 'La troca elotera. Pesada, rápida y aguanta todo.',
+    precio: 7000,
+    fisica: {
+      bodyWidth: 210,
+      bodyHeight: 30,
+      wallHeight: 38,
+      boxX: -52,
+      boxWidth: 100,
+      density: 0.006,
+      wheels: [
+        { x: -62, y: 34, r: 22 },
+        { x: 62, y: 34, r: 22 },
+      ],
+      wheelSpeedMax: 0.9,
+      wheelAccel: 0.08,
+      wheelFriction: 1.4,
+      suspensionStiffness: 0.5,
+      suspensionDamping: 0.18,
+      maxSpeedX: 21,
+      airTilt: 0.03,
+    },
+    vista: {
+      cuerpo: 'camioneta',
+      origen: { x: 130, y: 80 },
+      olla: { x: 59, y: -74 },
+      elotero: { modo: 'manejando', x: 58, y: -10 },
+    },
+  },
+];
+
+export function cartById(id) {
+  return CARTS.find((c) => c.id === id) || CARTS[0];
+}

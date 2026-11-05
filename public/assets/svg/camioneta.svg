@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 130" width="260" height="130">
+  <!-- centro del chasis físico: (130, 80). Caja atrás (x 28..128), cabina adelante. -->
+  <!-- carrocería -->
+  <path d="M20 96 L20 66 L36 62 L146 62 L158 32 L212 32 L232 62 L246 66 L246 96 Z" fill="#f2762e" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+  <!-- ventana (hueco: se ve el elotero detrás) -->
+  <path d="M164 38 L208 38 L224 60 L164 60 Z" fill="#bfe3ff" fill-opacity="0.35" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+  <!-- puerta -->
+  <line x1="170" y1="66" x2="170" y2="94" stroke="#b5521a" stroke-width="2.5"/>
+  <rect x="176" y="72" width="14" height="5" rx="2" fill="#1a1a1a"/>
+  <!-- franja -->
+  <rect x="20" y="78" width="226" height="7" fill="#fff4d6" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- panel trasero de la caja (se ve detrás de los elotes) -->
+  <rect x="32" y="40" width="92" height="22" fill="#c9661e" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="32" y1="51" x2="124" y2="51" stroke="#b5521a" stroke-width="2"/>
+  <!-- paredes de la caja -->
+  <rect x="28" y="36" width="9" height="32" rx="2" fill="#d96a24" stroke="#1a1a1a" stroke-width="3"/>
+  <rect x="119" y="36" width="9" height="32" rx="2" fill="#d96a24" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- letrero en la puerta de la caja -->
+  <rect x="48" y="84" width="64" height="10" rx="3" fill="#fff4d6" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="80" y="92" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="bold" fill="#c0392b" text-anchor="middle">ELOTES</text>
+  <!-- olla sobre la cabina -->
+  <rect x="176" y="8" width="26" height="22" rx="5" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="3"/>
+  <ellipse cx="189" cy="8" rx="14" ry="4" fill="#c7d0da" stroke="#1a1a1a" stroke-width="2.5"/>
+  <circle cx="189" cy="4" r="3" fill="#2b2b2b"/>
+  <!-- bocina -->
+  <path d="M160 30 L170 20 L182 30" fill="none" stroke="#9aa5b1" stroke-width="4" stroke-linecap="round"/>
+  <!-- faro y calavera -->
+  <rect x="236" y="68" width="10" height="10" rx="2" fill="#fff1a8" stroke="#1a1a1a" stroke-width="2"/>
+  <rect x="20" y="68" width="8" height="10" rx="2" fill="#d64545" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- defensas -->
+  <rect x="14" y="92" width="22" height="8" rx="3" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="2"/>
+  <rect x="230" y="92" width="24" height="8" rx="3" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- salpicaderas -->
+  <path d="M42 96 Q68 68 94 96" fill="#f2762e" stroke="#1a1a1a" stroke-width="3"/>
+  <path d="M166 96 Q192 68 218 96" fill="#f2762e" stroke="#1a1a1a" stroke-width="3"/>
+  <rect x="20" y="96" width="226" height="6" fill="#2b2b2b"/>
+</svg>
