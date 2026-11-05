@@ -6,6 +6,9 @@ import UIScene from './scenes/UIScene.js';
 import GameOverScene from './scenes/GameOverScene.js';
 import TitleScene from './scenes/TitleScene.js';
 import { DEBUG } from './debug.js';
+import '@fontsource/fredoka/400.css';
+import '@fontsource/fredoka/600.css';
+import '@fontsource/fredoka/700.css';
 
 const config = {
   type: Phaser.AUTO,
@@ -21,7 +24,7 @@ const config = {
     default: 'matter',
     matter: {
       gravity: { y: PHYSICS.gravityY },
-      debug: {
+      debug: DEBUG.physics && {
         showBody: true,
         showStaticBody: true,
         showInternalEdges: false,

@@ -3,6 +3,8 @@ const params = new URLSearchParams(window.location.search);
 
 export const DEBUG = {
   test: params.has('test'),
+  // dibuja los cuerpos de Matter encima del arte (?debug=1); ?nodebug=1 lo apaga
+  physics: params.has('debug') || !params.has('nodebug'),
   // número inicial de elotes para pruebas (?elotes=1)
   startElotes: params.has('elotes') ? Number(params.get('elotes')) : null,
   // fuerza game over a los N ms de juego (?gameover=5000)
