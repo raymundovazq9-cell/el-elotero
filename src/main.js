@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, PHYSICS } from './config.js';
 import BootScene from './scenes/BootScene.js';
 import GameScene from './scenes/GameScene.js';
+import UIScene from './scenes/UIScene.js';
+import { DEBUG } from './debug.js';
 
 const config = {
   type: Phaser.AUTO,
@@ -45,7 +47,11 @@ const config = {
   input: {
     activePointers: 2,
   },
-  scene: [BootScene, GameScene],
+  fps: {
+    target: 60,
+    forceSetTimeOut: DEBUG.test,
+  },
+  scene: [BootScene, GameScene, UIScene],
 };
 
 new Phaser.Game(config);

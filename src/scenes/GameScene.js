@@ -1,7 +1,8 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, PX_PER_METER } from '../config.js';
 import Road from '../objects/Road.js';
 import Cart from '../objects/Cart.js';
+import { DEBUG, isBrakeScripted } from '../debug.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -14,12 +15,54 @@ export default class GameScene extends Phaser.Scene {
     this.road = new Road(this);
     this.road.buildStraight(-400, 300, 6000, 22);
 
-    this.cart = new Cart(this, 120, 440);
+    this.startX = 120;
+    this.cart = new Cart(this, this.startX, 440);
+    this.elotes = 6;
+    this.bonus = 0;
 
-    this.cameras.main.setZoom(1);
+    this.braking = false;
+    this.input.on('pointerdown', () => this.setBraking(true));
+    this.input.on('pointerup', () => this.setBraking(this.input.activePointer.isDown));
+    this.input.on('pointerupoutside', () => this.setBraking(false));
+    this.game.events.on('blur', () => this.setBraking(false));
+
+    this.scene.launch('UI');
+
+    const cam = this.cameras.main;
+    cam.scrollX = this.cart.x - GAME_WIDTH * 0.3;
+    cam.scrollY = this.cart.y - GAME_HEIGHT * 0.35;
+  }
+
+  setBraking(v) {
+    this.braking = v;
+    this.cart.setBraking(v);
+  }
+
+  get meters() {
+    return Math.max(0, Math.floor((this.cart.x - this.startX) / PX_PER_METER));
+  }
+
+  getStats() {
+    return {
+      meters: this.meters,
+      elotes: this.elotes,
+      score: this.meters * this.elotes + this.bonus,
+      braking: this.braking,
+    };
   }
 
   update(time, delta) {
+    if (DEBUG.test) {
+      this.testClock = (this.testClock || 0) + delta;
+      this.setBraking(isBrakeScripted(this.testClock));
+      if (!this.nextLog || this.testClock >= this.nextLog) {
+        this.nextLog = (this.nextLog || 0) + 1000;
+        const c = this.cart;
+        console.log(
+          `[test] t=${Math.round(this.testClock)} x=${c.x.toFixed(0)} y=${c.y.toFixed(0)} vx=${c.speedX.toFixed(2)} ang=${c.angleDeg.toFixed(1)} brake=${this.braking} stats=${JSON.stringify(this.getStats())}`
+        );
+      }
+    }
     this.cart.update(delta);
 
     const cam = this.cameras.main;
