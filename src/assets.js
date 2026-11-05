@@ -9,6 +9,9 @@ export const SVG_ASSETS = [
   { key: 'rueda', url: 'assets/svg/rueda.svg', scale: SVG_SCALE },
   { key: 'elotero-torso', url: 'assets/svg/elotero-torso.svg', scale: SVG_SCALE },
   { key: 'elotero-pierna', url: 'assets/svg/elotero-pierna.svg', scale: SVG_SCALE },
+  { key: 'tope', url: 'assets/svg/tope.svg', scale: SVG_SCALE },
+  { key: 'perro', url: 'assets/svg/perro.svg', scale: SVG_SCALE },
+  { key: 'coche', url: 'assets/svg/coche.svg', scale: SVG_SCALE },
 ];
 
 export const IMAGE_ASSETS = [];

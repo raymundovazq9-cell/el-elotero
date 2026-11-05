@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 40" width="56" height="40">
+  <!-- cola -->
+  <path d="M8 18 Q0 10 6 4" stroke="#1a1a1a" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M8 18 Q0 10 6 4" stroke="#8b5a2b" stroke-width="3" stroke-linecap="round" fill="none"/>
+  <!-- patas -->
+  <rect x="12" y="24" width="7" height="14" rx="3" fill="#8b5a2b" stroke="#1a1a1a" stroke-width="2.5"/>
+  <rect x="34" y="24" width="7" height="14" rx="3" fill="#8b5a2b" stroke="#1a1a1a" stroke-width="2.5"/>
+  <!-- cuerpo -->
+  <rect x="8" y="12" width="36" height="18" rx="9" fill="#a0522d" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- cabeza -->
+  <circle cx="44" cy="14" r="10" fill="#a0522d" stroke="#1a1a1a" stroke-width="3"/>
+  <ellipse cx="52" cy="17" rx="5" ry="4" fill="#8b5a2b" stroke="#1a1a1a" stroke-width="2.5"/>
+  <circle cx="54" cy="16" r="2" fill="#1a1a1a"/>
+  <circle cx="46" cy="11" r="2" fill="#1a1a1a"/>
+  <path d="M38 6 L42 14 L34 14 Z" fill="#6b3e1e" stroke="#1a1a1a" stroke-width="2" stroke-linejoin="round"/>
+</svg>

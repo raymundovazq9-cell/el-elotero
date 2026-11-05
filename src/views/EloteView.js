@@ -5,9 +5,29 @@ export default class EloteView {
     this.scene = scene;
     this.elotes = elotes;
     this.images = new Map(); // body.id -> Image
+    this.pickupImages = new Map();
+  }
+
+  syncPickups() {
+    const alive = new Set();
+    for (const body of this.elotes.pickups) {
+      alive.add(body.id);
+      if (!this.pickupImages.has(body.id)) {
+        const img = svgImage(this.scene, body.position.x, body.position.y, 'elote').setDepth(-3).setScale(0.55);
+        this.scene.tweens.add({ targets: img, scale: 0.65, y: img.y - 6, duration: 500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+        this.pickupImages.set(body.id, img);
+      }
+    }
+    for (const [id, img] of this.pickupImages) {
+      if (!alive.has(id)) {
+        img.destroy();
+        this.pickupImages.delete(id);
+      }
+    }
   }
 
   sync() {
+    this.syncPickups();
     const alive = new Set();
     for (const body of this.elotes.elotes) {
       alive.add(body.id);
@@ -29,5 +49,7 @@ export default class EloteView {
   destroy() {
     this.images.forEach((img) => img.destroy());
     this.images.clear();
+    this.pickupImages.forEach((img) => img.destroy());
+    this.pickupImages.clear();
   }
 }

@@ -8,6 +8,7 @@ import { difficultyAt } from '../objects/Difficulty.js';
 import { DEBUG, isBrakeScripted, isGasScripted } from '../debug.js';
 import { Sfx, vibrate, unlockAudio } from '../audio.js';
 import CartView from '../views/CartView.js';
+import RoadView from '../views/RoadView.js';
 import EloteView from '../views/EloteView.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -22,7 +23,8 @@ export default class GameScene extends Phaser.Scene {
     this.road = new Road(
       this,
       (x) => Math.max(0, (x - this.startX) / PX_PER_METER),
-      DEBUG.test ? 'elotero' : undefined
+      DEBUG.test ? 'elotero' : undefined,
+      new RoadView(this)
     );
     this.road.buildStraight(-400, 300, 900, 20);
 

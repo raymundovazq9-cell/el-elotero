@@ -18,8 +18,9 @@ export default class Road {
    * @param {(x:number)=>number} metersAt convierte X del mundo a metros recorridos
    * @param {string} [seed] semilla fija para pruebas reproducibles
    */
-  constructor(scene, metersAt, seed) {
+  constructor(scene, metersAt, seed, drawer = null) {
     this.scene = scene;
+    this.drawer = drawer;
     this.metersAt = metersAt || (() => 0);
     this.rnd = new Phaser.Math.RandomDataGenerator(seed ? [seed] : undefined);
     this.chunks = []; // { bodies, gfx, startX, endX, points, spots }
@@ -35,6 +36,7 @@ export default class Road {
   generateChunk() {
     const pts = [{ ...this.lastPoint }];
     const topes = [];
+    const features = []; // { type, points } para dibujar baches/escalones/rampas
     const spots = []; // posiciones libres (sin rasgos) para colocar cosas encima
     let { x, y } = this.lastPoint;
     const targetX = x + ROAD.chunkLength;
@@ -61,7 +63,7 @@ export default class Road {
       // tope a la mitad del segmento recién puesto
       if (canFeature && this.rnd.frac() < diff.topeChance) {
         const mid = { x: (start.x + x) / 2, y: (start.y + y) / 2 };
-        topes.push({ x: mid.x + n.x * 2, y: mid.y + n.y * 2, r: diff.topeRadius });
+        topes.push({ x: mid.x + n.x * 2, y: mid.y + n.y * 2, r: diff.topeRadius, angle: rad });
         this.lastFeatureX = x;
         continue;
       }
@@ -70,20 +72,26 @@ export default class Road {
       if (canFeature) {
         const roll = this.rnd.frac();
         if (roll < diff.bacheChance) {
+          const from = pts.length - 1;
           const p = this.addBache(pts, { x, y }, d, n, diff);
+          features.push({ type: 'bache', points: pts.slice(from, from + 4) });
           x = p.x;
           y = p.y;
           this.lastFeatureX = x;
           continue;
         }
         if (roll < diff.bacheChance + diff.escalonChance) {
+          const from = pts.length - 1;
           y += diff.escalonDrop;
           pts.push({ x, y });
+          features.push({ type: 'escalon', points: pts.slice(from, from + 2) });
           this.lastFeatureX = x;
           continue;
         }
         if (roll < diff.bacheChance + diff.escalonChance + diff.rampaChance) {
+          const from = pts.length - 1;
           const p = this.addRampa(pts, { x, y }, d, n, rad, diff);
+          features.push({ type: 'rampa', points: pts.slice(from, from + 3) });
           x = p.x;
           y = p.y;
           this.lastFeatureX = x + 120; // espacio extra para aterrizar
@@ -95,7 +103,7 @@ export default class Road {
       spots.push({ x: (start.x + x) / 2, y: (start.y + y) / 2, angle: rad, len, d, n });
     }
 
-    const chunk = this.buildChunk(pts);
+    const chunk = this.buildChunk(pts, { features, topes });
     chunk.spots = spots;
     for (const t of topes) {
       chunk.bodies.push(
@@ -149,13 +157,31 @@ export default class Road {
   // ---------- construcción ----------
 
   /** Crea un tramo a partir de una lista de puntos consecutivos. */
-  buildChunk(points) {
+  buildChunk(points, extra = {}) {
     const bodies = [];
     for (let i = 0; i < points.length - 1; i++) {
       const body = this.segmentBody(points[i], points[i + 1]);
       if (body) bodies.push(body);
     }
+    const last = points[points.length - 1];
+    const chunk = {
+      bodies,
+      gfx: null,
+      startX: points[0].x,
+      endX: last.x,
+      points,
+      spots: [],
+      features: extra.features || [],
+      topes: extra.topes || [],
+    };
+    chunk.gfx = this.drawer ? this.drawer.draw(chunk) : this.defaultDraw(points);
+    this.chunks.push(chunk);
+    this.lastPoint = last;
+    return chunk;
+  }
 
+  /** Dibujo básico (relleno gris) cuando no hay RoadView. */
+  defaultDraw(points) {
     const gfx = this.scene.add.graphics();
     gfx.setDepth(-10);
     const last = points[points.length - 1];
@@ -174,11 +200,7 @@ export default class Road {
     gfx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) gfx.lineTo(points[i].x, points[i].y);
     gfx.strokePath();
-
-    const chunk = { bodies, gfx, startX: points[0].x, endX: last.x, points, spots: [] };
-    this.chunks.push(chunk);
-    this.lastPoint = last;
-    return chunk;
+    return gfx;
   }
 
   segmentBody(a, b) {
@@ -233,6 +255,7 @@ export default class Road {
   destroyChunk(chunk) {
     chunk.bodies.forEach((b) => this.scene.matter.world.remove(b));
     chunk.gfx.destroy();
+    (chunk.extras || []).forEach((e) => e.destroy());
     this.scene.events.emit('chunk-destroyed', chunk);
   }
 

@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { labelOf } from './EloteManager.js';
+import { svgImage } from '../assets.js';
 
 const COLOR_PERRO = 0x8b5a2b;
 const COLOR_COCHE = 0x3a6fd8;
@@ -86,6 +87,9 @@ export default class Obstacles {
       render: { fillColor: COLOR_COCHE, lineColor: 0x1d3f8a },
     });
     chunk.bodies.push(body);
+    const img = svgImage(this.scene, s.x, s.y, 'coche').setOrigin(0.5, 0.93).setRotation(s.angle).setDepth(-4);
+    chunk.extras = chunk.extras || [];
+    chunk.extras.push(img);
   }
 
   activatePerro(p) {
@@ -100,8 +104,10 @@ export default class Obstacles {
       label: 'perro',
       render: { fillColor: COLOR_PERRO, lineColor: 0x4a2e12 },
     });
+    p.img = svgImage(this.scene, x, y, 'perro').setOrigin(0.5, 0.75).setRotation(p.angle).setDepth(-3);
+    p.tween = this.scene.tweens.add({ targets: p.img, y: y - 5, duration: 110, yoyo: true, repeat: -1 });
     p.label = this.scene.add
-      .text(x, y - 40, '!', { fontFamily: 'Arial', fontSize: '36px', color: '#ff3b3b', stroke: '#000', strokeThickness: 4 })
+      .text(x, y - 52, '!', { fontFamily: 'Fredoka, Arial', fontSize: '40px', color: '#ff3b3b', stroke: '#000', strokeThickness: 5 })
       .setOrigin(0.5);
     p.state = 'active';
     p.timer = PERRO.lifetimeMs;
@@ -111,8 +117,11 @@ export default class Obstacles {
   removePerro(p) {
     if (p.body) this.scene.matter.world.remove(p.body);
     if (p.label) p.label.destroy();
+    if (p.tween) p.tween.stop();
+    if (p.img) p.img.destroy();
     p.body = null;
     p.label = null;
+    p.img = null;
     p.state = 'done';
   }
 
