@@ -25,7 +25,7 @@ export const ROAD = {
 export const CART = {
   bodyWidth: 110,
   bodyHeight: 26,
-  wallHeight: 20,
+  wallHeight: 24,
   wallThickness: 8,
   wheelRadius: 17,
   wheelOffsetX: 44,
