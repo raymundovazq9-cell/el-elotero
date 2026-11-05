@@ -46,6 +46,11 @@ export default class UIScene extends Phaser.Scene {
     ev.on('elote-picked', (pos) => this.showPickup(pos));
     ev.on('elote-added', () => this.showFloat('¡Elote al carrito!', COLORS.amarilloHex));
     ev.on('perro-hit', () => this.showFloat('¡Guau! ¡Perro!', '#ff9f43'));
+    ev.on('dona-hit', () => this.showFloat('¡Ay, la doña!', '#ff9f43'));
+    ev.on('cable-hit', () => this.showFloat('¡Los cables de la CFE!', '#9be7ff'));
+    ev.on('chile', () => this.showFloat('¡Chile! ¡Pícale!', '#ff6b6b'));
+    ev.on('bolsa', (n) => this.showFloat(n > 0 ? `¡Bolsa de elotes! +${n}` : 'Carrito lleno', COLORS.amarilloHex));
+    ev.on('camioneta-saltada', () => this.showFloat('¡Saltaste la camioneta!', '#9bffb0'));
     ev.on('landed', (gained) => this.showFloat(`¡Buen salto! +${gained}`, '#9be7ff'));
     ev.on('marometa', (flips, bonus) => this.showFloat(flips > 1 ? `¡${flips} MAROMETAS! +${bonus}` : `¡MAROMETA! +${bonus}`, '#ff6bd6'));
     ev.on('checkpoint', (m, bonus) => this.showFloat(`¡${m} m! +${bonus}`, COLORS.amarilloHex));

@@ -14,10 +14,6 @@ export function difficultyAt(meters) {
     // probabilidad por segmento de calle
     topeChance: 0.22 + 0.33 * t,
     bacheChance: 0.1 + 0.22 * t,
-    escalonChance: meters > 80 ? 0.05 + 0.14 * t : 0,
-    rampaChance: meters > 150 ? 0.06 + 0.12 * t : 0,
-    perroChance: meters > 120 ? 0.05 + 0.12 * t : 0,
-    cocheChance: meters > 250 ? 0.05 + 0.1 * t : 0,
     eloteChance: 0.07 + 0.05 * t,
     // tamaños
     topeRadius: 12 + 9 * t,

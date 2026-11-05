@@ -109,6 +109,31 @@ export const Sfx = {
   clac() {
     noise({ dur: 0.025, vol: 0.035 });
   },
+  /** "¡Ay!" de la doña. */
+  ay() {
+    tone({ freq: 900, to: 400, dur: 0.22, type: 'triangle', vol: 0.1 });
+  },
+  /** "¡Órale!" del cholo: dos notas bajas. */
+  orale() {
+    tone({ freq: 220, to: 180, dur: 0.12, type: 'sawtooth', vol: 0.1 });
+    tone({ freq: 260, to: 150, dur: 0.2, type: 'sawtooth', vol: 0.1, delay: 0.13 });
+  },
+  /** Chispas del cable de la CFE. */
+  chispas() {
+    noise({ dur: 0.05, vol: 0.12 });
+    noise({ dur: 0.06, vol: 0.1, delay: 0.07 });
+    tone({ freq: 2400, to: 1200, dur: 0.12, type: 'square', vol: 0.05, delay: 0.02 });
+  },
+  /** Bocina de la camioneta del gas. */
+  bocina() {
+    tone({ freq: 392, dur: 0.18, type: 'square', vol: 0.09 });
+    tone({ freq: 523, dur: 0.28, type: 'square', vol: 0.09, delay: 0.2 });
+  },
+  /** Chile: silbido que sube. */
+  chile() {
+    tone({ freq: 300, to: 1600, dur: 0.3, type: 'sawtooth', vol: 0.08 });
+    noise({ dur: 0.2, vol: 0.05, delay: 0.1 });
+  },
   inicio() {
     tone({ freq: 523, dur: 0.08, type: 'square', vol: 0.08 });
     tone({ freq: 659, dur: 0.08, type: 'square', vol: 0.08, delay: 0.08 });

@@ -8,7 +8,7 @@ import Cart from '../objects/Cart.js';
 import Stall from '../objects/Stall.js';
 import Tricks from '../objects/Tricks.js';
 import EloteManager from '../objects/EloteManager.js';
-import Obstacles from '../objects/Obstacles.js';
+import Actors from '../objects/Actors.js';
 import { difficultyAt } from '../objects/Difficulty.js';
 import { DEBUG, isBrakeScripted, isGasScripted } from '../debug.js';
 import { Sfx, vibrate, unlockAudio } from '../audio.js';
@@ -54,7 +54,7 @@ export default class GameScene extends Phaser.Scene {
       max: this.upgraded.maxElotes,
       shakeFactor: this.upgraded.shakeFactor,
     });
-    this.obstacles = new Obstacles(this, this.cart, this.road, this.elotes);
+    this.obstacles = new Actors(this, this.cart, this.road, this.elotes, this.level);
     this.cartView = new CartView(this, this.cart, this.cartData.vista);
     this.eloteView = new EloteView(this, this.elotes);
     this.particles = new Particles(this, this.cart);
@@ -100,6 +100,24 @@ export default class GameScene extends Phaser.Scene {
       Sfx.perro();
       vibrate([60, 40, 80]);
     });
+    this.events.on('dona-hit', () => {
+      Sfx.ay();
+      vibrate([60, 40, 80]);
+    });
+    this.events.on('robo', () => {
+      Sfx.orale();
+      vibrate([30, 30, 30, 30, 60]);
+    });
+    this.events.on('cable-hit', () => {
+      Sfx.chispas();
+      vibrate(80);
+    });
+    this.events.on('camioneta-appear', () => Sfx.bocina());
+    this.events.on('chile', () => {
+      this.cart.boostUntil = this.time.now + 2000;
+      Sfx.chile();
+    });
+    this.events.on('bolsa', () => Sfx.eloteRecogido());
     this.events.on('stall', () => this.gameOver('cansado'));
     this.events.on('gameover', () => {
       Music.stop();
@@ -194,6 +212,8 @@ export default class GameScene extends Phaser.Scene {
       total: this.earnedTotal,
       flips: this.flips,
       sales: this.sales,
+      robos: this.obstacles.robos,
+      saltos: this.obstacles.saltos,
       braking: this.braking,
       gas: this.pedals.gas,
       airborne: this.tricks.airborne,
@@ -276,7 +296,7 @@ export default class GameScene extends Phaser.Scene {
     }
     this.cartView.sync(delta);
     this.eloteView.sync();
-    this.particles.update();
+    this.particles.update(this.cartView.local(this.cartData.vista.olla.x, this.cartData.vista.olla.y), this.cart.boost > 1);
     this.cart.endStep();
 
     if (!this.over) {

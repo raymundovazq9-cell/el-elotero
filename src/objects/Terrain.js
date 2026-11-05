@@ -149,7 +149,7 @@ export default class Terrain {
         };
         const diffT = Phaser.Math.Clamp(meters / MAX_METERS, 0, 1);
 
-        if (Math.abs(slope) < 0.3 && hit(DEBUG.noTopes ? 0 : r.tope)) {
+        if (slope > -0.12 && slope < 0.3 && hit(DEBUG.noTopes ? 0 : r.tope)) {
           const mid = (x + nx) / 2;
           const a = Math.atan(slope);
           const radius = 12 + 8 * diffT;
@@ -161,8 +161,8 @@ export default class Terrain {
           continue;
         }
         if (Math.abs(slope) < 0.35 && hit(r.bache)) {
-          const depth = 16 + 10 * diffT;
-          const w = 70 + 40 * diffT;
+          const depth = 12 + 6 * diffT; // menor que la altura libre de cualquier carrito
+          const w = 60 + 30 * diffT;
           const from = pts.length - 1;
           pts.push({ x: x + depth, y: this.profile(x + depth) + depth });
           pts.push({ x: x + w - depth, y: this.profile(x + w - depth) + depth });

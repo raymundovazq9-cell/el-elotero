@@ -6,6 +6,19 @@ export default class Particles {
     this.makeTexture('polvo', 0xcfc5ad, 7);
     this.makeTexture('chispa', 0xf7c948, 4);
     this.makeTexture('eloteBit', 0xf5d547, 4);
+    this.makeTexture('flama', 0xff7a1a, 6);
+
+    this.flames = scene.add.particles(0, 0, 'flama', {
+      speedY: { min: -120, max: -200 },
+      speedX: { min: -25, max: 25 },
+      scale: { start: 1.2, end: 0 },
+      alpha: { start: 0.9, end: 0 },
+      lifespan: 380,
+      frequency: 18,
+      quantity: 1,
+      emitting: false,
+    });
+    this.flames.setDepth(0.7);
 
     this.dust = scene.add.particles(0, 0, 'polvo', {
       speedX: { min: -60, max: -20 },
@@ -41,6 +54,13 @@ export default class Particles {
     scene.events.on('bump', this.onBump, this);
     scene.events.on('elote-lost', this.onEloteLost, this);
     scene.events.on('perro-hit', this.onPerro, this);
+    scene.events.on('dona-hit', this.onPerro, this);
+    scene.events.on('cable-hit', this.onCable, this);
+  }
+
+  onCable(pos) {
+    if (pos) this.sparks.emitParticleAt(pos.x, pos.y, 16);
+    this.scene.cameras.main.shake(180, 0.008);
   }
 
   makeTexture(key, color, r) {
@@ -66,7 +86,10 @@ export default class Particles {
     this.scene.cameras.main.shake(220, 0.012);
   }
 
-  update() {
+  update(pot = null, boosting = false) {
+    if (pot) this.flames.setPosition(pot.x, pot.y - 6);
+    if (boosting && !this.flames.emitting) this.flames.start();
+    if (!boosting && this.flames.emitting) this.flames.stop();
     const rear = this.cart.wheels[0];
     this.dust.setPosition(rear.position.x - 6, rear.position.y + 12);
     const should = this.cart.braking && this.cart.grounded && Math.abs(this.cart.speedX) > 3.5;
@@ -78,6 +101,9 @@ export default class Particles {
     this.scene.events.off('bump', this.onBump, this);
     this.scene.events.off('elote-lost', this.onEloteLost, this);
     this.scene.events.off('perro-hit', this.onPerro, this);
+    this.scene.events.off('dona-hit', this.onPerro, this);
+    this.scene.events.off('cable-hit', this.onCable, this);
+    this.flames.destroy();
     this.dust.destroy();
     this.sparks.destroy();
     this.puff.destroy();

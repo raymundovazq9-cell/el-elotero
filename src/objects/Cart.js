@@ -174,6 +174,7 @@ export default class Cart {
   update(deltaMs) {
     const m = this.scene.matter;
     const c = this.spec;
+    this.boost = this.boostUntil && this.scene.time.now < this.boostUntil ? 1.4 : 1;
 
     // anti-caballito: con la nariz muy levantada respecto al piso, el empuje baja
     const pitch = this.chassis.angle - (this.groundAngle || 0);

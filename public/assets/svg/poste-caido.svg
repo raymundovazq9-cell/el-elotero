@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 36" width="140" height="36">
+  <rect x="2" y="10" width="136" height="22" rx="8" fill="#8b6b4a" stroke="#1a1a1a" stroke-width="3"/>
+  <g stroke="#6b4e30" stroke-width="2"><line x1="20" y1="14" x2="60" y2="14"/><line x1="70" y1="27" x2="120" y2="27"/></g>
+  <rect x="100" y="2" width="30" height="8" rx="2" fill="#5a4330" stroke="#1a1a1a" stroke-width="2"/>
+  <path d="M0 8 Q30 20 60 6" fill="none" stroke="#1a1a1a" stroke-width="2"/>
+  <rect x="54" y="4" width="26" height="12" rx="2" fill="#f7c948" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="67" y="13.5" font-family="Arial, Helvetica, sans-serif" font-size="8" font-weight="bold" fill="#1a1a1a" text-anchor="middle">CFE</text>
+</svg>

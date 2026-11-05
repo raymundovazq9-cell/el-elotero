@@ -12,7 +12,7 @@ export const LEVELS = [
     tema: 'callejon',
     terreno: { base: 420, amp: [50, 20, 4], lambda: [1000, 420, 200], crecimiento: 0.0012, maxMul: 2.2 },
     rasgos: { tope: 0.05, bache: 0.03, escalera: 0.04, rampa: 0.05, arco: 0.7 },
-    actores: { perro: 0.05, dona: 0.04, cholo: 0.04, cliente: 0.05, coche: 0.03, camioneta: 0, cable: 0, poste: 0, chile: 0.02 },
+    actores: { perro: 0.05, dona: 0.04, cholo: 0.04, cliente: 0.05, coche: 0.03, camioneta: 0.015, cable: 0.02, poste: 0.01, chile: 0.02, bolsa: 0.015 },
     cielo: { inicio: 0, ciclo: 600 },
     musica: { bpm: 96 },
   },
