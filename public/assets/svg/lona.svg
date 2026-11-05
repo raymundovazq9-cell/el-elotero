@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 70" width="220" height="70">
+  <!-- lona de mercado colgada: se estira entre dos postes -->
+  <path d="M0 6 Q55 0 110 6 Q165 12 220 6 L220 40 Q165 70 110 44 Q55 70 0 40 Z" fill="#e4007c" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M0 6 Q55 0 110 6 L110 44 Q55 70 0 40 Z" fill="#f7c948" stroke="#1a1a1a" stroke-width="2.5" stroke-linejoin="round" opacity="0.95"/>
+  <path d="M20 10 Q60 30 100 14" fill="none" stroke="#1a1a1a" stroke-width="1.5" opacity="0.3"/>
+  <path d="M130 12 Q170 32 210 14" fill="none" stroke="#1a1a1a" stroke-width="1.5" opacity="0.3"/>
+</svg>

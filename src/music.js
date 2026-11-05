@@ -27,10 +27,16 @@ class CumbiaLoop {
     this.nextTime = 0;
     this.timer = null;
     this.volume = 0.5;
+    this.bpm = BPM;
   }
 
   get stepDur() {
-    return 60 / BPM / STEPS_PER_BEAT;
+    return 60 / this.bpm / STEPS_PER_BEAT;
+  }
+
+  /** Cambia el tempo (por escenario); vale llamar antes de start(). */
+  setTempo(bpm) {
+    this.bpm = bpm || BPM;
   }
 
   start() {

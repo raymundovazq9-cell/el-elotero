@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 360" width="320" height="360">
+  <!-- soportes -->
+  <path d="M60 350 L160 180 L260 350" fill="none" stroke="#c0392b" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M30 350 L290 350" stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"/>
+  <!-- aro -->
+  <circle cx="160" cy="180" r="140" fill="none" stroke="#f7c948" stroke-width="10"/>
+  <circle cx="160" cy="180" r="140" fill="none" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- rayos -->
+  <g stroke="#f7c948" stroke-width="6" stroke-linecap="round">
+    <line x1="160" y1="40" x2="160" y2="320"/><line x1="20" y1="180" x2="300" y2="180"/>
+    <line x1="61" y1="81" x2="259" y2="279"/><line x1="259" y1="81" x2="61" y2="279"/>
+  </g>
+  <circle cx="160" cy="180" r="18" fill="#c0392b" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- canastillas -->
+  <g stroke="#1a1a1a" stroke-width="2.5">
+    <rect x="144" y="30" width="32" height="26" rx="6" fill="#3a86ff"/><rect x="144" y="304" width="32" height="26" rx="6" fill="#2e8b57"/>
+    <rect x="4" y="166" width="32" height="26" rx="6" fill="#e4007c"/><rect x="284" y="166" width="32" height="26" rx="6" fill="#f2762e"/>
+    <rect x="45" y="68" width="32" height="26" rx="6" fill="#f2762e"/><rect x="243" y="68" width="32" height="26" rx="6" fill="#e4007c"/>
+    <rect x="45" y="266" width="32" height="26" rx="6" fill="#2e8b57"/><rect x="243" y="266" width="32" height="26" rx="6" fill="#3a86ff"/>
+  </g>
+</svg>

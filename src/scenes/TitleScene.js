@@ -88,6 +88,7 @@ export default class TitleScene extends Phaser.Scene {
     this.input.once('pointerdown', () => {
       unlockAudio();
       Music.setVolume(0.35);
+      Music.setTempo(96);
       Music.start();
     });
     this.cameras.main.fadeIn(350);

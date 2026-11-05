@@ -68,6 +68,7 @@ export default class GarageScene extends Phaser.Scene {
     this.input.once('pointerdown', () => {
       unlockAudio();
       Music.setVolume(0.3);
+      Music.setTempo(96);
       Music.start();
     });
     this.events.once('shutdown', () => Music.stop());

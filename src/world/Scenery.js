@@ -7,16 +7,29 @@ const DEPTH_HOUSE = -50;
 const DEPTH_POST = -40;
 const DEPTH_PROPS = -45;
 const DEPTH_FLAGS = 20;
+const DEPTH_FAR = -60; // rueda de la fortuna, carpas
+const FOCO_COLORS = [0xff4d6d, 0xffd166, 0x06d6a0, 0x4cc9f0, 0xff8c42];
+
+/** Ajustes por escenario. */
+const THEMES = {
+  callejon: { houseChance: 1, puesto: 'puesto', puestoChance: 0.18, senoraChance: 0.24, flags: 'papel', lonas: false, far: [] },
+  mercado: { houseChance: 0.55, puesto: 'puesto-mercado', puestoChance: 0.5, senoraChance: 0.3, flags: 'papel', lonas: true, far: [] },
+  feria: { houseChance: 0.5, puesto: 'puesto-feria', puestoChance: 0.35, senoraChance: 0.2, flags: 'focos', lonas: false, far: ['rueda-fortuna', 'carpa'] },
+};
 
 /**
  * Coloca por tramo las casas, postes con cables, puestos y gente detrás de la
  * calle, y papel picado al frente. Todo se destruye junto con el tramo.
  */
 export default class Scenery {
-  constructor(scene, road) {
+  constructor(scene, road, theme = 'callejon') {
     this.scene = scene;
     this.road = road;
+    this.theme = THEMES[theme] || THEMES.callejon;
     this.rnd = road.rnd;
+    this.nextFarX = 500;
+    this.farIndex = 0;
+    this.focos = [];
     this.cursorX = -Infinity;
     this.nextPostX = 0;
     this.lastPost = null; // { x, y } punta del poste anterior
@@ -50,20 +63,43 @@ export default class Scenery {
     let x = Math.max(this.cursorX, chunk.startX + 10);
     if (this.nextPostX === 0) this.nextPostX = chunk.startX + 120;
 
+    const th = this.theme;
+    // lejanos del tema (rueda de la fortuna, carpa) detrás de las casas
+    while (th.far.length && this.nextFarX < chunk.endX) {
+      const key = th.far[this.farIndex % th.far.length];
+      const fy = this.houseBaseY(this.nextFarX - 100, this.nextFarX + 100);
+      if (fy !== null) {
+        const img = svgImage(this.scene, this.nextFarX, fy + 6, key).setOrigin(0.5, 1).setDepth(DEPTH_FAR);
+        items.push(img);
+        if (key === 'rueda-fortuna') {
+          // la rueda gira: la imagen gira sobre su eje (centro del aro)
+          img.setOrigin(0.5, 0.5).setPosition(this.nextFarX, fy + 6 - 90);
+          this.scene.tweens.add({ targets: img, rotation: Math.PI * 2, duration: 14000, repeat: -1 });
+          const base = this.scene.add.graphics().setDepth(DEPTH_FAR - 0.1);
+          base.lineStyle(10, 0xc0392b, 1);
+          base.lineBetween(this.nextFarX - 50, fy + 6, this.nextFarX, fy + 6 - 90);
+          base.lineBetween(this.nextFarX + 50, fy + 6, this.nextFarX, fy + 6 - 90);
+          items.push(base);
+        }
+      }
+      this.farIndex += 1;
+      this.nextFarX += rnd.between(900, 1400);
+    }
+
     while (x < chunk.endX - 80) {
       const w = rnd.between(120, 180);
       const xr = Math.min(x + w, chunk.endX);
       const yBase = this.houseBaseY(x, xr);
       if (yBase === null) break;
-      items.push(...this.addHouse(x + w / 2, yBase + 2, w));
+      if (rnd.frac() < th.houseChance) items.push(...this.addHouse(x + w / 2, yBase + 2, w));
 
       // algo en la banqueta frente a la casa, de vez en cuando
       const roll = rnd.frac();
-      if (roll < 0.18) {
+      if (roll < th.puestoChance) {
         const px = x + w * 0.5;
         const py = this.sidewalkY(px);
-        if (py !== null) items.push(svgImage(this.scene, px, py + 4, 'puesto').setOrigin(0.5, 1).setDepth(DEPTH_PROPS));
-      } else if (roll < 0.42) {
+        if (py !== null) items.push(svgImage(this.scene, px, py + 4, th.puesto).setOrigin(0.5, 1).setDepth(DEPTH_PROPS));
+      } else if (roll < th.puestoChance + th.senoraChance) {
         const px = x + w * rnd.realInRange(0.2, 0.8);
         const py = this.sidewalkY(px);
         if (py !== null) {
@@ -92,7 +128,9 @@ export default class Scenery {
       const top = { x: px, y: py - 190 };
       if (this.lastPost && px - this.lastPost.x < 520) {
         this.drawCables(g, this.lastPost, top);
-        if (this.flagTurn) this.drawFlags(gf, this.lastPost, top);
+        if (th.flags === 'focos') items.push(...this.drawFocos(this.lastPost, top));
+        else if (this.flagTurn) this.drawFlags(gf, this.lastPost, top);
+        if (th.lonas && rnd.frac() < 0.55) items.push(this.drawLona(this.lastPost, top));
         this.flagTurn = !this.flagTurn;
       }
       this.lastPost = top;
@@ -171,6 +209,32 @@ export default class Scenery {
     }
   }
 
+  /** Lona de mercado estirada entre dos postes, a media altura. */
+  drawLona(a, b) {
+    const w = Math.hypot(b.x - a.x, b.y - a.y);
+    const img = svgImage(this.scene, (a.x + b.x) / 2, (a.y + b.y) / 2 + 26, 'lona').setDepth(DEPTH_POST - 0.5).setAlpha(0.95);
+    img.setScale((w / 220) * 0.5, 0.36).setRotation(Math.atan2(b.y - a.y, b.x - a.x));
+    if (this.rnd.frac() < 0.5) img.setFlipX(true);
+    return img;
+  }
+
+  /** Focos de colores colgados del cable (se encienden de noche). */
+  drawFocos(a, b) {
+    const n = 9;
+    const out = [];
+    for (let i = 1; i < n; i++) {
+      const t = i / n;
+      const x = a.x + (b.x - a.x) * t;
+      const y = a.y + 30 + (b.y - a.y) * t + Math.sin(t * Math.PI) * 40 + 10;
+      const c = this.scene.add.circle(x, y, 6, FOCO_COLORS[i % FOCO_COLORS.length], 1).setDepth(DEPTH_FLAGS);
+      c.setStrokeStyle(2, 0x1a1a1a, 1);
+      const halo = this.scene.add.circle(x, y, 12, FOCO_COLORS[i % FOCO_COLORS.length], 0).setDepth(DEPTH_FLAGS - 0.1);
+      this.focos.push(halo);
+      out.push(c, halo);
+    }
+    return out;
+  }
+
   /** 0 = día, 1 = noche: enciende ventanas y faroles. */
   setNight(alpha) {
     this.nightAlpha = alpha;
@@ -180,8 +244,10 @@ export default class Scenery {
   applyNight() {
     this.windows = this.windows.filter((w) => w.active);
     this.lamps = this.lamps.filter((l) => l.active);
+    this.focos = this.focos.filter((f) => f.active);
     for (const w of this.windows) w.setAlpha(this.nightAlpha * 0.95);
     for (const l of this.lamps) l.setFillStyle(0xfff1a8, this.nightAlpha * 0.9);
+    for (const f of this.focos) f.setFillStyle(f.fillColor, this.nightAlpha * 0.55);
   }
 
   onChunkDestroyed(chunk) {

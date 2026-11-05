@@ -15,8 +15,8 @@ function lerpColor(a, b, t) {
 }
 
 /** Devuelve { top, bottom, night } interpolando tarde → atardecer → noche → tarde. */
-export function skyAt(meters) {
-  const t = (meters % CYCLE_METERS) / CYCLE_METERS;
+export function skyAt(meters, cycle = CYCLE_METERS) {
+  const t = (meters % cycle) / cycle;
   let a;
   let b;
   let k;
@@ -56,6 +56,7 @@ export default class SkyCycle {
   constructor(scene, opts = {}) {
     this.scene = scene;
     this.useImages = !!opts.farDay && scene.textures.exists(opts.farDay);
+    this.cycle = opts.cycle || CYCLE_METERS;
     this.lastKey = '';
     this.night = 0;
 
@@ -136,7 +137,7 @@ export default class SkyCycle {
   }
 
   update(meters, scrollX, timeMs) {
-    const sky = skyAt(meters);
+    const sky = skyAt(meters, this.cycle);
     this.paint(sky);
     this.night = sky.night;
 

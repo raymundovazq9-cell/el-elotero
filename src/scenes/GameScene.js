@@ -30,7 +30,7 @@ export default class GameScene extends Phaser.Scene {
     this.level = levelById((data && data.level) || Save.data.level);
     this.cameras.main.setBackgroundColor('#87b7e0');
     this.cameras.main.fadeIn(300);
-    this.sky = new SkyCycle(this, { farDay: 'fondo-tarde', farNight: 'fondo-noche' });
+    this.sky = new SkyCycle(this, { farDay: 'fondo-tarde', farNight: 'fondo-noche', cycle: this.level.cielo.ciclo });
 
     this.startX = 120;
     this.road = new Terrain(
@@ -40,7 +40,7 @@ export default class GameScene extends Phaser.Scene {
       new RoadView(this),
       this.level
     );
-    this.scenery = new Scenery(this, this.road);
+    this.scenery = new Scenery(this, this.road, this.level.tema);
     this.road.start(-500, 1100);
 
     this.cartData = cartById((data && data.cart) || Save.data.cart);
@@ -125,6 +125,7 @@ export default class GameScene extends Phaser.Scene {
       vibrate([120, 60, 200]);
     });
     Music.setVolume(0.5);
+    Music.setTempo(this.level.musica.bpm);
     Music.start();
     this.time.delayedCall(400, () => Sfx.silbato());
     this.events.on('pause', () => Music.stop());
