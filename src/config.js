@@ -16,6 +16,7 @@ export const ROAD = {
   cleanupBehind: 700, // px detrás de la cámara para borrar cuerpos
   slopeMinDeg: 14,
   slopeMaxDeg: 34,
+  slopeStep: 7, // cambio máximo de pendiente entre segmentos (grados)
   segmentMin: 120, // largo mínimo de un segmento de la polilínea
   segmentMax: 260,
   friction: 0.9,

@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ROAD } from '../config.js';
+import { ROAD, GAME_WIDTH } from '../config.js';
 
 const COLOR_ROAD = 0x5a5a5a;
 const COLOR_ROAD_LINE = 0x2e2e2e;
@@ -13,6 +13,38 @@ export default class Road {
     this.scene = scene;
     this.chunks = []; // { bodies: [], gfx: Graphics, startX, endX }
     this.lastPoint = { x: -400, y: 300 };
+    this.slopeDeg = (ROAD.slopeMinDeg + ROAD.slopeMaxDeg) / 2;
+  }
+
+  /** Genera un tramo nuevo a partir del último punto (pendiente en paseo aleatorio). */
+  generateChunk() {
+    const pts = [{ ...this.lastPoint }];
+    let { x, y } = this.lastPoint;
+    const targetX = x + ROAD.chunkLength;
+    while (x < targetX) {
+      const len = Phaser.Math.Between(ROAD.segmentMin, ROAD.segmentMax);
+      this.slopeDeg = Phaser.Math.Clamp(
+        this.slopeDeg + Phaser.Math.FloatBetween(-ROAD.slopeStep, ROAD.slopeStep),
+        ROAD.slopeMinDeg,
+        ROAD.slopeMaxDeg
+      );
+      const rad = Phaser.Math.DegToRad(this.slopeDeg);
+      x += Math.cos(rad) * len;
+      y += Math.sin(rad) * len;
+      pts.push({ x, y });
+    }
+    return this.buildChunk(pts);
+  }
+
+  /** Mantiene tramos por delante de la cámara y borra los que quedaron atrás. */
+  update(scrollX) {
+    const aheadX = scrollX + GAME_WIDTH + ROAD.chunkLength * ROAD.chunksAhead;
+    while (this.lastPoint.x < aheadX) this.generateChunk();
+
+    const behindX = scrollX - ROAD.cleanupBehind;
+    while (this.chunks.length && this.chunks[0].endX < behindX) {
+      this.destroyChunk(this.chunks.shift());
+    }
   }
 
   /** Crea un tramo a partir de una lista de puntos consecutivos. */
@@ -32,7 +64,8 @@ export default class Road {
     gfx.moveTo(points[0].x, points[0].y);
     for (let i = 1; i < points.length; i++) gfx.lineTo(points[i].x, points[i].y);
     const bottom = Math.max(...points.map((p) => p.y)) + 2000;
-    gfx.lineTo(points[points.length - 1].x, bottom);
+    gfx.lineTo(points[points.length - 1].x + 3, points[points.length - 1].y);
+    gfx.lineTo(points[points.length - 1].x + 3, bottom);
     gfx.lineTo(points[0].x, bottom);
     gfx.closePath();
     gfx.fillPath();

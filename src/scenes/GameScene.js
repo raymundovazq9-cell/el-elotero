@@ -13,7 +13,7 @@ export default class GameScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#87b7e0');
 
     this.road = new Road(this);
-    this.road.buildStraight(-400, 300, 6000, 22);
+    this.road.buildStraight(-400, 300, 900, 20);
 
     this.startX = 120;
     this.cart = new Cart(this, this.startX, 440);
@@ -66,6 +66,8 @@ export default class GameScene extends Phaser.Scene {
     this.cart.update(delta);
 
     const cam = this.cameras.main;
+    this.road.update(cam.scrollX);
+
     const targetX = this.cart.x - GAME_WIDTH * 0.3;
     const targetY = this.cart.y - GAME_HEIGHT * 0.35;
     cam.scrollX = Phaser.Math.Linear(cam.scrollX, targetX, 0.15);
