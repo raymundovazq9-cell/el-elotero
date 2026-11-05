@@ -28,7 +28,7 @@ export const CART = {
   wallHeight: 34,
   wallThickness: 8,
   wheelRadius: 17,
-  wheelOffsetX: 40,
+  wheelOffsetX: 44,
   wheelOffsetY: 26,
   suspensionStiffness: 0.35,
   suspensionDamping: 0.12,
@@ -36,7 +36,7 @@ export const CART = {
   wheelFriction: 0.95,
   // velocidad angular de las ruedas (rad/frame aprox. en Matter)
   wheelSpeedMax: 0.55,
-  wheelSpeedBrake: 0.08,
+  wheelSpeedBrake: 0.14,
   wheelAccel: 0.012,
   wheelBrakeRate: 0.04,
   // velocidad lineal mínima garantizada (px/step) en X

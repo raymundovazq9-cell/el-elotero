@@ -23,11 +23,11 @@ export default class Cart {
     const wallY = -(c.bodyHeight / 2 + c.wallHeight / 2) + 2;
     const wallX = c.bodyWidth / 2 - c.wallThickness / 2;
     const wallL = m.bodies.rectangle(-wallX, wallY, c.wallThickness, c.wallHeight, {
-      density: c.density * 0.5,
+      density: c.density * 0.25,
       render: { fillColor: COLOR_WALL, lineColor: 0x6b4a00 },
     });
     const wallR = m.bodies.rectangle(wallX, wallY, c.wallThickness, c.wallHeight, {
-      density: c.density * 0.5,
+      density: c.density * 0.25,
       render: { fillColor: COLOR_WALL, lineColor: 0x6b4a00 },
     });
 
@@ -48,7 +48,7 @@ export default class Cart {
       const wheel = m.add.circle(wx, wy, c.wheelRadius, {
         friction: c.wheelFriction,
         frictionStatic: 1,
-        density: c.density * 1.5,
+        density: c.density * 2.5,
         restitution: 0.05,
         collisionFilter: { group: GROUP_CART },
         label: 'wheel',
@@ -111,6 +111,9 @@ export default class Cart {
     const v = this.chassis.velocity;
     if (v.x < c.minSpeedX) {
       m.body.setVelocity(this.chassis, { x: c.minSpeedX, y: v.y });
+      for (const w of this.wheels) {
+        if (w.velocity.x < c.minSpeedX) m.body.setVelocity(w, { x: c.minSpeedX, y: w.velocity.y });
+      }
     } else if (v.x > c.maxSpeedX) {
       m.body.setVelocity(this.chassis, { x: c.maxSpeedX, y: v.y });
     }

@@ -12,10 +12,14 @@ export default class GameScene extends Phaser.Scene {
   create() {
     this.cameras.main.setBackgroundColor('#87b7e0');
 
-    this.road = new Road(this);
+    this.startX = 120;
+    this.road = new Road(
+      this,
+      (x) => Math.max(0, (x - this.startX) / PX_PER_METER),
+      DEBUG.test ? 'elotero' : undefined
+    );
     this.road.buildStraight(-400, 300, 900, 20);
 
-    this.startX = 120;
     this.cart = new Cart(this, this.startX, 440);
     this.elotes = 6;
     this.bonus = 0;
