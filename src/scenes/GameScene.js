@@ -7,6 +7,8 @@ import Obstacles from '../objects/Obstacles.js';
 import { difficultyAt } from '../objects/Difficulty.js';
 import { DEBUG, isBrakeScripted } from '../debug.js';
 import { Sfx, vibrate, unlockAudio } from '../audio.js';
+import CartView from '../views/CartView.js';
+import EloteView from '../views/EloteView.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -27,6 +29,8 @@ export default class GameScene extends Phaser.Scene {
     this.cart = new Cart(this, this.startX, 440);
     this.elotes = new EloteManager(this, this.cart, this.road);
     this.obstacles = new Obstacles(this, this.cart, this.road, this.elotes);
+    this.cartView = new CartView(this, this.cart);
+    this.eloteView = new EloteView(this, this.elotes);
     this.bonus = 0;
     this.airTime = 0;
     this.over = false;
@@ -64,6 +68,8 @@ export default class GameScene extends Phaser.Scene {
       this.game.events.off('blur', onBlur);
       this.elotes.destroy();
       this.obstacles.destroy();
+      this.cartView.destroy();
+      this.eloteView.destroy();
     });
 
     this.scene.launch('UI');
@@ -145,6 +151,8 @@ export default class GameScene extends Phaser.Scene {
     this.elotes.update();
     this.obstacles.update(delta);
     this.updateAir(delta);
+    this.cartView.sync(delta);
+    this.eloteView.sync();
     this.cart.endStep();
 
     if (!this.over) {

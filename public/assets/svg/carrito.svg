@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 100" width="160" height="100">
+  <!-- manubrio -->
+  <path d="M30 40 L8 20" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M8 20 L2 14" stroke="#c0392b" stroke-width="8" stroke-linecap="round" fill="none"/>
+  <!-- panel trasero de la caja (se ve detrás de los elotes) -->
+  <rect x="33" y="30" width="94" height="24" fill="#d08a4a" stroke="#1a1a1a" stroke-width="2"/>
+  <line x1="33" y1="42" x2="127" y2="42" stroke="#b5733a" stroke-width="2"/>
+  <!-- paredes -->
+  <rect x="25" y="28" width="9" height="28" rx="2" fill="#8b4513" stroke="#1a1a1a" stroke-width="3"/>
+  <rect x="126" y="28" width="9" height="28" rx="2" fill="#8b4513" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- base -->
+  <rect x="25" y="54" width="110" height="26" rx="4" fill="#c0392b" stroke="#1a1a1a" stroke-width="3"/>
+  <line x1="25" y1="63" x2="135" y2="63" stroke="#8e2a1f" stroke-width="2"/>
+  <line x1="25" y1="72" x2="135" y2="72" stroke="#8e2a1f" stroke-width="2"/>
+  <!-- letrero -->
+  <rect x="48" y="58" width="64" height="18" rx="4" fill="#fff4d6" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="80" y="72" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#c0392b" text-anchor="middle">ELOTES</text>
+  <!-- bote de vapor al frente -->
+  <rect x="128" y="14" width="28" height="24" rx="5" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="3"/>
+  <ellipse cx="142" cy="14" rx="15" ry="4" fill="#c7d0da" stroke="#1a1a1a" stroke-width="2.5"/>
+  <circle cx="142" cy="10" r="3" fill="#2b2b2b"/>
+  <line x1="132" y1="22" x2="132" y2="32" stroke="#7d8793" stroke-width="2"/>
+  <!-- eje -->
+  <line x1="36" y1="80" x2="124" y2="80" stroke="#2b2b2b" stroke-width="5" stroke-linecap="round"/>
+</svg>

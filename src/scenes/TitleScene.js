@@ -22,7 +22,7 @@ export default class TitleScene extends Phaser.Scene {
     g.fillStyle(0x87b7e0, 1);
     g.fillTriangle(0, 560, GAME_WIDTH, 560, GAME_WIDTH, 800);
 
-    this.add.image(cx, 170, 'elote').setScale(3);
+    this.add.image(cx, 170, 'elote').setScale(1.5);
     this.add.text(cx, 280, 'EL ELOTERO', { ...FONT, fontSize: '72px', color: '#ffe680' }).setOrigin(0.5);
     this.add.text(cx, 345, 'Baja la calle sin perder los elotes', { ...FONT, fontSize: '24px' }).setOrigin(0.5);
 
