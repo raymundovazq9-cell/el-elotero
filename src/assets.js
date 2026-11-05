@@ -19,9 +19,22 @@ export const SVG_ASSETS = [
   { key: 'poste', url: 'assets/svg/poste.svg', scale: SVG_SCALE },
   { key: 'puesto', url: 'assets/svg/puesto.svg', scale: SVG_SCALE },
   { key: 'senora', url: 'assets/svg/senora.svg', scale: SVG_SCALE },
+  { key: 'cerros', url: 'assets/svg/cerros.svg', scale: SVG_SCALE },
+  { key: 'nube', url: 'assets/svg/nube.svg', scale: SVG_SCALE },
 ];
 
-export const IMAGE_ASSETS = [];
+/**
+ * Fondos lejanos generados con IA (opcionales). Descarga las imágenes de Canva a
+ * public/assets/bg/fondo-tarde.png y fondo-noche.png (2:1, ~1776x896) y pon true.
+ */
+export const AI_BACKGROUNDS = false;
+
+export const IMAGE_ASSETS = AI_BACKGROUNDS
+  ? [
+      { key: 'fondo-tarde', url: 'assets/bg/fondo-tarde.png' },
+      { key: 'fondo-noche', url: 'assets/bg/fondo-noche.png' },
+    ]
+  : [];
 
 /** Crea una imagen SVG al tamaño lógico (1 unidad SVG = 1 px). */
 export function svgImage(scene, x, y, key) {

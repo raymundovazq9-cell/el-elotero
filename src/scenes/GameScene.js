@@ -10,6 +10,7 @@ import { Sfx, vibrate, unlockAudio } from '../audio.js';
 import CartView from '../views/CartView.js';
 import RoadView from '../views/RoadView.js';
 import Scenery from '../world/Scenery.js';
+import SkyCycle from '../world/SkyCycle.js';
 import EloteView from '../views/EloteView.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -19,6 +20,7 @@ export default class GameScene extends Phaser.Scene {
 
   create() {
     this.cameras.main.setBackgroundColor('#87b7e0');
+    this.sky = new SkyCycle(this, { farDay: 'fondo-tarde', farNight: 'fondo-noche' });
 
     this.startX = 120;
     this.road = new Road(
@@ -76,6 +78,7 @@ export default class GameScene extends Phaser.Scene {
       this.cartView.destroy();
       this.eloteView.destroy();
       this.scenery.destroy();
+      this.sky.destroy();
     });
 
     this.scene.launch('UI');
@@ -188,6 +191,8 @@ export default class GameScene extends Phaser.Scene {
 
     const cam = this.cameras.main;
     this.road.update(cam.scrollX);
+    this.sky.update(DEBUG.skyMeters ?? this.meters, cam.scrollX, time);
+    this.scenery.setNight(this.sky.night);
     const targetX = this.cart.x - GAME_WIDTH * 0.3;
     const targetY = this.cart.y - GAME_HEIGHT * 0.35;
     cam.scrollX = Phaser.Math.Linear(cam.scrollX, targetX, 0.15);

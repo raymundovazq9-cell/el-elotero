@@ -9,6 +9,8 @@ export const DEBUG = {
   startElotes: params.has('elotes') ? Number(params.get('elotes')) : null,
   // fuerza game over a los N ms de juego (?gameover=5000)
   forceGameOverAt: params.has('gameover') ? Number(params.get('gameover')) : null,
+  // metros fijos para el ciclo de cielo (?sky=330 = noche)
+  skyMeters: params.has('sky') ? Number(params.get('sky')) : null,
   // intervalos "inicio-fin,inicio-fin" en ms de juego en los que se simula el freno
   brakeWindows: (params.get('brake') || '')
     .split(',')

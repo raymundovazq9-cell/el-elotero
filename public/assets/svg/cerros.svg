@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 320" width="1080" height="320">
+  <!-- cerros lejanos -->
+  <path d="M0 220 Q120 120 260 190 Q380 90 520 170 Q640 80 780 160 Q900 100 1080 190 L1080 320 L0 320 Z" fill="#6aa86f" stroke="#1a1a1a" stroke-width="4"/>
+  <!-- cerro medio -->
+  <path d="M0 260 Q160 170 330 230 Q470 150 640 220 Q800 140 960 230 Q1020 210 1080 250 L1080 320 L0 320 Z" fill="#4e8f55" stroke="#1a1a1a" stroke-width="4"/>
+  <!-- iglesia -->
+  <g transform="translate(540 140)">
+    <rect x="-60" y="30" width="120" height="70" fill="#f7e2b8" stroke="#1a1a1a" stroke-width="4"/>
+    <rect x="-16" y="60" width="32" height="40" rx="14" fill="#6b3e1e" stroke="#1a1a1a" stroke-width="3"/>
+    <path d="M-30 30 Q0 -20 30 30 Z" fill="#e4007c" stroke="#1a1a1a" stroke-width="4"/>
+    <rect x="-6" y="-30" width="12" height="18" fill="#f7e2b8" stroke="#1a1a1a" stroke-width="3"/>
+    <path d="M0 -40 L0 -30 M-6 -36 L6 -36" stroke="#1a1a1a" stroke-width="3"/>
+    <rect x="-90" y="0" width="30" height="100" fill="#f7e2b8" stroke="#1a1a1a" stroke-width="4"/>
+    <rect x="60" y="0" width="30" height="100" fill="#f7e2b8" stroke="#1a1a1a" stroke-width="4"/>
+    <path d="M-90 0 L-75 -22 L-60 0 Z" fill="#c0392b" stroke="#1a1a1a" stroke-width="3"/>
+    <path d="M60 0 L75 -22 L90 0 Z" fill="#c0392b" stroke="#1a1a1a" stroke-width="3"/>
+    <rect x="-82" y="30" width="14" height="22" rx="7" fill="#1a1a1a"/><rect x="68" y="30" width="14" height="22" rx="7" fill="#1a1a1a"/>
+  </g>
+  <!-- casitas en las laderas -->
+  <g stroke="#1a1a1a" stroke-width="3">
+    <rect x="80" y="196" width="40" height="30" fill="#e4007c"/><rect x="130" y="186" width="36" height="40" fill="#3a86ff"/><rect x="176" y="200" width="44" height="26" fill="#f7c948"/>
+    <rect x="300" y="190" width="40" height="34" fill="#2e8b57"/><rect x="350" y="178" width="34" height="46" fill="#f2762e"/><rect x="394" y="196" width="40" height="28" fill="#fff4d6"/>
+    <rect x="660" y="190" width="40" height="34" fill="#8e44ad"/><rect x="710" y="180" width="36" height="44" fill="#f7c948"/><rect x="756" y="196" width="40" height="28" fill="#e4007c"/>
+    <rect x="880" y="200" width="40" height="30" fill="#3a86ff"/><rect x="930" y="190" width="36" height="40" fill="#2e8b57"/><rect x="976" y="204" width="44" height="26" fill="#f2762e"/>
+    <rect x="20" y="236" width="48" height="36" fill="#f7c948"/><rect x="230" y="246" width="44" height="30" fill="#8e44ad"/><rect x="470" y="252" width="40" height="30" fill="#e4007c"/>
+    <rect x="600" y="248" width="46" height="34" fill="#3a86ff"/><rect x="820" y="250" width="44" height="30" fill="#fff4d6"/><rect x="1010" y="246" width="50" height="34" fill="#2e8b57"/>
+  </g>
+  <!-- ventanitas -->
+  <g fill="#1a1a1a" opacity="0.7">
+    <rect x="92" y="206" width="8" height="8"/><rect x="142" y="196" width="8" height="8"/><rect x="190" y="208" width="8" height="8"/>
+    <rect x="312" y="200" width="8" height="8"/><rect x="360" y="190" width="8" height="8"/><rect x="406" y="206" width="8" height="8"/>
+    <rect x="672" y="200" width="8" height="8"/><rect x="720" y="192" width="8" height="8"/><rect x="768" y="206" width="8" height="8"/>
+    <rect x="892" y="210" width="8" height="8"/><rect x="940" y="200" width="8" height="8"/><rect x="988" y="214" width="8" height="8"/>
+    <rect x="34" y="248" width="8" height="8"/><rect x="244" y="256" width="8" height="8"/><rect x="482" y="262" width="8" height="8"/>
+    <rect x="614" y="258" width="8" height="8"/><rect x="834" y="260" width="8" height="8"/><rect x="1026" y="256" width="8" height="8"/>
+  </g>
+</svg>
