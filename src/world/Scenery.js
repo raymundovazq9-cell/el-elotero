@@ -33,6 +33,17 @@ export default class Scenery {
     return y === null ? null : y - 16;
   }
 
+  /** Base de una casa entre x0 y x1: el punto más bajo del terreno para que no flote. */
+  houseBaseY(x0, x1) {
+    let best = null;
+    for (let i = 0; i <= 4; i++) {
+      const y = this.sidewalkY(x0 + ((x1 - x0) * i) / 4);
+      if (y === null) continue;
+      if (best === null || y > best) best = y;
+    }
+    return best;
+  }
+
   onChunk(chunk) {
     const items = [];
     const rnd = this.rnd;
@@ -42,7 +53,7 @@ export default class Scenery {
     while (x < chunk.endX - 80) {
       const w = rnd.between(120, 180);
       const xr = Math.min(x + w, chunk.endX);
-      const yBase = this.sidewalkY(xr);
+      const yBase = this.houseBaseY(x, xr);
       if (yBase === null) break;
       items.push(...this.addHouse(x + w / 2, yBase + 2, w));
 

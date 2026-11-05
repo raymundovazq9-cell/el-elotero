@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT, PX_PER_METER, SCORE } from '../config.js';
-import Road from '../objects/Road.js';
+import Terrain from '../objects/Terrain.js';
+import { levelById } from '../data/levels.js';
 import Cart from '../objects/Cart.js';
 import EloteManager from '../objects/EloteManager.js';
 import Obstacles from '../objects/Obstacles.js';
@@ -20,22 +21,24 @@ export default class GameScene extends Phaser.Scene {
     super('Game');
   }
 
-  create() {
+  create(data) {
+    this.level = levelById(data && data.level);
     this.cameras.main.setBackgroundColor('#87b7e0');
     this.cameras.main.fadeIn(300);
     this.sky = new SkyCycle(this, { farDay: 'fondo-tarde', farNight: 'fondo-noche' });
 
     this.startX = 120;
-    this.road = new Road(
+    this.road = new Terrain(
       this,
       (x) => Math.max(0, (x - this.startX) / PX_PER_METER),
       DEBUG.test ? 'elotero' : undefined,
-      new RoadView(this)
+      new RoadView(this),
+      this.level
     );
     this.scenery = new Scenery(this, this.road);
-    this.road.buildStraight(-400, 300, 900, 20);
+    this.road.start(-500, 800);
 
-    this.cart = new Cart(this, this.startX, 440);
+    this.cart = new Cart(this, this.startX, this.road.surfaceYAt(this.startX) - 60);
     this.elotes = new EloteManager(this, this.cart, this.road);
     this.obstacles = new Obstacles(this, this.cart, this.road, this.elotes);
     this.cartView = new CartView(this, this.cart);

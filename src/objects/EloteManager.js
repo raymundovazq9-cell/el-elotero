@@ -75,9 +75,10 @@ export default class EloteManager {
     return body;
   }
 
-  /** Coloca elotes recogibles en los segmentos libres del tramo nuevo. */
+  /** Coloca elotes recogibles: arcos en las crestas y algunos sueltos en tramos libres. */
   onChunk(chunk) {
     const rnd = this.road.rnd;
+    for (const a of chunk.arcs || []) this.addPickup(chunk, a.x, a.y);
     for (const s of chunk.spots) {
       if (s.used) continue;
       const meters = this.road.metersAt(s.x);
@@ -86,15 +87,20 @@ export default class EloteManager {
       if (rnd.frac() > diff.eloteChance) continue;
       s.used = true;
       const lift = 26;
-      const body = this.scene.matter.add.circle(s.x - s.n.x * lift, s.y - s.n.y * lift, ELOTES.radius + 2, {
-        isStatic: true,
-        isSensor: true,
-        label: 'pickup',
-        render: { fillColor: COLOR_PICKUP, lineColor: COLOR_ELOTE_LINE },
-      });
-      chunk.bodies.push(body);
-      this.pickups.add(body);
+      this.addPickup(chunk, s.x - s.n.x * lift, s.y - s.n.y * lift);
     }
+  }
+
+  addPickup(chunk, x, y) {
+    const body = this.scene.matter.add.circle(x, y, ELOTES.radius + 3, {
+      isStatic: true,
+      isSensor: true,
+      label: 'pickup',
+      render: { fillColor: COLOR_PICKUP, lineColor: COLOR_ELOTE_LINE },
+    });
+    chunk.bodies.push(body);
+    this.pickups.add(body);
+    return body;
   }
 
   onCollision(event) {
