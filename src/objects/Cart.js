@@ -37,7 +37,7 @@ export default class Cart {
     this.chassis = m.body.create({
       parts: [base, wallL, wallR],
       friction: 0.3,
-      frictionAir: 0.012,
+      frictionAir: 0.008,
       collisionFilter: { group: GROUP_CART },
       label: 'cart',
       render: { fillColor: COLOR_BODY, lineColor: 0x6b4a00 },
@@ -76,6 +76,32 @@ export default class Cart {
     this.braking = false;
     this.tipTimer = 0;
     this.tipped = false;
+    this.grounded = true;
+    this.groundLabels = new Set(['road', 'tope', 'coche']);
+    scene.matter.world.on('collisionactive', this.onCollisionActive, this);
+    scene.matter.world.on('collisionstart', this.onCollisionActive, this);
+  }
+
+  /** Marca contacto con el piso si alguna rueda toca calle/tope/coche. */
+  onCollisionActive(event) {
+    for (const pair of event.pairs) {
+      const a = pair.bodyA;
+      const b = pair.bodyB;
+      const wheelA = this.wheels.includes(a);
+      const wheelB = this.wheels.includes(b);
+      if (!wheelA && !wheelB) continue;
+      const other = wheelA ? b : a;
+      const label = other.label !== 'Body' ? other.label : other.parent && other.parent.label;
+      if (this.groundLabels.has(label)) {
+        this.grounded = true;
+        return;
+      }
+    }
+  }
+
+  /** Llamar al final del update de la escena, después de leer `grounded`. */
+  endStep() {
+    this.grounded = false;
   }
 
   get x() {

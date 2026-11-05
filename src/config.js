@@ -25,7 +25,7 @@ export const ROAD = {
 export const CART = {
   bodyWidth: 110,
   bodyHeight: 26,
-  wallHeight: 34,
+  wallHeight: 20,
   wallThickness: 8,
   wheelRadius: 17,
   wheelOffsetX: 44,
@@ -35,7 +35,7 @@ export const CART = {
   density: 0.004,
   wheelFriction: 0.95,
   // velocidad angular de las ruedas (rad/frame aprox. en Matter)
-  wheelSpeedMax: 0.55,
+  wheelSpeedMax: 0.62,
   wheelSpeedBrake: 0.14,
   wheelAccel: 0.012,
   wheelBrakeRate: 0.04,
@@ -50,9 +50,9 @@ export const ELOTES = {
   start: 6,
   max: 12,
   radius: 9,
-  density: 0.0012,
-  friction: 0.6,
-  restitution: 0.15,
+  density: 0.0008,
+  friction: 0.3,
+  restitution: 0.3,
   lostDistance: 170, // px desde el chasis para darse por perdido
 };
 

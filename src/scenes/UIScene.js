@@ -38,6 +38,12 @@ export default class UIScene extends Phaser.Scene {
     this.game_.events.on('elote-picked', () => this.showFloat('¡+1 elote!', '#ffe680'));
     this.game_.events.on('elote-full', () => this.showFloat('Carrito lleno', '#dddddd'));
     this.game_.events.on('perro-hit', () => this.showFloat('¡Guau! ¡Perro!', '#ff9f43'));
+    this.game_.events.on('landed', (gained) => this.showFloat(`¡+aire! +${gained}`, '#9be7ff'));
+    this.game_.events.on('gameover', () => {
+      this.brakeBox.setVisible(false);
+      this.brakeText.setVisible(false);
+      this.hint.setVisible(false);
+    });
   }
 
   showFloat(msg, color = '#ffffff') {
@@ -60,7 +66,7 @@ export default class UIScene extends Phaser.Scene {
   update() {
     const g = this.game_;
     if (!g || !g.getStats) return;
-    const s = g.getStats();
+    const s = g.over ? g.final : g.getStats();
     this.metersText.setText(`${s.meters} m`);
     this.elotesText.setText(`🌽 ${s.elotes}`);
     this.scoreText.setText(`${s.score}`);

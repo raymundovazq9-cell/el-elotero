@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT, PHYSICS } from './config.js';
 import BootScene from './scenes/BootScene.js';
 import GameScene from './scenes/GameScene.js';
 import UIScene from './scenes/UIScene.js';
+import GameOverScene from './scenes/GameOverScene.js';
 import { DEBUG } from './debug.js';
 
 const config = {
@@ -51,7 +52,7 @@ const config = {
     target: 60,
     forceSetTimeOut: DEBUG.test,
   },
-  scene: [BootScene, GameScene, UIScene],
+  scene: [BootScene, GameScene, UIScene, GameOverScene],
 };
 
 new Phaser.Game(config);

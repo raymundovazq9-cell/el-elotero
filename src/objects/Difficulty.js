@@ -18,9 +18,9 @@ export function difficultyAt(meters) {
     rampaChance: meters > 150 ? 0.06 + 0.12 * t : 0,
     perroChance: meters > 120 ? 0.05 + 0.12 * t : 0,
     cocheChance: meters > 250 ? 0.05 + 0.1 * t : 0,
-    eloteChance: 0.18 + 0.1 * t,
+    eloteChance: 0.07 + 0.05 * t,
     // tamaños
-    topeRadius: 10 + 8 * t,
+    topeRadius: 12 + 9 * t,
     bacheDepth: 16 + 12 * t,
     bacheWidth: 70 + 50 * t,
     escalonDrop: 30 + 25 * t,

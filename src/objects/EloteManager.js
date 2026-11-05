@@ -1,4 +1,5 @@
 import { ELOTES, CART } from '../config.js';
+import { DEBUG } from '../debug.js';
 
 const COLOR_ELOTE = 0xf5d547;
 const COLOR_ELOTE_LINE = 0xb08a00;
@@ -25,7 +26,8 @@ export default class EloteManager {
     this.lost = 0;
     this.picked = 0;
 
-    for (let i = 0; i < ELOTES.start; i++) this.spawnInCart(i);
+    const start = DEBUG.startElotes ?? ELOTES.start;
+    for (let i = 0; i < start; i++) this.spawnInCart(i);
 
     scene.events.on('chunk', this.onChunk, this);
     scene.matter.world.on('collisionstart', this.onCollision, this);

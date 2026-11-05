@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, PX_PER_METER } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, PX_PER_METER, SCORE } from '../config.js';
 import Road from '../objects/Road.js';
 import Cart from '../objects/Cart.js';
 import EloteManager from '../objects/EloteManager.js';
@@ -27,12 +27,20 @@ export default class GameScene extends Phaser.Scene {
     this.elotes = new EloteManager(this, this.cart, this.road);
     this.obstacles = new Obstacles(this, this.cart, this.road, this.elotes);
     this.bonus = 0;
+    this.airTime = 0;
+    this.over = false;
 
     this.braking = false;
     this.input.on('pointerdown', () => this.setBraking(true));
     this.input.on('pointerup', () => this.setBraking(this.input.activePointer.isDown));
     this.input.on('pointerupoutside', () => this.setBraking(false));
-    this.game.events.on('blur', () => this.setBraking(false));
+    const onBlur = () => this.setBraking(false);
+    this.game.events.on('blur', onBlur);
+    this.events.once('shutdown', () => {
+      this.game.events.off('blur', onBlur);
+      this.elotes.destroy();
+      this.obstacles.destroy();
+    });
 
     this.scene.launch('UI');
 
@@ -42,6 +50,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   setBraking(v) {
+    if (this.over) v = false;
     this.braking = v;
     this.cart.setBraking(v);
   }
@@ -54,19 +63,51 @@ export default class GameScene extends Phaser.Scene {
     return Math.max(0, Math.floor((this.cart.x - this.startX) / PX_PER_METER));
   }
 
+  get score() {
+    return this.meters * this.elotes.count + this.bonus;
+  }
+
   getStats() {
     return {
       meters: this.meters,
       elotes: this.elotes.count,
-      score: this.meters * this.elotes.count + this.bonus,
+      score: this.score,
+      bonus: this.bonus,
       braking: this.braking,
+      airborne: this.airTime >= SCORE.airMinMs,
     };
   }
 
+  updateAir(delta) {
+    if (this.cart.grounded) {
+      if (this.airTime >= SCORE.airMinMs && !this.cart.tipped) {
+        const gained = Math.round((this.airTime / 1000) * SCORE.airBonusPerSecond);
+        this.bonus += gained;
+        this.events.emit('landed', gained, this.airTime);
+      }
+      this.airTime = 0;
+    } else {
+      this.airTime += delta;
+    }
+  }
+
+  gameOver(reason) {
+    if (this.over) return;
+    this.over = true;
+    this.final = { ...this.getStats(), reason };
+    this.setBraking(false);
+    this.events.emit('gameover', reason);
+    if (DEBUG.test) console.log(`[test] GAMEOVER reason=${reason} ${JSON.stringify(this.getStats())}`);
+    this.time.delayedCall(700, () => {
+      this.scene.launch('GameOver', this.final);
+    });
+  }
+
   update(time, delta) {
-    if (DEBUG.test) {
+    if (DEBUG.test && !this.over) {
       this.testClock = (this.testClock || 0) + delta;
       this.setBraking(isBrakeScripted(this.testClock));
+      if (DEBUG.forceGameOverAt !== null && this.testClock >= DEBUG.forceGameOverAt) this.gameOver('volcadura');
       if (!this.nextLog || this.testClock >= this.nextLog) {
         this.nextLog = (this.nextLog || 0) + 1000;
         const c = this.cart;
@@ -75,13 +116,20 @@ export default class GameScene extends Phaser.Scene {
         );
       }
     }
+
     this.cart.update(delta);
     this.elotes.update();
     this.obstacles.update(delta);
+    this.updateAir(delta);
+    this.cart.endStep();
+
+    if (!this.over) {
+      if (this.cart.tipped) this.gameOver('volcadura');
+      else if (this.elotes.count === 0) this.gameOver('sin-elotes');
+    }
 
     const cam = this.cameras.main;
     this.road.update(cam.scrollX);
-
     const targetX = this.cart.x - GAME_WIDTH * 0.3;
     const targetY = this.cart.y - GAME_HEIGHT * 0.35;
     cam.scrollX = Phaser.Math.Linear(cam.scrollX, targetX, 0.15);

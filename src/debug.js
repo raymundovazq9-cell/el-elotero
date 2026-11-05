@@ -3,6 +3,10 @@ const params = new URLSearchParams(window.location.search);
 
 export const DEBUG = {
   test: params.has('test'),
+  // número inicial de elotes para pruebas (?elotes=1)
+  startElotes: params.has('elotes') ? Number(params.get('elotes')) : null,
+  // fuerza game over a los N ms de juego (?gameover=5000)
+  forceGameOverAt: params.has('gameover') ? Number(params.get('gameover')) : null,
   // intervalos "inicio-fin,inicio-fin" en ms de juego en los que se simula el freno
   brakeWindows: (params.get('brake') || '')
     .split(',')
