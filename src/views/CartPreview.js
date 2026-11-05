@@ -1,6 +1,8 @@
 import { svgImage, SVG_SCALE } from '../assets.js';
 import { CART } from '../config.js';
 import { slotLocalFor } from '../objects/EloteManager.js';
+import { buildEloteroTorso } from './EloteroTorso.js';
+import { Save } from '../save.js';
 
 const WHEEL_IMAGE_R = 17;
 
@@ -18,7 +20,7 @@ export function buildCartPreview(scene, cartData, opts = {}) {
   const p = v.elotero;
   const legB = svgImage(scene, p.x, p.y, 'elotero-pierna').setOrigin(8 / 20, 2 / 46).setTint(0xbdbdbd);
   const legF = svgImage(scene, p.x, p.y, 'elotero-pierna').setOrigin(8 / 20, 2 / 46);
-  const torso = svgImage(scene, p.x, p.y, 'elotero-torso').setOrigin(40 / 80, 86 / 100);
+  const torso = buildEloteroTorso(scene, opts.equipped || Save.data.clothes.equipped).setPosition(p.x, p.y);
   if (p.modo === 'empujando') {
     legB.setRotation(0.5);
     legF.setRotation(-0.4);

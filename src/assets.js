@@ -11,7 +11,7 @@ export const SVG_ASSETS = [
   { key: 'motocarro', url: 'assets/svg/motocarro.svg', scale: SVG_SCALE },
   { key: 'camioneta', url: 'assets/svg/camioneta.svg', scale: SVG_SCALE },
   { key: 'rueda', url: 'assets/svg/rueda.svg', scale: SVG_SCALE },
-  { key: 'elotero-torso', url: 'assets/svg/elotero-torso.svg', scale: SVG_SCALE },
+  { key: 'elotero-cabeza', url: 'assets/svg/elotero-cabeza.svg', scale: SVG_SCALE },
   { key: 'elotero-pierna', url: 'assets/svg/elotero-pierna.svg', scale: SVG_SCALE },
   { key: 'tope', url: 'assets/svg/tope.svg', scale: SVG_SCALE },
   { key: 'perro', url: 'assets/svg/perro.svg', scale: SVG_SCALE },
@@ -32,6 +32,10 @@ export const SVG_ASSETS = [
  * public/assets/bg/fondo-tarde.png y fondo-noche.png (2:1, ~1776x896) y pon true.
  */
 export const AI_BACKGROUNDS = false;
+
+// prendas del elotero (data/clothes.js): una textura por prenda
+import { CLOTHES, clothKey } from './data/clothes.js';
+for (const c of CLOTHES) SVG_ASSETS.push({ key: clothKey(c.tipo, c.id), url: `assets/svg/${c.tipo}-${c.id}.svg`, scale: SVG_SCALE });
 
 export const IMAGE_ASSETS = AI_BACKGROUNDS
   ? [

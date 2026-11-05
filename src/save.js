@@ -12,7 +12,7 @@ function defaults() {
     carts: ['carrito'],
     levels: ['callejon'],
     upgrades: {}, // { [cartId]: { piernas: 0, llantas: 0, suspension: 0, canasta: 0, frenos: 0 } }
-    clothes: { owned: [], equipped: {} },
+    clothes: { owned: ['sombrero-paja', 'mandil-blanco', 'playera-azul'], equipped: { sombrero: 'paja', mandil: 'blanco', playera: 'azul' } },
     best: {}, // { [levelId]: metros }
     missions: { date: '', progress: {}, claimed: [] },
     totals: { runs: 0, meters: 0, elotes: 0, marometas: 0, ventas: 0 },
@@ -24,7 +24,13 @@ function read() {
     const raw = localStorage.getItem(KEY);
     if (!raw) return defaults();
     const d = JSON.parse(raw);
-    return { ...defaults(), ...d, totals: { ...defaults().totals, ...(d.totals || {}) } };
+    const base = defaults();
+    return {
+      ...base,
+      ...d,
+      totals: { ...base.totals, ...(d.totals || {}) },
+      clothes: { owned: [...new Set([...base.clothes.owned, ...((d.clothes && d.clothes.owned) || [])])], equipped: { ...base.clothes.equipped, ...((d.clothes && d.clothes.equipped) || {}) } },
+    };
   } catch {
     return defaults();
   }

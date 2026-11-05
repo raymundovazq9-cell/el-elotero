@@ -66,5 +66,6 @@ if (DEBUG.reset) Save.reset();
 if (DEBUG.bank !== null) Save.addBank(DEBUG.bank - Save.bank);
 if (DEBUG.level) Save.select('level', DEBUG.level);
 if (DEBUG.cart) Save.select('cart', DEBUG.cart);
+for (const [tipo, id] of Object.entries(DEBUG.wear)) Save.equip(tipo, id);
 
 new Phaser.Game(config);

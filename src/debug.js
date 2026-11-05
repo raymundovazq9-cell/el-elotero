@@ -10,6 +10,13 @@ export const DEBUG = {
   reset: params.has('reset'),
   // escenario a cargar directo en pruebas (?level=feria)
   level: params.get('level'),
+  // ropa a equipar en pruebas (?wear=sombrero:lucha,mandil:rojo)
+  wear: Object.fromEntries(
+    (params.get('wear') || '')
+      .split(',')
+      .filter(Boolean)
+      .map((kv) => kv.split(':'))
+  ),
   // carrito a usar en pruebas (?cart=motocarro)
   cart: params.get('cart'),
   // niveles de mejora para pruebas (?up=piernas:3,canasta:6)

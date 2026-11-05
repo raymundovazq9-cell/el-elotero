@@ -7,6 +7,7 @@ import { CARTS, cartById } from '../data/carts.js';
 import { LEVELS, levelById } from '../data/levels.js';
 import { UPGRADES, MAX_LEVEL, upgradePrice, applyUpgrades } from '../data/upgrades.js';
 import { buildCartPreview } from '../views/CartPreview.js';
+import { CLOTHES_TYPES, clothesOf, clothKey } from '../data/clothes.js';
 import { makeButton, makeIconButton, makePanel, iconMusic } from '../ui/widgets.js';
 import { setMuted, isMuted, Sfx, unlockAudio } from '../audio.js';
 import { Music } from '../music.js';
@@ -15,6 +16,7 @@ import { DEBUG } from '../debug.js';
 const TABS = [
   { id: 'carrito', label: 'CARRITO' },
   { id: 'mejoras', label: 'MEJORAS' },
+  { id: 'ropa', label: 'ROPA' },
   { id: 'lugar', label: 'LUGAR' },
 ];
 
@@ -55,8 +57,8 @@ export default class GarageScene extends Phaser.Scene {
     // pestañas
     this.tabButtons = {};
     TABS.forEach((t, i) => {
-      const x = PANEL_X + 90 + i * 180;
-      this.tabButtons[t.id] = makeButton(this, x, 108, 170, 48, COLORS.naranja, t.label, () => this.setTab(t.id), { fontSize: 24 });
+      const x = PANEL_X + 70 + i * 135;
+      this.tabButtons[t.id] = makeButton(this, x, 108, 128, 48, COLORS.naranja, t.label, () => this.setTab(t.id), { fontSize: 21 });
     });
     makePanel(this, PANEL_X + PANEL_W / 2, 306, PANEL_W, 326, 0x000000, 0.35, 22);
 
@@ -121,7 +123,48 @@ export default class GarageScene extends Phaser.Scene {
     this.clearContent();
     if (this.tab === 'carrito') this.renderCarts();
     else if (this.tab === 'mejoras') this.renderUpgrades();
+    else if (this.tab === 'ropa') this.renderClothes();
     else if (this.tab === 'lugar') this.renderLevels();
+  }
+
+  /** Tres columnas (sombreros, mandiles, playeras) con una ficha por prenda. */
+  renderClothes() {
+    const colW = (PANEL_W - 30) / 3;
+    CLOTHES_TYPES.forEach((t, col) => {
+      const cx = PANEL_X + 15 + colW * (col + 0.5);
+      this.content.push(this.add.text(cx, ROWS_Y - 14, t.nombre, textStyle(22, COLORS.amarilloHex)).setOrigin(0.5));
+      clothesOf(t.id).forEach((c, i) => {
+        const key = clothKey(c.tipo, c.id);
+        const owned = Save.owns('clothes', key);
+        const equipped = Save.data.clothes.equipped[c.tipo] === c.id;
+        const y = ROWS_Y + 28 + i * 50;
+        let color = COLORS.naranja;
+        let label = `${c.nombre.replace(/^(Sombrero de |Mandil |Playera |Camisa de |Máscara de )/, '')}  ·  ${c.precio}`;
+        let onClick = () => this.tryBuy(c.precio, () => {
+          Save.own('clothes', key);
+          Save.equip(c.tipo, c.id);
+        });
+        let disabled = Save.bank < c.precio;
+        if (equipped) {
+          color = COLORS.verde;
+          label = `${c.nombre.replace(/^(Sombrero de |Mandil |Playera |Camisa de |Máscara de )/, '')}  ✓`;
+          disabled = true;
+        } else if (owned) {
+          color = COLORS.azul;
+          label = c.nombre.replace(/^(Sombrero de |Mandil |Playera |Camisa de |Máscara de )/, '');
+          onClick = () => {
+            Save.equip(c.tipo, c.id);
+            Sfx.clac();
+            this.refresh();
+          };
+          disabled = false;
+        }
+        const b = makeButton(this, cx, y, colW - 14, 42, color, label, onClick, { fontSize: 17 });
+        if (disabled) b.setEnabled(false);
+        if (equipped) b.setAlpha(1);
+        this.content.push(b);
+      });
+    });
   }
 
   /** Fila genérica: título, descripción y un botón a la derecha. */

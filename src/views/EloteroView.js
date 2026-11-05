@@ -1,5 +1,7 @@
 import { svgImage } from '../assets.js';
 import Phaser from 'phaser';
+import { buildEloteroTorso } from './EloteroTorso.js';
+import { Save } from '../save.js';
 
 const STRIDE_PX = 90; // avance por zancada
 const LEG_LEN = 44; // largo de la pierna en px (origen en la cadera)
@@ -25,7 +27,7 @@ export default class EloteroView {
 
     this.legBack = svgImage(scene, 0, 0, 'elotero-pierna').setOrigin(8 / 20, 2 / 46).setTint(0xbdbdbd);
     this.legFront = svgImage(scene, 0, 0, 'elotero-pierna').setOrigin(8 / 20, 2 / 46);
-    this.torso = svgImage(scene, 0, 0, 'elotero-torso').setOrigin(40 / 80, 86 / 100);
+    this.torso = buildEloteroTorso(scene, Save.data.clothes.equipped);
     if (pose.modo === 'manejando') {
       this.legBack.setVisible(false);
       this.legFront.setVisible(false);
