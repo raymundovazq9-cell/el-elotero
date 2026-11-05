@@ -153,10 +153,11 @@ export default class EloteManager {
       const far = dx * dx + dy * dy > ELOTES.lostDistance * ELOTES.lostDistance;
       const below = e.position.y > c.y + 260;
       if (far || below) {
+        const pos = { x: e.position.x, y: e.position.y };
         this.elotes.splice(i, 1);
         this.scene.matter.world.remove(e);
         this.lost++;
-        this.scene.events.emit('elote-lost', this.count);
+        this.scene.events.emit('elote-lost', this.count, pos);
       }
     }
   }

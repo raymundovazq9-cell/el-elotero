@@ -12,6 +12,7 @@ import CartView from '../views/CartView.js';
 import RoadView from '../views/RoadView.js';
 import Scenery from '../world/Scenery.js';
 import SkyCycle from '../world/SkyCycle.js';
+import Particles from '../world/Particles.js';
 import EloteView from '../views/EloteView.js';
 
 export default class GameScene extends Phaser.Scene {
@@ -39,6 +40,7 @@ export default class GameScene extends Phaser.Scene {
     this.obstacles = new Obstacles(this, this.cart, this.road, this.elotes);
     this.cartView = new CartView(this, this.cart);
     this.eloteView = new EloteView(this, this.elotes);
+    this.particles = new Particles(this, this.cart);
     this.bonus = 0;
     this.airTime = 0;
     this.over = false;
@@ -89,6 +91,7 @@ export default class GameScene extends Phaser.Scene {
       this.eloteView.destroy();
       this.scenery.destroy();
       this.sky.destroy();
+      this.particles.destroy();
     });
 
     this.scene.launch('UI');
@@ -160,6 +163,7 @@ export default class GameScene extends Phaser.Scene {
     this.setBraking(false);
     this.events.emit('gameover', reason);
     if (DEBUG.test) console.log(`[test] GAMEOVER reason=${reason} ${JSON.stringify(this.getStats())}`);
+    this.cameras.main.shake(300, 0.012);
     this.time.delayedCall(700, () => {
       this.scene.launch('GameOver', this.final);
     });
@@ -174,7 +178,7 @@ export default class GameScene extends Phaser.Scene {
         this.nextLog = (this.nextLog || 0) + 1000;
         const c = this.cart;
         console.log(
-          `[test] t=${Math.round(this.testClock)} x=${c.x.toFixed(0)} y=${c.y.toFixed(0)} vx=${c.speedX.toFixed(2)} ang=${c.angleDeg.toFixed(1)} brake=${this.braking} perros=${this.obstacles.hits} lost=${this.elotes.lost} picked=${this.elotes.picked} stats=${JSON.stringify(this.getStats())}`
+          `[test] t=${Math.round(this.testClock)} x=${c.x.toFixed(0)} y=${c.y.toFixed(0)} vx=${c.speedX.toFixed(2)} ang=${c.angleDeg.toFixed(1)} brake=${this.braking} perros=${this.obstacles.hits} lost=${this.elotes.lost} picked=${this.elotes.picked} objs=${this.children.length} bodies=${this.matter.world.getAllBodies().length} stats=${JSON.stringify(this.getStats())}`
         );
       }
     }
@@ -199,6 +203,7 @@ export default class GameScene extends Phaser.Scene {
     this.updateAir(delta);
     this.cartView.sync(delta);
     this.eloteView.sync();
+    this.particles.update();
     this.cart.endStep();
 
     if (!this.over) {
