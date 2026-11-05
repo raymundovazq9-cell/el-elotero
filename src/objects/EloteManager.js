@@ -77,10 +77,12 @@ export default class EloteManager {
   onChunk(chunk) {
     const rnd = this.road.rnd;
     for (const s of chunk.spots) {
+      if (s.used) continue;
       const meters = this.road.metersAt(s.x);
       if (meters < 20) continue;
       const diff = this.scene.difficultyAt(meters);
       if (rnd.frac() > diff.eloteChance) continue;
+      s.used = true;
       const lift = 26;
       const body = this.scene.matter.add.circle(s.x - s.n.x * lift, s.y - s.n.y * lift, ELOTES.radius + 2, {
         isStatic: true,
