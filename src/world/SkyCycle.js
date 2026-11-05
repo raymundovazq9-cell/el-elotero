@@ -4,7 +4,8 @@ import { SKY_PHASES } from '../theme.js';
 import { svgImage } from '../assets.js';
 
 const CYCLE_METERS = 600;
-const HORIZON = GAME_HEIGHT * 0.4;
+const HORIZON = GAME_HEIGHT * 0.42;
+const FAR_SCALE = 0.62; // los cerros SVG se dibujaron para 540 px de ancho
 
 function lerpColor(a, b, t) {
   const ca = Phaser.Display.Color.ValueToColor(a);
@@ -75,15 +76,21 @@ export default class SkyCycle {
     }
     this.moon = scene.add.circle(GAME_WIDTH - 90, 110, 26, 0xfff6c2, 1).setScrollFactor(0).setDepth(-99).setAlpha(0);
 
-    // cerros (dos copias para el bucle; la segunda espejeada para que empalme)
+    // cerros: tantas copias como hagan falta para cubrir el ancho (alternando espejo para que empalmen)
     this.far = [];
     const mk = (key, isSvg) => {
-      const imgs = [0, 1].map((i) => {
+      const probe = isSvg ? svgImage(scene, 0, HORIZON, key) : scene.add.image(0, HORIZON, key);
+      const w = isSvg ? probe.displayWidth * FAR_SCALE : GAME_WIDTH * 2;
+      probe.destroy();
+      const n = Math.ceil(GAME_WIDTH / w) + 1;
+      const imgs = [];
+      for (let i = 0; i < n; i++) {
         const img = isSvg ? svgImage(scene, 0, HORIZON, key) : scene.add.image(0, HORIZON, key);
         img.setOrigin(0, 1).setScrollFactor(0).setDepth(-90);
-        if (i === 1) img.setFlipX(true);
-        return img;
-      });
+        if (isSvg) img.setScale(img.scaleX * FAR_SCALE);
+        if (i % 2 === 1) img.setFlipX(true);
+        imgs.push(img);
+      }
       return imgs;
     };
     if (this.useImages) {
@@ -134,8 +141,15 @@ export default class SkyCycle {
     this.night = sky.night;
 
     const w = this.farWidth;
-    const off = -((scrollX * 0.08) % (w * 2));
-    this.farDay.forEach((img, i) => img.setX(off + i * w + (off + i * w < -w ? 2 * w : 0)));
+    const n = this.farDay.length;
+    const period = w * (n % 2 === 0 ? n : n + 1);
+    let off = -((scrollX * 0.08) % period);
+    this.farDay.forEach((img, i) => {
+      let x = off + i * w;
+      while (x < -w) x += n * w;
+      while (x > GAME_WIDTH) x -= n * w;
+      img.setX(x);
+    });
     if (this.farNight) {
       this.farNight.forEach((img, i) => img.setX(this.farDay[i].x).setAlpha(Math.min(1, sky.night * 1.8)));
     }

@@ -8,6 +8,8 @@ import { svgImage } from '../assets.js';
 import SkyCycle from '../world/SkyCycle.js';
 import { makeButton, makeIconButton, drawPapelPicado, iconMusic } from '../ui/widgets.js';
 
+const STREET_Y = GAME_HEIGHT - 100; // línea de la banqueta
+
 export default class TitleScene extends Phaser.Scene {
   constructor() {
     super('Title');
@@ -21,43 +23,42 @@ export default class TitleScene extends Phaser.Scene {
     // calle de fondo
     const g = this.add.graphics().setDepth(-10);
     g.fillStyle(0xcfc5ad, 1);
-    g.fillRect(0, 700, GAME_WIDTH, 40);
+    g.fillRect(0, STREET_Y, GAME_WIDTH, 30);
     g.fillStyle(0x4a4a4a, 1);
-    g.fillRect(0, 730, GAME_WIDTH, GAME_HEIGHT - 730);
+    g.fillRect(0, STREET_Y + 30, GAME_WIDTH, GAME_HEIGHT - STREET_Y - 30);
     g.lineStyle(4, 0x2e2e2e, 1);
-    g.lineBetween(0, 730, GAME_WIDTH, 730);
+    g.lineBetween(0, STREET_Y + 30, GAME_WIDTH, STREET_Y + 30);
     g.fillStyle(0x616161, 1);
-    for (let i = 0; i < 26; i++) g.fillRoundedRect(i * 22 + ((i % 2) * 11), 740 + (i % 2) * 14, 18, 10, 3);
+    for (let i = 0; i < 46; i++) g.fillRoundedRect(i * 22 + (i % 2) * 11, STREET_Y + 40 + (i % 2) * 14, 18, 10, 3);
 
     // casas decorativas
-    const colors = [0xe4007c, 0x3a86ff, 0xf7c948, 0x2e8b57, 0xf2762e];
-    for (let i = 0; i < 5; i++) {
+    const colors = [0xe4007c, 0x3a86ff, 0xf7c948, 0x2e8b57, 0xf2762e, 0x8e44ad, 0x1abc9c, 0xe4007c, 0x3a86ff];
+    for (let i = 0; i < 9; i++) {
       const x = 60 + i * 110;
-      const h = 130 + ((i * 53) % 60);
+      const h = 110 + ((i * 53) % 60);
       g.fillStyle(colors[i], 1);
-      g.fillRect(x - 55, 700 - h, 110, h);
+      g.fillRect(x - 55, STREET_Y - h, 110, h);
       g.lineStyle(4, 0x1a1a1a, 1);
-      g.strokeRect(x - 55, 700 - h, 110, h);
+      g.strokeRect(x - 55, STREET_Y - h, 110, h);
       g.fillStyle(0x7fb3e6, 1);
-      g.fillRect(x - 30, 700 - h + 30, 24, 30);
-      g.fillRect(x + 6, 700 - h + 30, 24, 30);
+      g.fillRect(x - 30, STREET_Y - h + 26, 24, 30);
+      g.fillRect(x + 6, STREET_Y - h + 26, 24, 30);
       g.fillStyle(0x6b3e1e, 1);
-      g.fillRect(x - 14, 700 - 60, 28, 60);
+      g.fillRect(x - 14, STREET_Y - 60, 28, 60);
     }
 
-    drawPapelPicado(this, -10, 40, GAME_WIDTH + 10, 40, 14, 5);
-    drawPapelPicado(this, -10, 110, GAME_WIDTH + 10, 90, 12, 5);
+    drawPapelPicado(this, -10, 14, GAME_WIDTH + 10, 14, 22, 5);
 
     // logo
     const title = this.add
-      .text(cx, 250, 'EL ELOTERO', textStyle(84, COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 10 }))
+      .text(cx, 110, 'EL ELOTERO', textStyle(84, COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 10 }))
       .setOrigin(0.5)
-      .setRotation(-0.05);
-    this.add.text(cx, 320, 'Baja la calle sin tirar los elotes', textStyle(26, COLORS.blanco)).setOrigin(0.5);
+      .setRotation(-0.04);
+    this.add.text(cx, 178, 'Sube y baja las colinas del barrio sin tirar los elotes', textStyle(24, COLORS.blanco)).setOrigin(0.5);
     this.tweens.add({ targets: title, scale: 1.04, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
     // elotero con carrito
-    const cart = this.add.container(cx + 40, 668);
+    const cart = this.add.container(cx + 260, STREET_Y - 2);
     const carrito = svgImage(this, 0, 0, 'carrito').setOrigin(80 / 160, 67 / 100);
     const w1 = svgImage(this, -44, 26, 'rueda');
     const w2 = svgImage(this, 44, 26, 'rueda');
@@ -71,29 +72,25 @@ export default class TitleScene extends Phaser.Scene {
     const torso = svgImage(this, -98, 2, 'elotero-torso').setOrigin(40 / 80, 86 / 100).setRotation(-0.22);
     cart.add([legB, torso, legF, carrito, w1, w2, ...elotes]);
     this.tweens.add({ targets: [w1, w2], rotation: Math.PI * 2, duration: 1400, repeat: -1 });
-    this.tweens.add({ targets: cart, y: 664, duration: 260, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    this.tweens.add({ targets: cart, y: STREET_Y - 6, duration: 260, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
     // botones
     const best = loadBest();
     this.add
-      .text(cx, 392, best > 0 ? `Récord: ${best}` : 'Sin récord todavía', textStyle(28, COLORS.cremaHex))
+      .text(cx, 222, best > 0 ? `Récord: ${best}` : 'Sin récord todavía', textStyle(26, COLORS.cremaHex))
       .setOrigin(0.5);
 
-    makeButton(this, cx, 480, 300, 96, COLORS.verde, 'JUGAR', () => this.play(), { fontSize: 44 });
+    makeButton(this, cx, 300, 300, 90, COLORS.verde, 'JUGAR', () => this.play(), { fontSize: 44 });
 
-    this.musicBtn = makeIconButton(this, GAME_WIDTH - 60, 480, 32, COLORS.amarillo, iconMusic(isMuted()), () => {
-      setMuted(!isMuted());
-      this.musicBtn.destroyAll();
-      this.musicBtn = makeIconButton(this, GAME_WIDTH - 60, 480, 32, COLORS.amarillo, iconMusic(isMuted()), () => this.toggleMusic());
-    });
     this.toggleMusic = () => {
       setMuted(!isMuted());
       this.musicBtn.destroyAll();
-      this.musicBtn = makeIconButton(this, GAME_WIDTH - 60, 480, 32, COLORS.amarillo, iconMusic(isMuted()), () => this.toggleMusic());
+      this.musicBtn = makeIconButton(this, GAME_WIDTH - 56, 56, 30, COLORS.amarillo, iconMusic(isMuted()), () => this.toggleMusic());
     };
+    this.musicBtn = makeIconButton(this, GAME_WIDTH - 56, 56, 30, COLORS.amarillo, iconMusic(isMuted()), () => this.toggleMusic());
 
     this.add
-      .text(cx, 560, 'FRENO a la izquierda  ·  ACELERAR a la derecha', textStyle(18, COLORS.cremaHex))
+      .text(cx, 372, 'FRENO a la izquierda  ·  ACELERAR a la derecha', textStyle(18, COLORS.cremaHex))
       .setOrigin(0.5);
 
     this.input.once('pointerdown', () => {

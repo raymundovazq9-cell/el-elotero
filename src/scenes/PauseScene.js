@@ -11,17 +11,17 @@ export default class PauseScene extends Phaser.Scene {
 
   create() {
     const cx = GAME_WIDTH / 2;
-    const cy = GAME_HEIGHT / 2 - 40;
+    const cy = GAME_HEIGHT / 2;
     this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0.55);
-    makeCard(this, cx, cy, 400, 440);
-    this.add.text(cx, cy - 160, 'PAUSA', textStyle(56, COLORS.rosaHex, { fontStyle: '700' })).setOrigin(0.5);
+    makeCard(this, cx, cy, 420, 420);
+    this.add.text(cx, cy - 150, 'PAUSA', textStyle(56, COLORS.rosaHex, { fontStyle: '700' })).setOrigin(0.5);
 
-    makeButton(this, cx, cy - 60, 300, 80, COLORS.verde, 'CONTINUAR', () => this.resume());
-    makeButton(this, cx, cy + 40, 300, 80, COLORS.naranja, 'REINICIAR', () => this.restart());
-    makeButton(this, cx, cy + 140, 300, 80, COLORS.azul, 'MENÚ', () => this.menu());
+    makeButton(this, cx, cy - 60, 300, 76, COLORS.verde, 'CONTINUAR', () => this.resume());
+    makeButton(this, cx, cy + 36, 300, 76, COLORS.naranja, 'REINICIAR', () => this.restart());
+    makeButton(this, cx, cy + 132, 300, 76, COLORS.azul, 'MENÚ', () => this.menu());
 
     const mk = () =>
-      makeIconButton(this, cx + 150, cy - 160, 28, COLORS.amarillo, iconMusic(isMuted()), () => {
+      makeIconButton(this, cx + 160, cy - 150, 28, COLORS.amarillo, iconMusic(isMuted()), () => {
         setMuted(!isMuted());
         this.musicBtn.destroyAll();
         this.musicBtn = mk();

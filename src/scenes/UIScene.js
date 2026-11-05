@@ -13,21 +13,21 @@ export default class UIScene extends Phaser.Scene {
     this.game_ = this.scene.get('Game');
     const cx = GAME_WIDTH / 2;
 
-    // paneles superiores
-    makePanel(this, 110, 44, 190, 56, 0x000000, 0.4);
-    this.metersText = this.add.text(110, 44, '0 m', textStyle(30)).setOrigin(0.5);
-    makePanel(this, GAME_WIDTH - 110, 44, 190, 56, 0x000000, 0.4);
-    svgImage(this, GAME_WIDTH - 170, 44, 'elote').setScale(0.6);
-    this.elotesText = this.add.text(GAME_WIDTH - 98, 44, '0', textStyle(30)).setOrigin(0.5);
-    makePanel(this, cx, 104, 220, 52, 0x000000, 0.4);
-    this.scoreText = this.add.text(cx, 104, '0', textStyle(32, COLORS.amarilloHex)).setOrigin(0.5);
+    // paneles superiores: metros (izq.), elotes sueltos (centro), puntaje (der.)
+    makePanel(this, 120, 40, 200, 52, 0x000000, 0.4);
+    this.metersText = this.add.text(120, 40, '0 m', textStyle(30)).setOrigin(0.5);
+    makePanel(this, cx, 40, 170, 52, 0x000000, 0.4);
+    svgImage(this, cx - 48, 40, 'elote').setScale(0.6);
+    this.elotesText = this.add.text(cx + 16, 40, '0', textStyle(30)).setOrigin(0.5);
+    makePanel(this, GAME_WIDTH - 220, 40, 230, 52, 0x000000, 0.4);
+    this.scoreText = this.add.text(GAME_WIDTH - 220, 40, '0', textStyle(32, COLORS.amarilloHex)).setOrigin(0.5);
 
-    this.pauseBtn = makeIconButton(this, GAME_WIDTH - 44, 150, 26, COLORS.crema, iconPause, () => this.pause());
+    this.pauseBtn = makeIconButton(this, GAME_WIDTH - 50, 40, 26, COLORS.crema, iconPause, () => this.pause());
 
-    // pedales
+    // pedales en las esquinas inferiores
     this.pedals = {
-      brake: this.makePedal(118, GAME_HEIGHT - 105, 0xd62828, 'FRENO'),
-      gas: this.makePedal(GAME_WIDTH - 118, GAME_HEIGHT - 105, 0x2e8b57, 'ACELERAR'),
+      brake: this.makePedal(112, GAME_HEIGHT - 78, 0xd62828, 'FRENO'),
+      gas: this.makePedal(GAME_WIDTH - 112, GAME_HEIGHT - 78, 0x2e8b57, 'ACELERAR'),
     };
     this.input.on('pointerup', (p) => this.releasePointer(p.id));
     this.input.on('pointerupoutside', (p) => this.releasePointer(p.id));
@@ -35,7 +35,7 @@ export default class UIScene extends Phaser.Scene {
     this.events.once('shutdown', () => this.game.events.off('blur', this.releaseAll, this));
 
     this.hint = this.add
-      .text(cx, GAME_HEIGHT - 215, 'Izquierda frena · Derecha acelera', textStyle(22, COLORS.cremaHex))
+      .text(cx, GAME_HEIGHT - 36, 'Izquierda frena · Derecha acelera', textStyle(22, COLORS.cremaHex))
       .setOrigin(0.5);
     this.time.delayedCall(4000, () => this.tweens.add({ targets: this.hint, alpha: 0, duration: 400 }));
 
@@ -66,8 +66,8 @@ export default class UIScene extends Phaser.Scene {
 
   /** Pedal grande con seguimiento del pointer que lo pisó (multitouch). */
   makePedal(x, y, color, text) {
-    const w = 210;
-    const h = 130;
+    const w = 190;
+    const h = 118;
     const g = this.add.graphics();
     const paint = (down) => {
       g.clear();
@@ -88,7 +88,7 @@ export default class UIScene extends Phaser.Scene {
       for (let i = -2; i <= 2; i++) g.fillRoundedRect(i * 30 - 10, 14, 20, 30, 6);
     };
     paint(false);
-    const label = this.add.text(0, -24, text, textStyle(30)).setOrigin(0.5);
+    const label = this.add.text(0, -22, text, textStyle(28)).setOrigin(0.5);
     const container = this.add.container(x, y, [g, label]);
     const zone = this.add.zone(x, y, w + 40, h + 70).setInteractive();
     const pedal = { container, label, zone, pointerId: null, down: false, paint };
@@ -137,7 +137,7 @@ export default class UIScene extends Phaser.Scene {
   showFloat(msg, color = '#ffffff') {
     this.floats = this.floats.filter((f) => f.active);
     const slot = this.floats.length;
-    const y = GAME_HEIGHT * 0.3 + slot * 44;
+    const y = GAME_HEIGHT * 0.28 + slot * 40;
     const t = this.add.text(GAME_WIDTH / 2, y, msg, textStyle(34, color)).setOrigin(0.5).setAlpha(0);
     this.floats.push(t);
     this.tweens.add({

@@ -34,31 +34,31 @@ export default class GameOverScene extends Phaser.Scene {
     if (isRecord) saveBest(score);
 
     const cx = GAME_WIDTH / 2;
-    const cy = GAME_HEIGHT / 2 - 30;
+    const cy = GAME_HEIGHT / 2;
     const overlay = this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0).setDepth(0);
     this.tweens.add({ targets: overlay, fillAlpha: 0.55, duration: 400 });
 
     const card = this.add.container(cx, cy).setScale(0.6).setAlpha(0);
-    const cardBg = makeCard(this, 0, 0, 440, 560);
+    const cardBg = makeCard(this, 0, 0, 600, 440);
     const title = this.add
-      .text(0, -220, reason === 'volcadura' ? '¡SE VOLTEÓ!' : '¡SIN ELOTES!', textStyle(50, COLORS.rosaHex, { fontStyle: '700' }))
+      .text(0, -170, reason === 'volcadura' ? '¡SE VOLTEÓ!' : '¡SIN ELOTES!', textStyle(50, COLORS.rosaHex, { fontStyle: '700' }))
       .setOrigin(0.5);
-    const line1 = this.add.text(-30, -140, `${meters} m  ×  ${elotes}`, textStyle(36, COLORS.negro, { stroke: COLORS.cremaHex })).setOrigin(0.5);
-    const icon = svgImage(this, 70, -140, 'elote').setScale(0.7);
+    const line1 = this.add.text(-30, -108, `${meters} m  ×  ${elotes}`, textStyle(36, COLORS.negro, { stroke: COLORS.cremaHex })).setOrigin(0.5);
+    const icon = svgImage(this, 70, -108, 'elote').setScale(0.7);
     const bonusText = this.add
-      .text(0, -95, bonus > 0 ? `+ ${bonus} de aire` : ' ', textStyle(26, COLORS.azulHex, { stroke: COLORS.cremaHex }))
+      .text(0, -68, bonus > 0 ? `+ ${bonus} de aire` : ' ', textStyle(26, COLORS.azulHex, { stroke: COLORS.cremaHex }))
       .setOrigin(0.5);
-    const scoreText = this.add.text(0, -20, `${score}`, textStyle(86, COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 10 })).setOrigin(0.5);
+    const scoreText = this.add.text(0, -4, `${score}`, textStyle(76, COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 10 })).setOrigin(0.5);
     const recordText = this.add
-      .text(0, 50, isRecord ? '¡NUEVO RÉCORD!' : `Récord: ${best}`, textStyle(30, isRecord ? COLORS.verdeHex : COLORS.negro, { stroke: COLORS.cremaHex }))
+      .text(0, 58, isRecord ? '¡NUEVO RÉCORD!' : `Récord: ${best}`, textStyle(30, isRecord ? COLORS.verdeHex : COLORS.negro, { stroke: COLORS.cremaHex }))
       .setOrigin(0.5);
     card.add([cardBg, title, line1, icon, bonusText, scoreText, recordText]);
     this.tweens.add({ targets: card, scale: 1, alpha: 1, duration: 350, ease: 'Back.easeOut', delay: 150 });
     if (isRecord) this.tweens.add({ targets: recordText, scale: 1.1, duration: 400, yoyo: true, repeat: -1 });
 
     this.time.delayedCall(700, () => {
-      this.again = makeButton(this, cx, cy + 140, 320, 84, COLORS.verde, 'OTRA VEZ', () => this.restart(), { fontSize: 38 });
-      this.menuBtn = makeButton(this, cx, cy + 235, 320, 70, COLORS.azul, 'MENÚ', () => this.menu());
+      this.again = makeButton(this, cx + 130, cy + 150, 250, 76, COLORS.verde, 'OTRA VEZ', () => this.restart(), { fontSize: 36 });
+      this.menuBtn = makeButton(this, cx - 130, cy + 150, 250, 76, COLORS.azul, 'MENÚ', () => this.menu());
     });
   }
 

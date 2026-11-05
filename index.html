@@ -37,10 +37,41 @@
         display: block;
         touch-action: none;
       }
+      /* aviso para girar el celular: el juego es horizontal */
+      #rotate {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        background: #1b2a49;
+        color: #fff4d6;
+        font-family: Fredoka, Arial, sans-serif;
+        font-size: 28px;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+      }
+      #rotate .phone {
+        width: 54px;
+        height: 96px;
+        border: 5px solid #f7c948;
+        border-radius: 12px;
+        animation: girar 1.6s ease-in-out infinite;
+      }
+      @keyframes girar {
+        0%, 20% { transform: rotate(0deg); }
+        60%, 100% { transform: rotate(-90deg); }
+      }
+      @media (orientation: portrait) and (pointer: coarse) {
+        #rotate { display: flex; }
+      }
     </style>
   </head>
   <body>
     <div id="game"></div>
+    <div id="rotate"><div class="phone"></div>Gira tu celular</div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

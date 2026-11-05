@@ -1,7 +1,7 @@
 // Constantes de balance del juego. Todo lo que se "tunea" vive aquí.
 
-export const GAME_WIDTH = 540;
-export const GAME_HEIGHT = 960;
+export const GAME_WIDTH = 960;
+export const GAME_HEIGHT = 540;
 
 export const PX_PER_METER = 50;
 

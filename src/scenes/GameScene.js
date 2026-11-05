@@ -98,7 +98,7 @@ export default class GameScene extends Phaser.Scene {
 
     const cam = this.cameras.main;
     cam.scrollX = this.cart.x - GAME_WIDTH * 0.3;
-    cam.scrollY = this.cart.y - GAME_HEIGHT * 0.35;
+    cam.scrollY = this.cart.y - GAME_HEIGHT * 0.55;
   }
 
   /** Estado de los pedales (desde la UI, el teclado o el modo de prueba). */
@@ -216,7 +216,7 @@ export default class GameScene extends Phaser.Scene {
     this.sky.update(DEBUG.skyMeters ?? this.meters, cam.scrollX, time);
     this.scenery.setNight(this.sky.night);
     const targetX = this.cart.x - GAME_WIDTH * 0.3;
-    const targetY = this.cart.y - GAME_HEIGHT * 0.35;
+    const targetY = this.cart.y - GAME_HEIGHT * 0.55;
     cam.scrollX = Phaser.Math.Linear(cam.scrollX, targetX, 0.15);
     cam.scrollY = Phaser.Math.Linear(cam.scrollY, targetY, 0.12);
   }
