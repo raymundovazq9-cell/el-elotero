@@ -3,8 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 import { COLORS, textStyle } from '../theme.js';
 import { makeButton, makeCard } from '../ui/widgets.js';
 import { svgImage } from '../assets.js';
-
-export const BEST_KEY = 'elotero.best';
+import { levelById } from '../data/levels.js';
 
 const TITLES = {
   volcadura: '¡SE VOLTEÓ!',
@@ -12,21 +11,13 @@ const TITLES = {
   cansado: '¡SE CANSÓ!',
 };
 
-export function loadBest() {
-  try {
-    return Number(localStorage.getItem(BEST_KEY) || 0);
-  } catch {
-    return 0;
-  }
-}
-
-export function saveBest(score) {
-  try {
-    localStorage.setItem(BEST_KEY, String(score));
-  } catch {
-    /* sin almacenamiento */
-  }
-}
+const LINES = [
+  ['recogidos', 'Elotes recogidos'],
+  ['metros', 'Bono por metros'],
+  ['marometas', 'Marometas'],
+  ['aire', 'Tiempo en el aire'],
+  ['ventas', 'Ventas a clientes'],
+];
 
 export default class GameOverScene extends Phaser.Scene {
   constructor() {
@@ -34,37 +25,53 @@ export default class GameOverScene extends Phaser.Scene {
   }
 
   create(data) {
-    const { meters = 0, elotes = 0, score = 0, bonus = 0, reason = '' } = data || {};
-    const best = loadBest();
-    const isRecord = score > best;
-    if (isRecord) saveBest(score);
+    const { meters = 0, earned = {}, total = 0, reason = '', isRecord = false, best = 0, bank = 0, level = 'callejon' } = data || {};
+    const dark = textStyle(24, COLORS.negro, { stroke: COLORS.cremaHex, strokeThickness: 2 });
 
     const cx = GAME_WIDTH / 2;
     const cy = GAME_HEIGHT / 2;
-    const overlay = this.add.rectangle(cx, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0).setDepth(0);
+    const overlay = this.add.rectangle(cx, cy, GAME_WIDTH, GAME_HEIGHT, 0x000000, 0).setDepth(0);
     this.tweens.add({ targets: overlay, fillAlpha: 0.55, duration: 400 });
 
     const card = this.add.container(cx, cy).setScale(0.6).setAlpha(0);
-    const cardBg = makeCard(this, 0, 0, 600, 440);
-    const title = this.add
-      .text(0, -170, TITLES[reason] || '¡SIN ELOTES!', textStyle(50, COLORS.rosaHex, { fontStyle: '700' }))
-      .setOrigin(0.5);
-    const line1 = this.add.text(-30, -108, `${meters} m  ×  ${elotes}`, textStyle(36, COLORS.negro, { stroke: COLORS.cremaHex })).setOrigin(0.5);
-    const icon = svgImage(this, 70, -108, 'elote').setScale(0.7);
-    const bonusText = this.add
-      .text(0, -68, bonus > 0 ? `+ ${bonus} de aire` : ' ', textStyle(26, COLORS.azulHex, { stroke: COLORS.cremaHex }))
-      .setOrigin(0.5);
-    const scoreText = this.add.text(0, -4, `${score}`, textStyle(76, COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 10 })).setOrigin(0.5);
+    const items = [makeCard(this, 0, 0, 720, 460)];
+    items.push(this.add.text(0, -190, TITLES[reason] || TITLES['sin-elotes'], textStyle(48, COLORS.rosaHex, { fontStyle: '700' })).setOrigin(0.5));
+
+    // columna izquierda: metros y récord
+    items.push(this.add.text(-180, -120, `${meters} m`, textStyle(64, COLORS.azulHex, { fontStyle: '700', stroke: COLORS.cremaHex, strokeThickness: 3 })).setOrigin(0.5));
+    items.push(this.add.text(-180, -72, levelById(level).nombre, dark).setOrigin(0.5));
     const recordText = this.add
-      .text(0, 58, isRecord ? '¡NUEVO RÉCORD!' : `Récord: ${best}`, textStyle(30, isRecord ? COLORS.verdeHex : COLORS.negro, { stroke: COLORS.cremaHex }))
+      .text(-180, -30, isRecord ? '¡NUEVO RÉCORD!' : `Récord: ${best} m`, textStyle(26, isRecord ? COLORS.verdeHex : COLORS.negro, { stroke: COLORS.cremaHex, strokeThickness: 2 }))
       .setOrigin(0.5);
-    card.add([cardBg, title, line1, icon, bonusText, scoreText, recordText]);
+    items.push(recordText);
+
+    // columna derecha: desglose de elotes ganados
+    let y = -135;
+    for (const [key, label] of LINES) {
+      const v = earned[key] || 0;
+      if (!v) continue;
+      items.push(this.add.text(40, y, label, dark).setOrigin(0, 0.5));
+      items.push(this.add.text(330, y, `+${v}`, textStyle(24, COLORS.verdeHex, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(1, 0.5));
+      y += 34;
+    }
+    if (y === -135) {
+      items.push(this.add.text(185, y, 'Esta vez no ganaste elotes', dark).setOrigin(0.5));
+      y += 34;
+    }
+    items.push(this.add.text(40, y + 14, 'Ganaste', textStyle(30, COLORS.negro, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(0, 0.5));
+    items.push(this.add.text(290, y + 14, `+${total}`, textStyle(44, COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 6 })).setOrigin(1, 0.5));
+    items.push(svgImage(this, 332, y + 14, 'elote').setScale(0.8));
+
+    items.push(this.add.text(-180, 40, `Banco: ${bank}`, textStyle(26, COLORS.negro, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(0.5));
+    items.push(svgImage(this, -180 + 80 + String(bank).length * 7, 40, 'elote').setScale(0.6));
+
+    card.add(items);
     this.tweens.add({ targets: card, scale: 1, alpha: 1, duration: 350, ease: 'Back.easeOut', delay: 150 });
     if (isRecord) this.tweens.add({ targets: recordText, scale: 1.1, duration: 400, yoyo: true, repeat: -1 });
 
     this.time.delayedCall(700, () => {
-      this.again = makeButton(this, cx + 130, cy + 150, 250, 76, COLORS.verde, 'OTRA VEZ', () => this.restart(), { fontSize: 36 });
-      this.menuBtn = makeButton(this, cx - 130, cy + 150, 250, 76, COLORS.azul, 'MENÚ', () => this.menu());
+      this.again = makeButton(this, cx + 150, cy + 160, 260, 76, COLORS.verde, 'OTRA VEZ', () => this.restart(), { fontSize: 36 });
+      this.shopBtn = makeButton(this, cx - 150, cy + 160, 260, 76, COLORS.naranja, 'TIENDA', () => this.shop(), { fontSize: 36 });
     });
   }
 
@@ -74,10 +81,10 @@ export default class GameOverScene extends Phaser.Scene {
     this.scene.start('Game');
   }
 
-  menu() {
+  shop() {
     this.scene.stop('UI');
     this.scene.stop('GameOver');
     this.scene.stop('Game');
-    this.scene.start('Title');
+    this.scene.start(this.scene.manager.keys.Garage ? 'Garage' : 'Title');
   }
 }

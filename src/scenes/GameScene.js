@@ -4,12 +4,14 @@ import Terrain from '../objects/Terrain.js';
 import { levelById } from '../data/levels.js';
 import Cart from '../objects/Cart.js';
 import Stall from '../objects/Stall.js';
+import Tricks from '../objects/Tricks.js';
 import EloteManager from '../objects/EloteManager.js';
 import Obstacles from '../objects/Obstacles.js';
 import { difficultyAt } from '../objects/Difficulty.js';
 import { DEBUG, isBrakeScripted, isGasScripted } from '../debug.js';
 import { Sfx, vibrate, unlockAudio } from '../audio.js';
 import { Music } from '../music.js';
+import { Save } from '../save.js';
 import CartView from '../views/CartView.js';
 import RoadView from '../views/RoadView.js';
 import Scenery from '../world/Scenery.js';
@@ -23,7 +25,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   create(data) {
-    this.level = levelById(data && data.level);
+    this.level = levelById((data && data.level) || Save.data.level);
     this.cameras.main.setBackgroundColor('#87b7e0');
     this.cameras.main.fadeIn(300);
     this.sky = new SkyCycle(this, { farDay: 'fondo-tarde', farNight: 'fondo-noche' });
@@ -41,14 +43,21 @@ export default class GameScene extends Phaser.Scene {
 
     this.cart = new Cart(this, this.startX, this.road.surfaceYAt(this.startX) - 60);
     this.stall = new Stall(this, this.cart);
+    this.tricks = new Tricks(this, this.cart);
     this.elotes = new EloteManager(this, this.cart, this.road);
     this.obstacles = new Obstacles(this, this.cart, this.road, this.elotes);
     this.cartView = new CartView(this, this.cart);
     this.eloteView = new EloteView(this, this.elotes);
     this.particles = new Particles(this, this.cart);
-    this.bonus = 0;
-    this.airTime = 0;
+
+    // ganancias de la partida (elotes al banco), por concepto
+    this.earned = { recogidos: 0, metros: 0, marometas: 0, aire: 0, ventas: 0 };
+    this.nextCheckpoint = SCORE.checkpointMeters;
+    this.checkpoints = 0;
+    this.flips = 0;
+    this.sales = 0;
     this.over = false;
+    this.banked = false;
 
     this.events.on('bump', () => {
       Sfx.golpe();
@@ -58,10 +67,25 @@ export default class GameScene extends Phaser.Scene {
       Sfx.eloteCaido();
       vibrate(45);
     });
-    this.events.on('elote-picked', () => Sfx.eloteRecogido());
-    this.events.on('landed', () => {
+    this.events.on('elote-picked', () => {
+      this.earned.recogidos += 1;
+      Sfx.eloteRecogido();
+    });
+    this.events.on('landed', (gained) => {
+      this.earned.aire += gained;
       Sfx.aterrizaje();
       vibrate(30);
+    });
+    this.events.on('marometa', (flips, bonus) => {
+      this.flips += flips;
+      this.earned.marometas += bonus;
+      Sfx.silbato();
+      vibrate([40, 30, 40]);
+    });
+    this.events.on('venta', (value) => {
+      this.sales += 1;
+      this.earned.ventas += value;
+      Sfx.eloteRecogido();
     });
     this.events.on('perro-hit', () => {
       Sfx.perro();
@@ -78,7 +102,6 @@ export default class GameScene extends Phaser.Scene {
     this.time.delayedCall(400, () => Sfx.silbato());
     this.events.on('pause', () => Music.stop());
     this.events.on('resume', () => Music.start());
-    this.events.once('shutdown', () => Music.stop());
     this.clacDist = 0;
 
     this.braking = false;
@@ -90,6 +113,8 @@ export default class GameScene extends Phaser.Scene {
     const onBlur = () => this.setPedals(false, false);
     this.game.events.on('blur', onBlur);
     this.events.once('shutdown', () => {
+      Music.stop();
+      this.bankRun();
       this.game.events.off('blur', onBlur);
       this.elotes.destroy();
       this.cart.destroy();
@@ -134,42 +159,56 @@ export default class GameScene extends Phaser.Scene {
     return Math.max(0, Math.floor((this.cart.x - this.startX) / PX_PER_METER));
   }
 
-  get score() {
-    return this.meters * this.elotes.count + this.bonus;
+  get earnedTotal() {
+    const e = this.earned;
+    return e.recogidos + e.metros + e.marometas + e.aire + e.ventas;
   }
 
   getStats() {
     return {
+      level: this.level.id,
       meters: this.meters,
       elotes: this.elotes.count,
-      score: this.score,
-      bonus: this.bonus,
+      earned: { ...this.earned },
+      total: this.earnedTotal,
+      flips: this.flips,
+      sales: this.sales,
       braking: this.braking,
       gas: this.pedals.gas,
-      airborne: this.airTime >= SCORE.airMinMs,
+      airborne: this.tricks.airborne,
     };
   }
 
-  updateAir(delta) {
-    if (this.cart.grounded) {
-      if (this.airTime >= SCORE.airMinMs && !this.cart.tipped) {
-        const gained = Math.round((this.airTime / 1000) * SCORE.airBonusPerSecond);
-        this.bonus += gained;
-        this.events.emit('landed', gained, this.airTime);
-      }
-      this.airTime = 0;
-    } else {
-      this.airTime += delta;
+  /** Suma lo ganado al banco y guarda el récord (una sola vez por partida). */
+  bankRun() {
+    if (this.banked) return;
+    this.banked = true;
+    const meters = this.meters;
+    Save.addBank(this.earnedTotal);
+    this.isRecord = Save.setBest(this.level.id, meters);
+    Save.addTotals({ runs: 1, meters, elotes: this.earnedTotal, marometas: this.flips, ventas: this.sales });
+  }
+
+  updateCheckpoints() {
+    const m = this.meters;
+    while (m >= this.nextCheckpoint) {
+      this.checkpoints += 1;
+      const bonus = SCORE.checkpointBase * this.checkpoints;
+      this.earned.metros += bonus;
+      this.events.emit('checkpoint', this.nextCheckpoint, bonus);
+      Sfx.eloteRecogido();
+      this.nextCheckpoint += SCORE.checkpointMeters;
     }
   }
 
   gameOver(reason) {
     if (this.over) return;
     this.over = true;
-    this.final = { ...this.getStats(), reason };
     this.setBraking(false);
+    this.bankRun();
+    this.final = { ...this.getStats(), reason, isRecord: this.isRecord, best: Save.bestFor(this.level.id), bank: Save.bank };
     this.events.emit('gameover', reason);
-    if (DEBUG.test) console.log(`[test] GAMEOVER reason=${reason} ${JSON.stringify(this.getStats())}`);
+    if (DEBUG.test) console.log(`[test] GAMEOVER reason=${reason} ${JSON.stringify(this.final)}`);
     this.cameras.main.shake(300, 0.012);
     this.time.delayedCall(700, () => {
       this.scene.launch('GameOver', this.final);
@@ -202,13 +241,16 @@ export default class GameScene extends Phaser.Scene {
     this.elotes.update();
     this.obstacles.update(delta);
     if (this.cart.grounded && !this.over) {
-      this.clacDist += this.cart.speedX;
+      this.clacDist += Math.abs(this.cart.speedX);
       if (this.clacDist > 90) {
         this.clacDist = 0;
         Sfx.clac();
       }
     }
-    this.updateAir(delta);
+    if (!this.over) {
+      this.tricks.update(delta);
+      this.updateCheckpoints();
+    }
     this.cartView.sync(delta);
     this.eloteView.sync();
     this.particles.update();
@@ -221,7 +263,7 @@ export default class GameScene extends Phaser.Scene {
 
     const cam = this.cameras.main;
     this.road.update(cam.scrollX);
-    this.sky.update(DEBUG.skyMeters ?? this.meters, cam.scrollX, time);
+    this.sky.update(DEBUG.skyMeters ?? this.meters + this.level.cielo.inicio, cam.scrollX, time);
     this.scenery.setNight(this.sky.night);
     const targetX = this.cart.x - GAME_WIDTH * 0.3;
     const targetY = this.cart.y - GAME_HEIGHT * 0.55;

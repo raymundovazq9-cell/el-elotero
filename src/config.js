@@ -60,6 +60,12 @@ export const ELOTES = {
 };
 
 export const SCORE = {
-  airBonusPerSecond: 40,
-  airMinMs: 250,
+  airMinMs: 250, // mínimo en el aire para contar como salto
+  airBonusMinMs: 700, // mínimo para dar elotes por aire
+  airBonusPerSecond: 2, // elotes por segundo en el aire
+  flipBonus: 10, // elotes por marometa
+  flipFraction: 0.85, // fracción de vuelta completa que cuenta como marometa
+  checkpointMeters: 100,
+  checkpointBase: 5, // elotes en el primer checkpoint; sube 5 en cada uno
+  saleValue: 3, // elotes por vender uno a un cliente
 };

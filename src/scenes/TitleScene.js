@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config.js';
-import { loadBest } from './GameOverScene.js';
+import { Save } from '../save.js';
 import { unlockAudio, Sfx, setMuted, isMuted } from '../audio.js';
 import { Music } from '../music.js';
 import { COLORS, textStyle } from '../theme.js';
@@ -75,10 +75,12 @@ export default class TitleScene extends Phaser.Scene {
     this.tweens.add({ targets: cart, y: STREET_Y - 6, duration: 260, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
     // botones
-    const best = loadBest();
+    const best = Save.bestFor(Save.data.level);
     this.add
-      .text(cx, 222, best > 0 ? `Récord: ${best}` : 'Sin récord todavía', textStyle(26, COLORS.cremaHex))
+      .text(cx, 222, best > 0 ? `Récord: ${best} m` : 'Sin récord todavía', textStyle(26, COLORS.cremaHex))
       .setOrigin(0.5);
+    svgImage(this, 70, 56, 'elote').setScale(0.8);
+    this.add.text(104, 56, `${Save.bank}`, textStyle(30, COLORS.amarilloHex)).setOrigin(0, 0.5);
 
     makeButton(this, cx, 300, 300, 90, COLORS.verde, 'JUGAR', () => this.play(), { fontSize: 44 });
 

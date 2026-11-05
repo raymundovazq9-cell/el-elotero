@@ -69,7 +69,7 @@ export default class Particles {
   update() {
     const rear = this.cart.wheels[0];
     this.dust.setPosition(rear.position.x - 6, rear.position.y + 12);
-    const should = this.cart.braking && this.cart.grounded && this.cart.speedX > 3.5;
+    const should = this.cart.braking && this.cart.grounded && Math.abs(this.cart.speedX) > 3.5;
     if (should && !this.dust.emitting) this.dust.start();
     if (!should && this.dust.emitting) this.dust.stop();
   }

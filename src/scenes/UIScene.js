@@ -13,14 +13,15 @@ export default class UIScene extends Phaser.Scene {
     this.game_ = this.scene.get('Game');
     const cx = GAME_WIDTH / 2;
 
-    // paneles superiores: metros (izq.), elotes sueltos (centro), puntaje (der.)
+    // paneles superiores: metros (izq.), elotes en el carrito (centro), elotes ganados (der.)
     makePanel(this, 120, 40, 200, 52, 0x000000, 0.4);
     this.metersText = this.add.text(120, 40, '0 m', textStyle(30)).setOrigin(0.5);
-    makePanel(this, cx, 40, 170, 52, 0x000000, 0.4);
-    svgImage(this, cx - 48, 40, 'elote').setScale(0.6);
+    makePanel(this, cx, 40, 190, 52, 0x000000, 0.4);
+    svgImage(this, cx - 58, 40, 'carrito').setScale(0.2);
     this.elotesText = this.add.text(cx + 16, 40, '0', textStyle(30)).setOrigin(0.5);
-    makePanel(this, GAME_WIDTH - 220, 40, 230, 52, 0x000000, 0.4);
-    this.scoreText = this.add.text(GAME_WIDTH - 220, 40, '0', textStyle(32, COLORS.amarilloHex)).setOrigin(0.5);
+    makePanel(this, GAME_WIDTH - 210, 40, 220, 52, 0x000000, 0.4);
+    svgImage(this, GAME_WIDTH - 280, 40, 'elote').setScale(0.6);
+    this.scoreText = this.add.text(GAME_WIDTH - 190, 40, '0', textStyle(32, COLORS.amarilloHex)).setOrigin(0.5);
 
     this.pauseBtn = makeIconButton(this, GAME_WIDTH - 50, 40, 26, COLORS.crema, iconPause, () => this.pause());
 
@@ -42,10 +43,14 @@ export default class UIScene extends Phaser.Scene {
     this.floats = [];
     const ev = this.game_.events;
     ev.on('elote-lost', () => this.showFloat('¡Se cayó un elote!', '#ff6b6b'));
-    ev.on('elote-picked', () => this.showFloat('¡+1 elote!', COLORS.amarilloHex));
-    ev.on('elote-full', () => this.showFloat('Carrito lleno', '#dddddd'));
+    ev.on('elote-picked', (pos) => this.showPickup(pos));
+    ev.on('elote-added', () => this.showFloat('¡Elote al carrito!', COLORS.amarilloHex));
     ev.on('perro-hit', () => this.showFloat('¡Guau! ¡Perro!', '#ff9f43'));
-    ev.on('landed', (gained) => this.showFloat(`¡Aire! +${gained}`, '#9be7ff'));
+    ev.on('landed', (gained) => this.showFloat(`¡Buen salto! +${gained}`, '#9be7ff'));
+    ev.on('marometa', (flips, bonus) => this.showFloat(flips > 1 ? `¡${flips} MAROMETAS! +${bonus}` : `¡MAROMETA! +${bonus}`, '#ff6bd6'));
+    ev.on('checkpoint', (m, bonus) => this.showFloat(`¡${m} m! +${bonus}`, COLORS.amarilloHex));
+    ev.on('venta', (value) => this.showFloat(`¡Gracias! +${value}`, '#9bffb0'));
+    ev.on('robo', (n) => this.showFloat(n > 1 ? `¡Órale! Te quitaron ${n}` : '¡Órale! Te quitaron uno', '#ff6b6b'));
     ev.on('stall-warning', () => this.showFloat('¡Se está cansando! Dale ACELERAR o reversa', '#ffb347'));
     ev.on('gameover', () => {
       this.releaseAll();
@@ -135,6 +140,15 @@ export default class UIScene extends Phaser.Scene {
     g.setPedals(g.uiBrake, g.uiGas);
   }
 
+  /** "+1" pequeño en el lugar del elote recogido (coordenadas del mundo → pantalla). */
+  showPickup(pos) {
+    const cam = this.game_.cameras.main;
+    const x = pos ? pos.x - cam.scrollX : GAME_WIDTH / 2;
+    const y = pos ? pos.y - cam.scrollY : GAME_HEIGHT / 2;
+    const t = this.add.text(x, y, '+1', textStyle(26, COLORS.amarilloHex)).setOrigin(0.5);
+    this.tweens.add({ targets: t, y: y - 40, alpha: 0, duration: 600, onComplete: () => t.destroy() });
+  }
+
   showFloat(msg, color = '#ffffff') {
     this.floats = this.floats.filter((f) => f.active);
     const slot = this.floats.length;
@@ -158,6 +172,6 @@ export default class UIScene extends Phaser.Scene {
     const s = g.over ? g.final : g.getStats();
     this.metersText.setText(`${s.meters} m`);
     this.elotesText.setText(`${s.elotes}`);
-    this.scoreText.setText(`${s.score}`);
+    this.scoreText.setText(`${s.total}`);
   }
 }

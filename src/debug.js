@@ -3,6 +3,12 @@ const params = new URLSearchParams(window.location.search);
 
 export const DEBUG = {
   test: params.has('test'),
+  // borra el progreso guardado al cargar (?reset=1)
+  reset: params.has('reset'),
+  // escenario a cargar directo en pruebas (?level=feria)
+  level: params.get('level'),
+  // banco inicial para pruebas de tienda (?bank=5000)
+  bank: params.has('bank') ? Number(params.get('bank')) : null,
   // bucle con setTimeout para capturas en navegador headless (?headless=1)
   headless: params.has('headless') || params.has('test'),
   // dibuja los cuerpos de Matter encima del arte (?debug=1); ?nodebug=1 lo apaga

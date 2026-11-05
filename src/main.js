@@ -7,6 +7,7 @@ import GameOverScene from './scenes/GameOverScene.js';
 import TitleScene from './scenes/TitleScene.js';
 import PauseScene from './scenes/PauseScene.js';
 import { DEBUG } from './debug.js';
+import { Save } from './save.js';
 import '@fontsource/fredoka/400.css';
 import '@fontsource/fredoka/600.css';
 import '@fontsource/fredoka/700.css';
@@ -59,5 +60,9 @@ const config = {
   },
   scene: [BootScene, TitleScene, GameScene, UIScene, PauseScene, GameOverScene],
 };
+
+if (DEBUG.reset) Save.reset();
+if (DEBUG.bank !== null) Save.addBank(DEBUG.bank - Save.bank);
+if (DEBUG.level) Save.select('level', DEBUG.level);
 
 new Phaser.Game(config);

@@ -25,6 +25,7 @@ export default class EloteManager {
     this.pickups = new Set();
     this.lost = 0;
     this.picked = 0;
+    this.maxCount = ELOTES.max;
 
     const start = DEBUG.startElotes ?? ELOTES.start;
     for (let i = 0; i < start; i++) this.spawnInCart(i);
@@ -131,20 +132,32 @@ export default class EloteManager {
     }
   }
 
+  /** Elote recogido: va al banco (moneda). */
   collect(pickup) {
     this.pickups.delete(pickup);
     this.scene.matter.world.remove(pickup);
-    if (this.count >= ELOTES.max) {
-      this.scene.events.emit('elote-full');
-      return;
-    }
-    // aparece arriba del carrito y cae dentro de la caja
+    this.picked++;
+    this.scene.events.emit('elote-picked', { x: pickup.position.x, y: pickup.position.y });
+  }
+
+  /** Mete un elote suelto nuevo al carrito (vida extra). Devuelve false si está lleno. */
+  addToCart() {
+    if (this.count >= this.maxCount) return false;
     const local = { x: 0, y: -(CART.bodyHeight / 2 + CART.wallHeight + ELOTES.height + 6) };
     const p = this.toWorld(local);
     const body = this.makeEloteBody(p.x, p.y);
     this.elotes.push(body);
-    this.picked++;
-    this.scene.events.emit('elote-picked', this.count);
+    this.scene.events.emit('elote-added', this.count);
+    return true;
+  }
+
+  /** Quita un elote suelto (venta o robo). Devuelve su posición o null. */
+  removeOne() {
+    const e = this.elotes.pop();
+    if (!e) return null;
+    const pos = { x: e.position.x, y: e.position.y };
+    this.scene.matter.world.remove(e);
+    return pos;
   }
 
   /** Marca como perdidos los elotes que se alejaron del carrito. */
