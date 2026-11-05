@@ -74,6 +74,8 @@ export default class Cart {
     });
 
     this.braking = false;
+    this.throttle = 0; // -1 freno, 0 libre, 1 acelerar
+    this.airMs = 0;
     this.tipTimer = 0;
     this.tipped = false;
     this.grounded = true;
@@ -135,25 +137,48 @@ export default class Cart {
   }
 
   setBraking(v) {
-    this.braking = v;
+    this.setThrottle(v ? -1 : this.throttle === -1 ? 0 : this.throttle);
+  }
+
+  /** -1 = freno, 0 = rueda libre, 1 = acelerar. */
+  setThrottle(t) {
+    this.throttle = Math.sign(t);
+    this.braking = this.throttle < 0;
   }
 
   update(deltaMs) {
     const m = this.scene.matter;
     const c = CART;
 
-    // ruedas: acelerar o frenar
-    const target = this.braking ? c.wheelSpeedBrake : c.wheelSpeedMax;
+    // ruedas: frenar, acelerar o rodar libres
     for (const w of this.wheels) {
       const cur = w.angularVelocity;
-      let next;
-      if (this.braking) {
+      let next = cur;
+      if (this.throttle < 0) {
+        const target = c.wheelSpeedBrake;
         next = cur > target ? Math.max(target, cur - c.wheelBrakeRate) : target;
+      } else if (this.throttle > 0) {
+        const target = c.wheelSpeedMax;
+        next = cur < target ? Math.min(target, cur + c.wheelAccel * 1.5) : cur;
       } else {
-        next = cur < target ? Math.min(target, cur + c.wheelAccel) : cur;
+        // rueda libre: la bajada lo lleva poco a poco a la velocidad de crucero
+        const target = c.wheelSpeedCoast;
+        if (cur < target) next = Math.min(target, cur + c.wheelAccel * 0.6);
+        else if (cur > target + 0.05) next = Math.max(target, cur - c.wheelAccel * 0.3);
       }
-      m.body.setAngularVelocity(w, next);
+      if (next !== cur) m.body.setAngularVelocity(w, next);
       w.friction = this.braking ? c.wheelFriction : c.wheelFriction * 0.6;
+    }
+
+    // en el aire los pedales inclinan el carrito
+    if (!this.grounded) {
+      this.airMs += deltaMs;
+      if (this.airMs > c.airTiltMin && this.throttle !== 0) {
+        const target = this.throttle * c.airTilt;
+        m.body.setAngularVelocity(this.chassis, Phaser.Math.Linear(this.chassis.angularVelocity, target, 0.2));
+      }
+    } else {
+      this.airMs = 0;
     }
 
     // velocidad mínima garantizada / máxima

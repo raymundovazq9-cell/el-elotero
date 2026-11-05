@@ -35,13 +35,16 @@ export const CART = {
   density: 0.004,
   wheelFriction: 0.95,
   // velocidad angular de las ruedas (rad/frame aprox. en Matter)
-  wheelSpeedMax: 0.62,
+  wheelSpeedMax: 0.72,
+  wheelSpeedCoast: 0.5, // tope de velocidad de ruedas cuando no se pisa nada (rueda libre)
+  airTilt: 0.07, // velocidad angular aplicada en el aire con los pedales
+  airTiltMin: 100, // ms en el aire antes de permitir inclinar
   wheelSpeedBrake: 0.14,
   wheelAccel: 0.012,
   wheelBrakeRate: 0.04,
   // velocidad lineal mínima garantizada (px/step) en X
   minSpeedX: 2.2,
-  maxSpeedX: 14,
+  maxSpeedX: 15,
   tipAngleDeg: 75,
   tipTimeMs: 400,
 };

@@ -14,8 +14,16 @@ export const DEBUG = {
     .split(',')
     .filter(Boolean)
     .map((w) => w.split('-').map(Number)),
+  gasWindows: (params.get('gas') || '')
+    .split(',')
+    .filter(Boolean)
+    .map((w) => w.split('-').map(Number)),
 };
 
 export function isBrakeScripted(timeMs) {
   return DEBUG.brakeWindows.some(([a, b]) => timeMs >= a && timeMs < b);
+}
+
+export function isGasScripted(timeMs) {
+  return DEBUG.gasWindows.some(([a, b]) => timeMs >= a && timeMs < b);
 }

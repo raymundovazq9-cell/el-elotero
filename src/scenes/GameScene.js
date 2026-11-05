@@ -5,7 +5,7 @@ import Cart from '../objects/Cart.js';
 import EloteManager from '../objects/EloteManager.js';
 import Obstacles from '../objects/Obstacles.js';
 import { difficultyAt } from '../objects/Difficulty.js';
-import { DEBUG, isBrakeScripted } from '../debug.js';
+import { DEBUG, isBrakeScripted, isGasScripted } from '../debug.js';
 import { Sfx, vibrate, unlockAudio } from '../audio.js';
 import CartView from '../views/CartView.js';
 import EloteView from '../views/EloteView.js';
@@ -58,11 +58,12 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.braking = false;
+    this.pedals = { brake: false, gas: false };
     this.input.once('pointerdown', () => unlockAudio());
-    this.input.on('pointerdown', () => this.setBraking(true));
-    this.input.on('pointerup', () => this.setBraking(this.input.activePointer.isDown));
-    this.input.on('pointerupoutside', () => this.setBraking(false));
-    const onBlur = () => this.setBraking(false);
+    this.keys = this.input.keyboard
+      ? this.input.keyboard.addKeys({ left: 'LEFT', right: 'RIGHT', a: 'A', d: 'D' })
+      : null;
+    const onBlur = () => this.setPedals(false, false);
     this.game.events.on('blur', onBlur);
     this.events.once('shutdown', () => {
       this.game.events.off('blur', onBlur);
@@ -79,10 +80,22 @@ export default class GameScene extends Phaser.Scene {
     cam.scrollY = this.cart.y - GAME_HEIGHT * 0.35;
   }
 
+  /** Estado de los pedales (desde la UI, el teclado o el modo de prueba). */
+  setPedals(brake, gas) {
+    if (this.over) {
+      brake = false;
+      gas = false;
+    }
+    this.pedals.brake = brake;
+    this.pedals.gas = gas;
+    // si se pisan ambos, manda el freno
+    const throttle = brake ? -1 : gas ? 1 : 0;
+    this.braking = throttle < 0;
+    this.cart.setThrottle(throttle);
+  }
+
   setBraking(v) {
-    if (this.over) v = false;
-    this.braking = v;
-    this.cart.setBraking(v);
+    this.setPedals(v, this.pedals.gas);
   }
 
   difficultyAt(meters) {
@@ -104,6 +117,7 @@ export default class GameScene extends Phaser.Scene {
       score: this.score,
       bonus: this.bonus,
       braking: this.braking,
+      gas: this.pedals.gas,
       airborne: this.airTime >= SCORE.airMinMs,
     };
   }
@@ -136,7 +150,7 @@ export default class GameScene extends Phaser.Scene {
   update(time, delta) {
     if (DEBUG.test && !this.over) {
       this.testClock = (this.testClock || 0) + delta;
-      this.setBraking(isBrakeScripted(this.testClock));
+      this.setPedals(isBrakeScripted(this.testClock), isGasScripted(this.testClock));
       if (DEBUG.forceGameOverAt !== null && this.testClock >= DEBUG.forceGameOverAt) this.gameOver('volcadura');
       if (!this.nextLog || this.testClock >= this.nextLog) {
         this.nextLog = (this.nextLog || 0) + 1000;
@@ -145,6 +159,13 @@ export default class GameScene extends Phaser.Scene {
           `[test] t=${Math.round(this.testClock)} x=${c.x.toFixed(0)} y=${c.y.toFixed(0)} vx=${c.speedX.toFixed(2)} ang=${c.angleDeg.toFixed(1)} brake=${this.braking} perros=${this.obstacles.hits} lost=${this.elotes.lost} picked=${this.elotes.picked} stats=${JSON.stringify(this.getStats())}`
         );
       }
+    }
+
+    if (this.keys && !DEBUG.test) {
+      const kBrake = this.keys.left.isDown || this.keys.a.isDown;
+      const kGas = this.keys.right.isDown || this.keys.d.isDown;
+      if (kBrake || kGas || this.keyboardWasDown) this.setPedals(kBrake || this.uiBrake, kGas || this.uiGas);
+      this.keyboardWasDown = kBrake || kGas;
     }
 
     this.cart.update(delta);

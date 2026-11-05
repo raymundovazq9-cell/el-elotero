@@ -17,22 +17,24 @@ export default class UIScene extends Phaser.Scene {
       .text(GAME_WIDTH / 2, 60, '0', { ...FONT, fontSize: '28px', color: '#ffe680' })
       .setOrigin(0.5, 0);
 
-    this.brakeBox = this.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 70, 220, 56, 0xd62828, 0.85)
-      .setStrokeStyle(3, 0xffffff)
-      .setVisible(false);
-    this.brakeText = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 70, 'FRENO', { ...FONT, fontSize: '30px' })
-      .setOrigin(0.5)
-      .setVisible(false);
+    this.pedals = {
+      brake: this.makePedal(118, GAME_HEIGHT - 110, 0xd62828, 'FRENO'),
+      gas: this.makePedal(GAME_WIDTH - 118, GAME_HEIGHT - 110, 0x2e8b57, 'ACELERAR'),
+    };
+    this.brakeBox = this.pedals.brake.box;
+    this.brakeText = this.pedals.brake.label;
+    this.input.on('pointerup', (p) => this.releasePointer(p.id));
+    this.input.on('pointerupoutside', (p) => this.releasePointer(p.id));
+    this.game.events.on('blur', this.releaseAll, this);
+    this.events.once('shutdown', () => this.game.events.off('blur', this.releaseAll, this));
 
     this.hint = this.add
-      .text(GAME_WIDTH / 2, GAME_HEIGHT - 140, 'Mantén presionado para frenar', {
+      .text(GAME_WIDTH / 2, GAME_HEIGHT - 210, 'Pisa los pedales: izquierda frena, derecha acelera', {
         ...FONT,
-        fontSize: '22px',
+        fontSize: '20px',
       })
       .setOrigin(0.5);
-    this.time.delayedCall(3500, () => this.hint.setVisible(false));
+    this.time.delayedCall(4000, () => this.hint.setVisible(false));
 
     this.game_.events.on('elote-lost', () => this.showFloat('¡Se cayó un elote!', '#ff6b6b'));
     this.game_.events.on('elote-picked', () => this.showFloat('¡+1 elote!', '#ffe680'));
@@ -40,10 +42,60 @@ export default class UIScene extends Phaser.Scene {
     this.game_.events.on('perro-hit', () => this.showFloat('¡Guau! ¡Perro!', '#ff9f43'));
     this.game_.events.on('landed', (gained) => this.showFloat(`¡+aire! +${gained}`, '#9be7ff'));
     this.game_.events.on('gameover', () => {
-      this.brakeBox.setVisible(false);
-      this.brakeText.setVisible(false);
+      this.releaseAll();
       this.hint.setVisible(false);
     });
+  }
+
+  /** Botón grande con seguimiento del pointer que lo pisó (multitouch). */
+  makePedal(x, y, color, text) {
+    const w = 200;
+    const h = 120;
+    const box = this.add.rectangle(x, y, w, h, color, 0.8).setStrokeStyle(4, 0xffffff);
+    const label = this.add.text(x, y, text, { ...FONT, fontSize: '28px' }).setOrigin(0.5);
+    const zone = this.add.zone(x, y, w + 30, h + 50).setInteractive();
+    const pedal = { box, label, zone, pointerId: null, down: false, color };
+    zone.on('pointerdown', (p) => {
+      pedal.pointerId = p.id;
+      this.setPedal(pedal, true);
+    });
+    zone.on('pointerover', (p) => {
+      if (p.isDown) {
+        pedal.pointerId = p.id;
+        this.setPedal(pedal, true);
+      }
+    });
+    zone.on('pointerout', (p) => {
+      if (pedal.pointerId === p.id) this.setPedal(pedal, false);
+    });
+    return pedal;
+  }
+
+  setPedal(pedal, down) {
+    pedal.down = down;
+    if (!down) pedal.pointerId = null;
+    pedal.box.setFillStyle(pedal.color, down ? 1 : 0.8);
+    pedal.box.setScale(down ? 0.94 : 1);
+    pedal.label.setScale(down ? 0.94 : 1);
+    this.pushPedals();
+  }
+
+  releasePointer(id) {
+    for (const pedal of Object.values(this.pedals)) {
+      if (pedal.pointerId === id) this.setPedal(pedal, false);
+    }
+  }
+
+  releaseAll() {
+    for (const pedal of Object.values(this.pedals)) this.setPedal(pedal, false);
+  }
+
+  pushPedals() {
+    const g = this.game_;
+    if (!g || !g.setPedals) return;
+    g.uiBrake = this.pedals.brake.down;
+    g.uiGas = this.pedals.gas.down;
+    g.setPedals(g.uiBrake, g.uiGas);
   }
 
   showFloat(msg, color = '#ffffff') {
@@ -70,7 +122,11 @@ export default class UIScene extends Phaser.Scene {
     this.metersText.setText(`${s.meters} m`);
     this.elotesText.setText(`🌽 ${s.elotes}`);
     this.scoreText.setText(`${s.score}`);
-    this.brakeBox.setVisible(s.braking);
-    this.brakeText.setVisible(s.braking);
+    if (g.over) {
+      this.pedals.brake.box.setVisible(false);
+      this.pedals.brake.label.setVisible(false);
+      this.pedals.gas.box.setVisible(false);
+      this.pedals.gas.label.setVisible(false);
+    }
   }
 }
