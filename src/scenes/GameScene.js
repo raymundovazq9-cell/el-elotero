@@ -6,6 +6,7 @@ import EloteManager from '../objects/EloteManager.js';
 import Obstacles from '../objects/Obstacles.js';
 import { difficultyAt } from '../objects/Difficulty.js';
 import { DEBUG, isBrakeScripted } from '../debug.js';
+import { Sfx, vibrate, unlockAudio } from '../audio.js';
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -30,7 +31,30 @@ export default class GameScene extends Phaser.Scene {
     this.airTime = 0;
     this.over = false;
 
+    this.events.on('bump', () => {
+      Sfx.golpe();
+      vibrate(25);
+    });
+    this.events.on('elote-lost', () => {
+      Sfx.eloteCaido();
+      vibrate(45);
+    });
+    this.events.on('elote-picked', () => Sfx.eloteRecogido());
+    this.events.on('landed', () => {
+      Sfx.aterrizaje();
+      vibrate(30);
+    });
+    this.events.on('perro-hit', () => {
+      Sfx.perro();
+      vibrate([60, 40, 80]);
+    });
+    this.events.on('gameover', () => {
+      Sfx.gameOver();
+      vibrate([120, 60, 200]);
+    });
+
     this.braking = false;
+    this.input.once('pointerdown', () => unlockAudio());
     this.input.on('pointerdown', () => this.setBraking(true));
     this.input.on('pointerup', () => this.setBraking(this.input.activePointer.isDown));
     this.input.on('pointerupoutside', () => this.setBraking(false));

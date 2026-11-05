@@ -80,6 +80,26 @@ export default class Cart {
     this.groundLabels = new Set(['road', 'tope', 'coche']);
     scene.matter.world.on('collisionactive', this.onCollisionActive, this);
     scene.matter.world.on('collisionstart', this.onCollisionActive, this);
+    scene.matter.world.on('collisionstart', this.onCollisionStart, this);
+    this.lastBump = 0;
+  }
+
+  /** Avisa de golpes contra topes/coches (para sonido y vibración), con límite de frecuencia. */
+  onCollisionStart(event) {
+    const now = this.scene.time.now;
+    if (now - this.lastBump < 150) return;
+    for (const pair of event.pairs) {
+      const a = pair.bodyA;
+      const b = pair.bodyB;
+      const mine = this.wheels.includes(a) || this.wheels.includes(b) || a.parent === this.chassis || b.parent === this.chassis;
+      if (!mine) continue;
+      const other = this.wheels.includes(a) || a.parent === this.chassis ? b : a;
+      if (other.label === 'tope' || other.label === 'coche') {
+        this.lastBump = now;
+        this.scene.events.emit('bump', other.label);
+        return;
+      }
+    }
   }
 
   /** Marca contacto con el piso si alguna rueda toca calle/tope/coche. */
