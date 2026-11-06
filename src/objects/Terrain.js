@@ -26,8 +26,9 @@ export default class Terrain {
    * @param {{draw:(chunk:object)=>{destroy:()=>void}}} [drawer]
    * @param {object} level datos del escenario (data/levels.js)
    */
-  constructor(scene, metersAt, seed, drawer, level) {
+  constructor(scene, metersAt, seed, drawer, level, opts = {}) {
     this.scene = scene;
+    this.finishX = opts.finishX || null; // pista finita (copas): se aplana hacia la meta y deja de generar
     this.drawer = drawer || null;
     this.level = level;
     this.metersAt = metersAt || (() => 0);
@@ -50,11 +51,15 @@ export default class Terrain {
 
   ampMul(x) {
     const t = this.level.terreno;
-    const grow = Math.min(t.maxMul, 1 + t.crecimiento * Math.max(0, this.metersAt(x)));
+    // en pistas finitas (copas) las colinas casi no crecen: la carrera es de velocidad, no de mejoras
+    const maxMul = this.finishX ? Math.min(t.maxMul, 1.15) : t.maxMul;
+    const grow = Math.min(maxMul, 1 + t.crecimiento * Math.max(0, this.metersAt(x)));
     // entrada suave: las colinas crecen de 0 a 1 en los primeros 500 px después del piso plano
     const k = Phaser.Math.Clamp((x - this.profileStartX) / 500, 0, 1);
     const ease = k * k * (3 - 2 * k);
-    return grow * ease;
+    // hacia la meta las colinas se apagan en 400 px y después queda plano
+    const fade = this.finishX ? Phaser.Math.Clamp((this.finishX - 300 - x) / 400, 0, 1) : 1;
+    return grow * ease * fade;
   }
 
   /** Altura (y) del perfil puro en x, antes de rasgos. */
@@ -133,10 +138,10 @@ export default class Terrain {
       const slope = (y1 - y0) / STEP; // > 0 bajando (y crece hacia abajo)
       const meters = this.metersAt(nx);
       const mul = this.chanceMul(meters);
-      const canFeature = meters > SAFE_METERS && x - this.lastFeatureX > this.minFeatureGap;
+      const canFeature = meters > SAFE_METERS && x - this.lastFeatureX > this.minFeatureGap && (!this.finishX || x < this.finishX - 500);
 
       // cresta: deja de subir y empieza a bajar → arco de elotes
-      if (prevSlope < -0.04 && slope > 0.04 && meters > 15 && rnd.frac() < r.arco) {
+      if (prevSlope < -0.04 && slope > 0.04 && meters > 15 && (!this.finishX || x < this.finishX - 300) && rnd.frac() < r.arco) {
         arcs.push(...this.makeArc(x));
       }
       prevSlope = slope;
@@ -315,7 +320,7 @@ export default class Terrain {
   /** Mantiene tramos por delante de la cámara y borra los que quedaron atrás. */
   update(scrollX) {
     const aheadX = scrollX + GAME_WIDTH + ROAD.chunkLength * ROAD.chunksAhead;
-    while (this.lastPoint.x < aheadX) this.generateChunk();
+    while (this.lastPoint.x < aheadX && (!this.finishX || this.lastPoint.x < this.finishX + 1800)) this.generateChunk();
 
     const behindX = scrollX - ROAD.cleanupBehind;
     while (this.chunks.length && this.chunks[0].endX < behindX) {

@@ -47,12 +47,14 @@ export default class Cart {
       render: { fillColor: COLOR_WALL, lineColor: 0x6b4a00 },
     });
 
+    const filter = c.filter || { group: GROUP_CART };
+    this.silent = !!c.silent; // rivales: no emiten eventos de la escena
     this.chassis = m.body.create({
       parts: [base, wallL, wallR],
       friction: 1.2, // alta para que mande la fricción de los elotes (Matter usa el mínimo del par)
       frictionStatic: 1.2,
       frictionAir: 0.006,
-      collisionFilter: { group: GROUP_CART },
+      collisionFilter: filter,
       label: 'cart',
       render: { fillColor: COLOR_BODY, lineColor: 0x6b4a00 },
     });
@@ -70,7 +72,7 @@ export default class Cart {
         frictionStatic: 1.2,
         density: c.density * 1.6,
         restitution: 0.05,
-        collisionFilter: { group: GROUP_CART },
+        collisionFilter: { ...filter },
         label: 'wheel',
         render: { fillColor: COLOR_WHEEL, lineColor: 0x000000 },
       });
@@ -119,7 +121,7 @@ export default class Cart {
       const other = mineA ? b : a;
       if (other.label === 'tope' || other.label === 'coche' || other.label === 'camioneta' || other.label === 'poste-caido') {
         this.lastBump = now;
-        this.scene.events.emit('bump', other.label);
+        if (!this.silent) this.scene.events.emit('bump', other.label);
         return;
       }
     }
@@ -137,6 +139,10 @@ export default class Cart {
       if (!wheelA && !wheelB && !chassisA && !chassisB) continue;
       const other = wheelA || chassisA ? b : a;
       const label = other.label !== 'Body' ? other.label : other.parent && other.parent.label;
+      if (label === 'elote' && (chassisA || chassisB)) {
+        this.chassisContact = true; // tirado sobre sus propios elotes
+        continue;
+      }
       if (!this.groundLabels.has(label)) continue;
       if (wheelA || wheelB) {
         this.grounded = true;
@@ -184,7 +190,7 @@ export default class Cart {
   update(deltaMs) {
     const m = this.scene.matter;
     const c = this.spec;
-    this.boost = this.boostUntil && this.scene.time.now < this.boostUntil ? 1.4 : 1;
+    this.boost = (this.boostUntil && this.scene.time.now < this.boostUntil ? 1.4 : 1) * (this.boostFactor || 1);
 
     // anti-caballito: con la nariz muy levantada respecto al piso, el empuje baja
     const pitch = this.chassis.angle - (this.groundAngle || 0);
@@ -208,7 +214,7 @@ export default class Cart {
 
     // aterrizaje: avisa con la velocidad vertical que traía (impacto en px/paso)
     if (this.grounded && !this.wasGrounded && this.airTotalMs >= 120) {
-      this.scene.events.emit('landing', Math.max(0, this.lastVy), this.airTotalMs);
+      if (!this.silent) this.scene.events.emit('landing', Math.max(0, this.lastVy), this.airTotalMs);
     }
     if (this.grounded) this.airTotalMs = 0;
     else this.airTotalMs += deltaMs;
@@ -230,9 +236,12 @@ export default class Cart {
 
     // volcadura: de cabeza y tocando el piso con el chasis (en el aire se puede dar la vuelta)
     const a = Math.abs(Phaser.Math.Angle.WrapDegrees(this.angleDeg));
-    if (a > c.tipAngleDeg && this.chassisContact) {
+    // parado de nariz (o de cabeza) y casi sin moverse también cuenta, aunque solo toque una rueda
+    const standing = a > 70 && this.speed < 0.8 && (this.grounded || this.chassisContact);
+    // de cabeza tocando el piso con el chasis o con una rueda (tirado de lado sobre sus elotes también cuenta)
+    if ((a > c.tipAngleDeg && (this.chassisContact || this.grounded)) || standing) {
       this.tipTimer += deltaMs;
-      if (this.tipTimer >= c.tipTimeMs) this.tipped = true;
+      if (this.tipTimer >= (standing ? c.tipTimeMs * 2.4 : c.tipTimeMs)) this.tipped = true;
     } else {
       this.tipTimer = 0;
     }

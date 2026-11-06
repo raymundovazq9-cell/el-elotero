@@ -16,6 +16,10 @@ export default class Driver {
     this.queue = []; // decisiones pendientes { at, brake, gas }
     this.current = { brake: false, gas: false };
     this.brakeUntil = 0;
+    this.maxX = cart.x;
+    this.stuckMs = 0;
+    this.reverseUntil = 0;
+    this.lastThink = 0;
   }
 
   /** Decisión instantánea según el estado del carrito. */
@@ -37,7 +41,22 @@ export default class Driver {
       return { brake: false, gas: false };
     }
 
+    // atorado: reversa un momento para despegarse y volver a intentar
+    const dt = this.lastThink ? Math.min(100, now - this.lastThink) : 0;
+    this.lastThink = now;
+    if (x > this.maxX + 3) {
+      this.maxX = x;
+      this.stuckMs = 0;
+    } else if (c.grounded) this.stuckMs += dt;
+    if (this.stuckMs > 1500) {
+      this.stuckMs = 0;
+      this.reverseUntil = now + 700;
+    }
+    if (now < this.reverseUntil) return { brake: true, gas: false };
     if (now < this.brakeUntil) return { brake: true, gas: false };
+    // nariz muy levantada en el piso: suelta el gas para no irse de espaldas
+    const pitch = c.chassis.angle - (c.groundAngle || 0);
+    if (pitch < -0.55) return { brake: false, gas: false };
 
     const here = road.slopeAt(x);
     const ahead = road.slopeAt(x + 150);

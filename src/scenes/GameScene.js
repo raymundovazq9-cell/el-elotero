@@ -16,6 +16,11 @@ import { Sfx, vibrate, unlockAudio, EngineSound, setMasterVolume } from '../audi
 import { Music } from '../music.js';
 import { Save } from '../save.js';
 import { dailyMissions, missionDone, todayKey } from '../data/missions.js';
+import { cupById, cupPrize } from '../data/cups.js';
+import { pickRivals } from '../data/rivals.js';
+import Rival from '../objects/Rival.js';
+import Race from '../objects/Race.js';
+import { drawMeta } from '../views/MetaView.js';
 import CartView from '../views/CartView.js';
 import { loadCartPaints, bodyTexture } from '../paint.js';
 import RoadView from '../views/RoadView.js';
@@ -31,11 +36,22 @@ export default class GameScene extends Phaser.Scene {
 
   preload() {
     const cartId = Save.data.cart;
-    loadCartPaints(this, [{ cartId, paintId: Save.paintFor(cartId).color }]);
+    const items = [{ cartId, paintId: Save.paintFor(cartId).color }];
+    const data = this.scene.settings.data || {};
+    if (data.mode === 'copa') {
+      // misma semilla que en create(): los rivales y sus pinturas quedan definidos aquí
+      this.raceSeed = `${data.cup}-${Math.floor(Math.random() * 1e9)}`;
+      this.rivalSpecs = pickRivals(this.raceSeed, cartId, Save.upgradesFor(cartId));
+      for (const r of this.rivalSpecs) items.push({ cartId: r.cartId, paintId: r.paint.color });
+    }
+    loadCartPaints(this, items);
   }
 
   create(data) {
-    this.level = levelById((data && data.level) || Save.data.level);
+    this.startData = data || {};
+    this.mode = this.startData.mode === 'copa' ? 'copa' : 'aventura';
+    this.cup = this.mode === 'copa' ? cupById(this.startData.cup) : null;
+    this.level = levelById(this.cup ? this.cup.level : (data && data.level) || Save.data.level);
     this.cameras.main.setBackgroundColor('#87b7e0');
     this.cameras.main.fadeIn(300);
     this.sky = new SkyCycle(this, {
@@ -46,7 +62,9 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.startX = 120;
-    this.road = new Terrain(this, (x) => Math.max(0, (x - this.startX) / PX_PER_METER), DEBUG.test ? 'elotero' : undefined, new RoadView(this), this.level);
+    this.finishX = this.cup ? this.startX + this.cup.metros * PX_PER_METER : null;
+    const seed = this.cup ? `copa-${this.raceSeed || this.cup.id}` : DEBUG.test ? 'elotero' : undefined;
+    this.road = new Terrain(this, (x) => Math.max(0, (x - this.startX) / PX_PER_METER), seed, new RoadView(this), this.level, { finishX: this.finishX });
     this.scenery = new Scenery(this, this.road, this.level.tema);
     this.road.start(-500, 1100);
 
@@ -61,11 +79,27 @@ export default class GameScene extends Phaser.Scene {
       max: this.upgraded.maxElotes,
       shakeFactor: this.upgraded.shakeFactor,
     });
-    this.obstacles = new Actors(this, this.cart, this.road, this.elotes, this.level);
+    this.obstacles = new Actors(this, this.cart, this.road, this.elotes, this.level, { race: this.mode === 'copa' });
     const paint = Save.paintFor(this.cartData.id);
     this.cartView = new CartView(this, this.cart, this.cartData.vista, { bodyKey: bodyTexture(this, this.cartData, paint.color), calca: paint.calca });
     this.eloteView = new EloteView(this, this.elotes);
     this.particles = new Particles(this, this.cart);
+
+    // copa: rivales, meta y estado de la carrera
+    this.rivals = [];
+    this.race = null;
+    if (this.cup) {
+      const specs = this.rivalSpecs || pickRivals(`${this.cup.id}-0`, this.cartData.id, Save.upgradesFor(this.cartData.id));
+      this.rivals = specs.map((spec, i) => new Rival(this, this.road, spec, i, this.startX - 110 * (i + 1), this.road.surfaceYAt(this.startX) - 70));
+      this.race = new Race(this, this.cup, { name: 'Tú', cart: this.cart }, this.rivals, this.startX, this.finishX);
+      this.metaView = drawMeta(this, this.finishX, this.road.profile(this.finishX));
+      this.events.on('race-count', (n) => Sfx.beep(false));
+      this.events.on('race-go', () => {
+        Sfx.beep(true);
+        vibrate(40);
+      });
+      this.events.on('race-player-finish', (place) => this.finishRace(place));
+    }
 
     // ganancias de la partida (elotes al banco), por concepto
     this.earned = {
@@ -207,6 +241,8 @@ export default class GameScene extends Phaser.Scene {
       this.engine.stop();
       setMasterVolume(1, 10);
       this.elotes.destroy();
+      this.rivals.forEach((r) => r.destroy());
+      if (this.metaView) this.metaView.destroy();
       this.cart.destroy();
       this.obstacles.destroy();
       this.cartView.destroy();
@@ -255,7 +291,7 @@ export default class GameScene extends Phaser.Scene {
 
   /** Estado de los pedales (desde la UI, el teclado o el modo de prueba). */
   setPedals(brake, gas) {
-    if (this.over) {
+    if (this.over || (this.race && !this.race.running && this.race.state === 'countdown')) {
       brake = false;
       gas = false;
     }
@@ -288,11 +324,24 @@ export default class GameScene extends Phaser.Scene {
 
   get earnedTotal() {
     const e = this.earned;
-    return e.recogidos + e.metros + e.marometas + e.aire + e.trucos + e.ventas + e.misiones;
+    return e.recogidos + e.metros + e.marometas + e.aire + e.trucos + e.ventas + e.misiones + (e.copa || 0);
+  }
+
+  /** Datos de la carrera para el HUD (null en aventura). */
+  raceInfo() {
+    if (!this.race) return null;
+    return {
+      state: this.race.state,
+      place: this.race.playerPlace,
+      total: this.race.runners.length,
+      toFinish: this.race.metersToFinish(),
+      progress: this.race.progress(),
+    };
   }
 
   getStats() {
     return {
+      mode: this.mode,
       level: this.level.id,
       meters: this.meters,
       elotes: this.elotes.count,
@@ -321,14 +370,16 @@ export default class GameScene extends Phaser.Scene {
     // misiones del día cumplidas en esta partida
     const key = DEBUG.missionSeed || todayKey();
     const stats = this.getStats();
-    for (const m of dailyMissions(key)) {
-      if (Save.missionsDone(key).includes(m.id) || !missionDone(m, stats)) continue;
-      Save.markMission(key, m.id);
-      this.earned.misiones += m.premio;
-      this.missionsDone.push(m);
+    if (!this.cup) {
+      for (const m of dailyMissions(key)) {
+        if (Save.missionsDone(key).includes(m.id) || !missionDone(m, stats)) continue;
+        Save.markMission(key, m.id);
+        this.earned.misiones += m.premio;
+        this.missionsDone.push(m);
+      }
     }
     Save.addBank(this.earnedTotal);
-    this.isRecord = Save.setBest(this.level.id, meters);
+    this.isRecord = this.cup ? false : Save.setBest(this.level.id, meters);
     Save.addTotals({
       runs: 1,
       meters,
@@ -350,10 +401,50 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  /** El jugador cruzó la meta (o quedó fuera): premio, guardado y pantalla de resultados. */
+  finishRace(place, reason = null) {
+    if (this.raceDone) return;
+    this.raceDone = true;
+    const prize = reason ? cupPrize(this.cup, this.race.runners.length) : cupPrize(this.cup, place);
+    this.earned.copa = prize;
+    this.bankRun();
+    Save.recordRace(this.cup.id, place);
+    this.raceFinal = {
+      cup: this.cup,
+      place,
+      reason,
+      results: this.race.results(),
+      prize,
+      collected: this.earnedTotal - prize,
+      total: this.earnedTotal,
+      bank: Save.bank,
+      time: this.race.elapsed,
+    };
+    if (DEBUG.test)
+      console.log(`[test] RACE place=${place} reason=${reason || 'meta'} time=${Math.round(this.race.elapsed)} ${JSON.stringify(this.raceFinal.results)}`);
+    if (place === 1 && !reason) {
+      Sfx.porra();
+      vibrate([60, 40, 60, 40, 120]);
+    } else if (!reason) Sfx.silbato();
+    this.events.emit('race-over', this.raceFinal);
+    this.time.delayedCall(reason ? 900 : 1600, () => {
+      this.scene.launch('RaceResult', this.raceFinal);
+    });
+  }
+
   gameOver(reason) {
     if (this.over) return;
     this.over = true;
     this.setBraking(false);
+    if (this.race) {
+      // en copa, perder es quedar en último lugar
+      this.final = { ...this.getStats(), reason };
+      this.race.playerOut();
+      this.events.emit('gameover', reason);
+      this.cameras.main.shake(300, 0.012);
+      this.finishRace(this.race.runners.length, reason);
+      return;
+    }
     this.bankRun();
     this.final = {
       ...this.getStats(),
@@ -393,15 +484,25 @@ export default class GameScene extends Phaser.Scene {
       this.keyboardWasDown = kBrake || kGas;
     }
 
+    if (this.race) {
+      this.race.update(delta);
+      for (const r of this.rivals) r.update(delta, this.race.running || this.race.state === 'finished', this.cart.x);
+      if (DEBUG.test && this.testClock && Math.floor(this.testClock / 1000) !== this.lastRivalLog) {
+        this.lastRivalLog = Math.floor(this.testClock / 1000);
+        console.log(
+          `[test] rivals ${this.rivals.map((r) => `${r.name}:${r.x.toFixed(0)}/${r.cart.speedX.toFixed(1)}/${r.cart.angleDeg.toFixed(0)}${r.cart.tipped ? 'T' : ''}/r${r.resets}n${r.nudges}`).join(' ')} place=${this.race.playerPlace}`
+        );
+      }
+    }
     this.cart.groundAngle = Math.atan(this.road.slopeAt(this.cart.x));
     this.cart.update(delta);
-    if (!this.over) this.stall.update(delta);
+    if (!this.over && !(this.race && !this.race.running)) this.stall.update(delta);
     this.elotes.update();
     this.obstacles.update(delta);
     if (!this.over) this.engine.update(Math.abs(this.cart.speedX), this.cart.throttle, this.cart.grounded, this.cart.airTotalMs, delta);
     if (!this.over) {
       this.tricks.update(delta);
-      this.updateCheckpoints();
+      if (!this.cup) this.updateCheckpoints();
     }
     this.cartView.sync(delta);
     this.eloteView.sync();

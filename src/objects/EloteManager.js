@@ -1,4 +1,4 @@
-import { ELOTES } from '../config.js';
+import { ELOTES, PHYSICS } from '../config.js';
 import { DEBUG } from '../debug.js';
 
 const COLOR_ELOTE = 0xf5d547;
@@ -169,12 +169,33 @@ export default class EloteManager {
   }
 
   /** Marca como perdidos los elotes que se alejaron del carrito. */
+  /** Posición de un elote en coordenadas del chasis. */
+  toLocal(pos) {
+    const b = this.cart.chassis;
+    const cos = Math.cos(-b.angle);
+    const sin = Math.sin(-b.angle);
+    const dx = pos.x - b.position.x;
+    const dy = pos.y - b.position.y;
+    return { x: dx * cos - dy * sin, y: dx * sin + dy * cos };
+  }
+
   update() {
     const c = this.cart.chassis.position;
+    const spec = this.cart.spec;
+    const boxX = spec.boxX || 0;
+    const halfW = (spec.boxWidth || spec.bodyWidth) / 2;
+    const floorY = -spec.bodyHeight / 2;
+    const topY = floorY - spec.wallHeight - 12;
+    const hold = PHYSICS.gravityY * 0.001 * ELOTES.holdGravity;
     for (let i = this.elotes.length - 1; i >= 0; i--) {
       const e = this.elotes[i];
       const dx = e.position.x - c.x;
       const dy = e.position.y - c.y;
+      // dentro de la caja los elotes pesan más: aguantan los brincos de la calle
+      const l = this.toLocal(e.position);
+      if (Math.abs(l.x - boxX) < halfW && l.y < floorY + 4 && l.y > topY) {
+        this.scene.matter.body.applyForce(e, e.position, { x: 0, y: e.mass * hold });
+      }
       const far = dx * dx + dy * dy > ELOTES.lostDistance * ELOTES.lostDistance;
       const below = e.position.y > c.y + 260;
       if (far || below) {

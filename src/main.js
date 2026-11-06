@@ -7,6 +7,8 @@ import GameOverScene from './scenes/GameOverScene.js';
 import TitleScene from './scenes/TitleScene.js';
 import PauseScene from './scenes/PauseScene.js';
 import GarageScene from './scenes/GarageScene.js';
+import CupScene from './scenes/CupScene.js';
+import RaceResultScene from './scenes/RaceResultScene.js';
 import { DEBUG } from './debug.js';
 import { Save } from './save.js';
 import '@fontsource/fredoka/400.css';
@@ -62,7 +64,7 @@ const config = {
     target: 60,
     forceSetTimeOut: DEBUG.headless,
   },
-  scene: [BootScene, TitleScene, GarageScene, GameScene, UIScene, PauseScene, GameOverScene],
+  scene: [BootScene, TitleScene, GarageScene, CupScene, GameScene, UIScene, PauseScene, GameOverScene, RaceResultScene],
 };
 
 if (DEBUG.reset) Save.reset();

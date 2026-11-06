@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { svgImage, SVG_SCALE } from '../assets.js';
+import { slotLocalFor } from '../objects/EloteManager.js';
 import EloteroView from './EloteroView.js';
 
 const WHEEL_IMAGE_R = 17; // radio físico para el que se dibujó rueda.svg
@@ -29,7 +30,18 @@ export default class CartView {
         .setScale((ws.r / WHEEL_IMAGE_R) * (1 / SVG_SCALE))
         .setDepth(this.depth + 0.5)
     );
-    this.elotero = new EloteroView(scene, cart, vista.elotero);
+    this.elotero = new EloteroView(scene, cart, vista.elotero, opts.equipped || null, { rival: !!opts.rival });
+    this.elotero.container.setDepth(this.depth - 1);
+    // elotes pintados (rivales: no llevan elotes físicos)
+    this.fakeElotes = [];
+    for (let i = 0; i < (opts.fakeElotes || 0); i++) {
+      this.fakeElotes.push(
+        svgImage(scene, 0, 0, 'elote')
+          .setScale(0.27)
+          .setDepth(this.depth - 0.2)
+          .setRotation((i % 3) * 0.12 - 0.12)
+      );
+    }
 
     // paredes extra (mejora de canasta): tablitas encima de las paredes dibujadas
     const extra = (cart.spec.wallHeight || 0) - (cart.baseWallHeight || cart.spec.wallHeight);
@@ -68,7 +80,8 @@ export default class CartView {
     this.steam.setDepth(-0.5);
 
     this.squash = 0; // 0..1, aplasta el cuerpo al aterrizar
-    scene.events.on('landing', this.onLanding, this);
+    this.rival = !!opts.rival;
+    if (!this.rival) scene.events.on('landing', this.onLanding, this);
     this.sync();
   }
 
@@ -109,7 +122,23 @@ export default class CartView {
     });
     const pot = this.local(this.vista.olla.x, this.vista.olla.y);
     this.steam.setPosition(pot.x, pot.y);
+    this.fakeElotes.forEach((img, i) => {
+      const s = slotLocalFor(this.cart.spec, i);
+      const p = this.local(s.x, s.y);
+      img.setPosition(p.x, p.y).setRotation(b.angle + (i % 3) * 0.12 - 0.12);
+    });
     this.elotero.sync(delta);
+  }
+
+  setAlpha(a) {
+    if (this.alpha_ === a) return;
+    this.alpha_ = a;
+    this.body.setAlpha(a);
+    if (this.sticker) this.sticker.setAlpha(a);
+    this.wheels.forEach((w) => w.setAlpha(a));
+    this.fakeElotes.forEach((e) => e.setAlpha(a));
+    this.elotero.container.setAlpha(a);
+    this.steam.setAlpha(a);
   }
 
   setVisible(v) {
@@ -121,7 +150,8 @@ export default class CartView {
   }
 
   destroy() {
-    this.scene.events.off('landing', this.onLanding, this);
+    if (!this.rival) this.scene.events.off('landing', this.onLanding, this);
+    this.fakeElotes.forEach((e) => e.destroy());
     if (this.walls) this.walls.destroy();
     this.body.destroy();
     if (this.sticker) this.sticker.destroy();

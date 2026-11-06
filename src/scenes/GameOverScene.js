@@ -40,10 +40,17 @@ export default class GameOverScene extends Phaser.Scene {
     items.push(this.add.text(0, -190, TITLES[reason] || TITLES['sin-elotes'], textStyle(48, COLORS.rosaHex, { fontStyle: '700' })).setOrigin(0.5));
 
     // columna izquierda: metros y récord
-    items.push(this.add.text(-180, -120, `${meters} m`, textStyle(64, COLORS.azulHex, { fontStyle: '700', stroke: COLORS.cremaHex, strokeThickness: 3 })).setOrigin(0.5));
+    items.push(
+      this.add.text(-180, -120, `${meters} m`, textStyle(64, COLORS.azulHex, { fontStyle: '700', stroke: COLORS.cremaHex, strokeThickness: 3 })).setOrigin(0.5)
+    );
     items.push(this.add.text(-180, -72, levelById(level).nombre, dark).setOrigin(0.5));
     const recordText = this.add
-      .text(-180, -30, isRecord ? '¡NUEVO RÉCORD!' : `Récord: ${best} m`, textStyle(26, isRecord ? COLORS.verdeHex : COLORS.negro, { stroke: COLORS.cremaHex, strokeThickness: 2 }))
+      .text(
+        -180,
+        -30,
+        isRecord ? '¡NUEVO RÉCORD!' : `Récord: ${best} m`,
+        textStyle(26, isRecord ? COLORS.verdeHex : COLORS.negro, { stroke: COLORS.cremaHex, strokeThickness: 2 })
+      )
       .setOrigin(0.5);
     items.push(recordText);
 
@@ -65,7 +72,9 @@ export default class GameOverScene extends Phaser.Scene {
     items.push(svgImage(this, 332, y + 14, 'elote').setScale(0.8));
 
     missions.forEach((m, i) => {
-      items.push(this.add.text(-180, 80 + i * 24, `✓ ${m.texto}`, textStyle(16, COLORS.verdeHex, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(0.5));
+      items.push(
+        this.add.text(-180, 80 + i * 24, `✓ ${m.texto}`, textStyle(16, COLORS.verdeHex, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(0.5)
+      );
     });
     items.push(this.add.text(-180, 40, `Banco: ${bank}`, textStyle(26, COLORS.negro, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(0.5));
     items.push(svgImage(this, -180 + 80 + String(bank).length * 7, 40, 'elote').setScale(0.6));
@@ -81,9 +90,10 @@ export default class GameOverScene extends Phaser.Scene {
   }
 
   restart() {
+    const data = this.scene.get('Game').startData || {};
     this.scene.stop('UI');
     this.scene.stop('GameOver');
-    this.scene.start('Game');
+    this.scene.start('Game', data);
   }
 
   shop() {

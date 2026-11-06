@@ -17,9 +17,7 @@ export default class BootScene extends Phaser.Scene {
     const box = this.add.graphics();
     box.lineStyle(4, 0xffffff, 1);
     box.strokeRoundedRect(cx - 160, cy - 18, 320, 36, 12);
-    this.add
-      .text(cx, cy - 50, 'Cargando...', { fontFamily: FONT_FAMILY, fontSize: '28px', color: '#ffffff' })
-      .setOrigin(0.5);
+    this.add.text(cx, cy - 50, 'Cargando...', { fontFamily: FONT_FAMILY, fontSize: '28px', color: '#ffffff' }).setOrigin(0.5);
     this.load.on('progress', (v) => {
       bar.clear();
       bar.fillStyle(COLORS.amarillo, 1);
@@ -33,16 +31,13 @@ export default class BootScene extends Phaser.Scene {
     this.input.addPointer(1);
     try {
       await Promise.race([
-        Promise.all([
-          document.fonts.load('600 32px Fredoka'),
-          document.fonts.load('400 32px Fredoka'),
-          document.fonts.load('700 32px Fredoka'),
-        ]),
+        Promise.all([document.fonts.load('600 32px Fredoka'), document.fonts.load('400 32px Fredoka'), document.fonts.load('700 32px Fredoka')]),
         new Promise((r) => setTimeout(r, 2500)),
       ]);
     } catch {
       /* seguimos con la fuente de respaldo */
     }
-    this.scene.start(DEBUG.test ? 'Game' : DEBUG.scene || 'Title');
+    if (DEBUG.test) this.scene.start('Game', DEBUG.mode === 'copa' ? { mode: 'copa', cup: DEBUG.cup || 'callejon' } : {});
+    else this.scene.start(DEBUG.scene || 'Title');
   }
 }

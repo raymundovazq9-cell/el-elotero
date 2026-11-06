@@ -17,6 +17,7 @@ function defaults() {
     paint: {}, // { [cartId]: { color: 'rojo', calca: 'balon' | null } }
     paints: ['original'], // pinturas compradas
     calcas: [], // calcomanías compradas
+    copas: {}, // { [cupId]: { carreras, ganadas, podios, mejorLugar } }
     missions: { date: '', done: [] },
     totals: { runs: 0, meters: 0, elotes: 0, marometas: 0, ventas: 0 },
   };
@@ -135,6 +136,21 @@ class SaveStore {
   setPaint(cartId, partial) {
     this.data.paint[cartId] = { ...this.paintFor(cartId), ...partial };
     this.persist();
+  }
+
+  cupStats(cupId) {
+    return { carreras: 0, ganadas: 0, podios: 0, mejorLugar: 0, ...(this.data.copas[cupId] || {}) };
+  }
+
+  recordRace(cupId, place) {
+    const st = this.cupStats(cupId);
+    st.carreras += 1;
+    if (place === 1) st.ganadas += 1;
+    if (place <= 3) st.podios += 1;
+    st.mejorLugar = st.mejorLugar ? Math.min(st.mejorLugar, place) : place;
+    this.data.copas[cupId] = st;
+    this.persist();
+    return st;
   }
 
   equip(type, id) {

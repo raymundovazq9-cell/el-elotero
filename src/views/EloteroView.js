@@ -19,7 +19,7 @@ export default class EloteroView {
    * @param {{modo:string,x:number,y:number}} [pose] posición de la cadera respecto al chasis
    * @param {object} [equipped] ropa (por defecto la del jugador)
    */
-  constructor(scene, cart, pose = { modo: 'empujando', x: -98, y: 2 }, equipped = null) {
+  constructor(scene, cart, pose = { modo: 'empujando', x: -98, y: 2 }, equipped = null, opts = {}) {
     this.scene = scene;
     this.cart = cart;
     this.pose = pose;
@@ -46,6 +46,8 @@ export default class EloteroView {
     }
 
     this.container = scene.add.container(0, 0, [this.legBack, this.torso, this.legFront]).setDepth(-1);
+    this.rival = !!opts.rival;
+    if (this.rival) return;
 
     scene.events.on('bump', this.onBump, this);
     scene.events.on('marometa', this.onCelebrate, this);
@@ -158,6 +160,10 @@ export default class EloteroView {
   }
 
   destroy() {
+    if (this.rival) {
+      this.container.destroy();
+      return;
+    }
     const ev = this.scene.events;
     ev.off('bump', this.onBump, this);
     ev.off('marometa', this.onCelebrate, this);

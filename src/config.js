@@ -41,11 +41,11 @@ export const CART = {
   wheelAccel: 0.06, // cuánto sube por paso al acelerar
   wheelSpeedReverse: -0.22, // reversa lenta al mantener FRENO
   wheelBrakeRate: 0.05, // cuánto baja por paso al frenar
-  antiWheelie: 0.5, // cuánto baja el empuje al levantar la nariz (1 = se corta del todo)
+  antiWheelie: 0.75, // cuánto baja el empuje al levantar la nariz (1 = se corta del todo)
   airTilt: 0.04, // velocidad angular en el aire con los pedales
   airTiltMin: 220, // ms en el aire antes de permitir inclinar (los brinquitos no cuentan)
   maxSpeedX: 16,
-  tipAngleDeg: 100,
+  tipAngleDeg: 88, // de cabeza (o parado de nariz) tocando el piso con el chasis = volcadura
   tipTimeMs: 500,
   stallMs: 6000, // sin avanzar este tiempo = se cansó el elotero
 };
@@ -61,6 +61,7 @@ export const ELOTES = {
   frictionAir: 0.006, // igual que el chasis: en el aire no se rezagan respecto al carrito
   restitution: 0.05,
   lostDistance: 170, // px desde el chasis para darse por perdido
+  holdGravity: 1.6, // gravedad extra (en múltiplos) para los elotes que van dentro de la caja: no brincan tan fácil
 };
 
 export const CAMERA = {

@@ -32,13 +32,18 @@ const MIN_SALE_COUNT = 2; // nunca vender el último elote
  *   chile: empujón de 2 s; bolsa: repone 2 elotes al carrito
  */
 export default class Actors {
-  constructor(scene, cart, road, elotes, level) {
+  constructor(scene, cart, road, elotes, level, opts = {}) {
     this.scene = scene;
     this.cart = cart;
     this.road = road;
     this.elotes = elotes;
     this.level = level;
     this.weights = { bolsa: 0.015, ...level.actores };
+    if (opts.race) {
+      // en las copas no hay que pasar lento: fuera cholos y clientes
+      this.weights.cholo = 0;
+      this.weights.cliente = 0;
+    }
     this.crossers = [];
     this.zones = new Map(); // body -> { kind, img, done }
     this.pickups = new Map(); // body -> { kind, img, tween }

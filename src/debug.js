@@ -57,6 +57,8 @@ export const DEBUG = {
   noTopes: params.has('notopes'),
   // metros fijos para el ciclo de cielo (?sky=330 = noche)
   skyMeters: params.has('sky') ? Number(params.get('sky')) : null,
+  mode: params.get('mode') || '',
+  cup: params.get('cup') || '',
   paint: params.get('paint') || '',
   calca: params.get('calca') || '',
   // intervalos "inicio-fin,inicio-fin" en ms de juego en los que se simula el freno

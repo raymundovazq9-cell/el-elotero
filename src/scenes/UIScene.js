@@ -67,6 +67,21 @@ export default class UIScene extends Phaser.Scene {
       for (const p of Object.values(this.pedals)) p.container.setVisible(false);
     });
 
+    // carrera: lugar, barra de progreso con cabezas y cuenta regresiva
+    this.raceUI = null;
+    if (this.game_.race) this.buildRaceUI();
+    ev.on('race-count', (n) => this.showCount(`${n}`));
+    ev.on('race-go', () => this.showCount('¡VAMOS!', true));
+    ev.on('race-player-finish', (place) =>
+      this.showFloat(place === 1 ? '¡Llegaste primero!' : `Llegaste en ${place}º`, place === 1 ? '#9bffb0' : COLORS.amarilloHex)
+    );
+    ev.on('race-over', () => {
+      this.releaseAll();
+      for (const p of Object.values(this.pedals)) p.container.setVisible(false);
+      this.pauseBtn.setVisible(false);
+      this.pauseBtn.zone.input.enabled = false;
+    });
+
     // combo y tiempo en el aire (bajo el HUD, centrados)
     this.comboText = this.add
       .text(cx, 96, '', textStyle(40, '#ff6bd6', { strokeThickness: 6 }))
@@ -75,6 +90,70 @@ export default class UIScene extends Phaser.Scene {
     this.airText = this.add.text(cx, 134, '', textStyle(24, '#9be7ff')).setOrigin(0.5).setAlpha(0);
 
     this.cameras.main.fadeIn(300);
+  }
+
+  buildRaceUI() {
+    const cx = GAME_WIDTH / 2;
+    this.metersText.setText('');
+    this.placeText = this.add.text(120, 40, '', textStyle(34, COLORS.amarilloHex, { fontStyle: '700' })).setOrigin(0.5);
+    this.toFinishText = this.add.text(cx, 76, '', textStyle(18, COLORS.cremaHex)).setOrigin(0.5);
+    // barra de progreso
+    const w = 300;
+    const y = 96;
+    const g = this.add.graphics();
+    g.fillStyle(0x000000, 0.4);
+    g.fillRoundedRect(cx - w / 2 - 8, y - 8, w + 16, 16, 8);
+    g.fillStyle(0xcfc5ad, 1);
+    g.fillRect(cx - w / 2, y - 2, w, 4);
+    for (let i = 0; i < 6; i++) {
+      g.fillStyle(i % 2 ? 0x1a1a1a : 0xffffff, 1);
+      g.fillRect(cx + w / 2 - 2, y - 9 + i * 3, 10, 3);
+    }
+    this.raceUI = { w, y, cx, g, markers: [] };
+    this.lastPlace = 0;
+  }
+
+  showCount(text, go = false) {
+    const t = this.add
+      .text(GAME_WIDTH / 2, GAME_HEIGHT * 0.4, text, textStyle(go ? 72 : 96, go ? '#9bffb0' : COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 10 }))
+      .setOrigin(0.5)
+      .setScale(0.3);
+    this.tweens.add({ targets: t, scale: 1, duration: 250, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: t, alpha: 0, delay: go ? 600 : 500, duration: 300, onComplete: () => t.destroy() });
+  }
+
+  updateRaceUI(info) {
+    const r = this.raceUI;
+    if (!r || !info) return;
+    const sufijo = ['º', 'º', 'º', 'º'];
+    this.placeText.setText(`${info.place}${sufijo[info.place - 1] || 'º'} de ${info.total}`);
+    if (info.place !== this.lastPlace) {
+      if (this.lastPlace) {
+        this.placeText.setScale(1.4);
+        this.tweens.add({ targets: this.placeText, scale: 1, duration: 250, ease: 'Back.easeOut' });
+      }
+      this.lastPlace = info.place;
+    }
+    this.toFinishText.setText(info.state === 'countdown' ? '¡Prepárate!' : info.toFinish > 0 ? `${info.toFinish} m a la meta` : '¡Meta!');
+    // marcadores (uno por corredor): círculo con inicial
+    while (r.markers.length < info.progress.length) {
+      const i = r.markers.length;
+      const p = info.progress[i];
+      const c = this.add
+        .circle(0, r.y, p.isPlayer ? 11 : 8, p.isPlayer ? COLORS.amarillo : 0xe4007c, 1)
+        .setStrokeStyle(2, 0x1a1a1a, 1)
+        .setDepth(p.isPlayer ? 2 : 1);
+      const t = this.add
+        .text(0, r.y, p.name[0], textStyle(p.isPlayer ? 13 : 10, COLORS.negro, { strokeThickness: 0 }))
+        .setOrigin(0.5)
+        .setDepth(3);
+      r.markers.push({ c, t });
+    }
+    info.progress.forEach((p, i) => {
+      const x = r.cx - r.w / 2 + r.w * p.t;
+      r.markers[i].c.setPosition(x, r.y);
+      r.markers[i].t.setPosition(x, r.y);
+    });
   }
 
   showCombo(n) {
@@ -201,7 +280,8 @@ export default class UIScene extends Phaser.Scene {
     const g = this.game_;
     if (!g || !g.getStats) return;
     const s = g.over ? g.final : g.getStats();
-    this.metersText.setText(`${s.meters} m`);
+    if (this.raceUI) this.updateRaceUI(g.raceInfo());
+    else this.metersText.setText(`${s.meters} m`);
     this.elotesText.setText(`${s.elotes}`);
     this.scoreText.setText(`${s.total}`);
     // tiempo en el aire en vivo

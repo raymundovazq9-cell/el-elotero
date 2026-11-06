@@ -74,7 +74,8 @@ export default class GarageScene extends Phaser.Scene {
     });
     makePanel(this, PANEL_X + PANEL_W / 2, 306, PANEL_W, 326, 0x000000, 0.35, 22);
 
-    this.playBtn = makeButton(this, 190, 480, 300, 80, COLORS.verde, '¡A VENDER!', () => this.play(), { fontSize: 38 });
+    this.playBtn = makeButton(this, 110, 480, 190, 80, COLORS.verde, 'AVENTURA', () => this.play(), { fontSize: 28 });
+    this.cupBtn = makeButton(this, 290, 480, 150, 80, COLORS.naranja, 'COPA', () => this.cups(), { fontSize: 28 });
     this.musicBtn = makeIconButton(this, GAME_WIDTH - 46, 500, 26, COLORS.amarillo, iconMusic(isMuted()), () => this.toggleMusic());
 
     this.input.once('pointerdown', () => {
@@ -392,6 +393,13 @@ export default class GarageScene extends Phaser.Scene {
     Sfx.inicio();
     this.cameras.main.fadeOut(250);
     this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Game'));
+  }
+
+  cups() {
+    unlockAudio();
+    Sfx.clac();
+    this.cameras.main.fadeOut(200);
+    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Cup'));
   }
 
   back() {

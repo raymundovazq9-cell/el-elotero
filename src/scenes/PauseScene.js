@@ -35,10 +35,11 @@ export default class PauseScene extends Phaser.Scene {
   }
 
   restart() {
+    const data = this.scene.get('Game').startData || {};
     this.scene.stop('UI');
     this.scene.stop();
     this.scene.stop('Game');
-    this.scene.start('Game');
+    this.scene.start('Game', data);
   }
 
   menu() {
