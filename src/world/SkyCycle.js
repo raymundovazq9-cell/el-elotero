@@ -50,7 +50,8 @@ export function skyAt(meters, cycle = CYCLE_METERS) {
 
 /**
  * Cielo degradado, capas lejanas con parallax (cerros, nubes), estrellas y
- * oscurecimiento nocturno. Todo fijo a la cámara (scrollFactor 0).
+ * oscurecimiento nocturno. Todo vive en un contenedor fijo a la cámara que se
+ * escala al inverso del zoom, así el cielo nunca se encoge al alejar la cámara.
  */
 export default class SkyCycle {
   constructor(scene, opts = {}) {
@@ -60,37 +61,45 @@ export default class SkyCycle {
     this.lastKey = '';
     this.night = 0;
 
-    // cielo
+    // contenedor centrado en la pantalla; sus hijos usan coordenadas de pantalla - centro
+    this.root = scene.add
+      .container(GAME_WIDTH / 2, GAME_HEIGHT / 2)
+      .setScrollFactor(0)
+      .setDepth(-100);
+    const OX = -GAME_WIDTH / 2;
+    const OY = -GAME_HEIGHT / 2;
+    this.ox = OX;
+
+    // cielo (un poco más grande que la pantalla por si el zoom baja de lo previsto)
     this.canvas = scene.textures.createCanvas('sky', 8, 256);
-    this.sky = scene.add.image(0, 0, 'sky').setOrigin(0).setScrollFactor(0).setDepth(-100);
-    this.sky.setDisplaySize(GAME_WIDTH, GAME_HEIGHT);
+    this.sky = scene.add.image(OX - GAME_WIDTH * 0.25, OY - GAME_HEIGHT * 0.25, 'sky').setOrigin(0);
+    this.sky.setDisplaySize(GAME_WIDTH * 1.5, GAME_HEIGHT * 1.5);
+    this.root.add(this.sky);
 
     // estrellas
     this.stars = [];
     for (let i = 0; i < 40; i++) {
-      const s = scene.add
-        .circle(Math.random() * GAME_WIDTH, Math.random() * HORIZON * 0.9, Math.random() * 1.6 + 0.8, 0xffffff, 1)
-        .setScrollFactor(0)
-        .setDepth(-99)
-        .setAlpha(0);
+      const s = scene.add.circle(OX + Math.random() * GAME_WIDTH, OY + Math.random() * HORIZON * 0.9, Math.random() * 1.6 + 0.8, 0xffffff, 1).setAlpha(0);
       this.stars.push(s);
+      this.root.add(s);
     }
-    this.moon = scene.add.circle(GAME_WIDTH - 90, 110, 26, 0xfff6c2, 1).setScrollFactor(0).setDepth(-99).setAlpha(0);
+    this.moon = scene.add.circle(OX + GAME_WIDTH - 90, OY + 110, 26, 0xfff6c2, 1).setAlpha(0);
+    this.root.add(this.moon);
 
     // cerros: tantas copias como hagan falta para cubrir el ancho (alternando espejo para que empalmen)
-    this.far = [];
     const mk = (key, isSvg) => {
       const probe = isSvg ? svgImage(scene, 0, HORIZON, key) : scene.add.image(0, HORIZON, key);
       const w = isSvg ? probe.displayWidth * FAR_SCALE : GAME_WIDTH * 2;
       probe.destroy();
-      const n = Math.ceil(GAME_WIDTH / w) + 1;
+      const n = Math.ceil((GAME_WIDTH * 1.5) / w) + 1;
       const imgs = [];
       for (let i = 0; i < n; i++) {
-        const img = isSvg ? svgImage(scene, 0, HORIZON, key) : scene.add.image(0, HORIZON, key);
-        img.setOrigin(0, 1).setScrollFactor(0).setDepth(-90);
+        const img = isSvg ? svgImage(scene, 0, OY + HORIZON, key) : scene.add.image(0, OY + HORIZON, key);
+        img.setOrigin(0, 1);
         if (isSvg) img.setScale(img.scaleX * FAR_SCALE);
         if (i % 2 === 1) img.setFlipX(true);
         imgs.push(img);
+        this.root.add(img);
       }
       return imgs;
     };
@@ -105,20 +114,28 @@ export default class SkyCycle {
       this.farNight = null;
     }
     this.farWidth = this.farDay[0].displayWidth;
+    // relleno bajo los cerros, por si el mundo queda más abajo del horizonte al alejar la cámara
+    this.ground = scene.add.rectangle(OX - GAME_WIDTH * 0.25, OY + HORIZON - 2, GAME_WIDTH * 1.5, GAME_HEIGHT, 0x3f7a48, 1).setOrigin(0);
+    this.root.addAt(this.ground, 1);
 
     // nubes
     this.clouds = [];
     for (let i = 0; i < 4; i++) {
-      const c = svgImage(scene, 0, 0, 'nube').setScrollFactor(0).setDepth(-95).setAlpha(0.9);
+      const c = svgImage(scene, 0, 0, 'nube').setAlpha(0.9);
       c.baseX = (i / 4) * GAME_WIDTH * 1.3;
       c.baseY = 95 + ((i * 97) % 110);
       c.setScale(0.3 + ((i * 37) % 30) / 100);
       c.setAlpha(0.85);
       this.clouds.push(c);
+      this.root.add(c);
+      this.root.moveBelow(c, this.farDay[0]);
     }
 
     // oscurecimiento nocturno sobre el mundo (debajo del HUD)
-    this.overlay = scene.add.rectangle(0, 0, GAME_WIDTH, GAME_HEIGHT, 0x101a40, 0).setOrigin(0).setScrollFactor(0).setDepth(25);
+    this.overlay = scene.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH * 1.6, GAME_HEIGHT * 1.6, 0x101a40, 0)
+      .setScrollFactor(0)
+      .setDepth(25);
 
     this.paint(skyAt(0));
   }
@@ -140,16 +157,20 @@ export default class SkyCycle {
     const sky = skyAt(meters, this.cycle);
     this.paint(sky);
     this.night = sky.night;
+    const zoom = this.scene.cameras.main.zoom || 1;
+    this.root.setScale(1 / zoom);
 
     const w = this.farWidth;
     const n = this.farDay.length;
     const period = w * (n % 2 === 0 ? n : n + 1);
+    const span = GAME_WIDTH * 1.5;
+    const left = this.ox - GAME_WIDTH * 0.25;
     let off = -((scrollX * 0.08) % period);
     this.farDay.forEach((img, i) => {
       let x = off + i * w;
       while (x < -w) x += n * w;
-      while (x > GAME_WIDTH) x -= n * w;
-      img.setX(x);
+      while (x > span) x -= n * w;
+      img.setX(left + x);
     });
     if (this.farNight) {
       this.farNight.forEach((img, i) => img.setX(this.farDay[i].x).setAlpha(Math.min(1, sky.night * 1.8)));
@@ -159,7 +180,7 @@ export default class SkyCycle {
     for (const c of this.clouds) {
       let x = c.baseX - ((scrollX * 0.03 + timeMs * 0.006) % cw);
       if (x < -120) x += cw;
-      c.setPosition(x, c.baseY);
+      c.setPosition(this.ox + x, -GAME_HEIGHT / 2 + c.baseY);
       c.setAlpha(0.85 - sky.night * 0.6);
     }
 
@@ -170,13 +191,8 @@ export default class SkyCycle {
   }
 
   destroy() {
-    this.sky.destroy();
+    this.root.destroy(true);
     this.scene.textures.remove('sky');
-    this.stars.forEach((s) => s.destroy());
-    this.moon.destroy();
-    this.farDay.forEach((i) => i.destroy());
-    if (this.farNight) this.farNight.forEach((i) => i.destroy());
-    this.clouds.forEach((c) => c.destroy());
     this.overlay.destroy();
   }
 }

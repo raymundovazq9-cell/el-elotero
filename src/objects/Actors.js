@@ -3,6 +3,7 @@ import { labelOf } from './EloteManager.js';
 import { svgImage } from '../assets.js';
 import { SCORE } from '../config.js';
 import { MAX_METERS, SAFE_METERS } from './Difficulty.js';
+import { groundFilter } from './collision.js';
 
 export const CROSSER = {
   triggerDistance: 460, // px por delante del carrito para que "salga"
@@ -159,14 +160,14 @@ export default class Actors {
     const sin = Math.sin(angle);
     const cx = x + c.x * cos - c.y * sin;
     const cy = y + c.x * sin + c.y * cos;
-    return m.add.fromVertices(cx, cy, local, { isStatic, angle, friction: 0.8, label, render: { visible: false } });
+    return m.add.fromVertices(cx, cy, local, { isStatic, angle, friction: 0.8, label, collisionFilter: groundFilter(), render: { visible: false } });
   }
 
   addPoste(chunk, s) {
     const m = this.scene.matter;
     const x = s.x - s.n.x * POSTE.radius;
     const y = s.y - s.n.y * POSTE.radius;
-    const body = m.add.circle(x, y, POSTE.radius, { isStatic: true, friction: 0.7, label: 'poste-caido', render: { visible: false } });
+    const body = m.add.circle(x, y, POSTE.radius, { isStatic: true, friction: 0.7, label: 'poste-caido', collisionFilter: groundFilter(), render: { visible: false } });
     chunk.bodies.push(body);
     this.extras(chunk).push(svgImage(this.scene, x, y, 'poste-caido').setOrigin(0.5, 0.6).setRotation(s.angle).setDepth(-4));
   }

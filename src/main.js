@@ -19,6 +19,7 @@ const config = {
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   backgroundColor: '#000000',
+  render: { antialias: true, roundPixels: true },
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -27,6 +28,8 @@ const config = {
     default: 'matter',
     matter: {
       gravity: { y: PHYSICS.gravityY },
+      positionIterations: 8,
+      velocityIterations: 6,
       debug: DEBUG.physics && {
         showBody: true,
         showStaticBody: true,

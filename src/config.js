@@ -61,6 +61,21 @@ export const ELOTES = {
   lostDistance: 170, // px desde el chasis para darse por perdido
 };
 
+export const CAMERA = {
+  lookAheadBase: 0.3, // fracción del ancho a la izquierda del carrito
+  lookAheadPerSpeed: 9, // px extra de adelanto por cada px/paso de velocidad
+  zoomMin: 0.78, // zoom a toda velocidad
+  zoomSpeed0: 6, // velocidad (px/paso) donde empieza a alejarse
+  zoomSpeed1: 18, // velocidad donde llega a zoomMin
+  zoomAir: 0.08, // alejamiento extra en el aire
+  lerpX: 0.15,
+  lerpY: 0.12,
+  lerpYAir: 0.22,
+  lerpZoom: 0.05,
+  landingShakeMin: 4, // impacto (px/paso) a partir del cual sacude
+  landingShakeK: 0.0022,
+};
+
 export const SCORE = {
   airMinMs: 250, // mínimo en el aire para contar como salto
   airBonusMinMs: 700, // mínimo para dar elotes por aire

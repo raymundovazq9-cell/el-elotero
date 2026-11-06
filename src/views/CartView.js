@@ -1,3 +1,4 @@
+import Phaser from 'phaser';
 import { svgImage, SVG_SCALE } from '../assets.js';
 import EloteroView from './EloteroView.js';
 
@@ -60,19 +61,38 @@ export default class CartView {
     });
     this.steam.setDepth(-0.5);
 
+    this.squash = 0; // 0..1, aplasta el cuerpo al aterrizar
+    scene.events.on('landing', this.onLanding, this);
     this.sync();
+  }
+
+  /** Aplasta un poco el cuerpo al caer (más con más impacto). */
+  onLanding(impact) {
+    const amount = Phaser.Math.Clamp(impact / 14, 0.25, 1);
+    if (this.squashTween) this.squashTween.stop();
+    this.squash = amount;
+    this.squashTween = this.scene.tweens.add({
+      targets: this,
+      squash: 0,
+      duration: 180,
+      ease: 'Sine.easeOut',
+    });
   }
 
   local(dx, dy) {
     const b = this.cart.chassis;
     const cos = Math.cos(b.angle);
     const sin = Math.sin(b.angle);
-    return { x: b.position.x + dx * cos - dy * sin, y: b.position.y + dx * sin + dy * cos };
+    return {
+      x: b.position.x + dx * cos - dy * sin,
+      y: b.position.y + dx * sin + dy * cos,
+    };
   }
 
   sync(delta = 16) {
     const b = this.cart.chassis;
     this.body.setPosition(b.position.x, b.position.y).setRotation(b.angle);
+    this.body.setScale((1 + 0.08 * this.squash) / SVG_SCALE, (1 - 0.12 * this.squash) / SVG_SCALE);
     if (this.walls) this.walls.setPosition(b.position.x, b.position.y).setRotation(b.angle);
     this.cart.wheels.forEach((w, i) => {
       this.wheels[i].setPosition(w.position.x, w.position.y).setRotation(w.angle);
@@ -90,6 +110,7 @@ export default class CartView {
   }
 
   destroy() {
+    this.scene.events.off('landing', this.onLanding, this);
     if (this.walls) this.walls.destroy();
     this.body.destroy();
     this.wheels.forEach((w) => w.destroy());

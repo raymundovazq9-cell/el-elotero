@@ -89,7 +89,11 @@ export default class Cart {
     this.tipTimer = 0;
     this.tipped = false;
     this.grounded = true;
+    this.wasGrounded = true;
     this.chassisContact = false;
+    this.wheelContacts = new Set(); // índices de las ruedas que tocan el piso
+    this.lastVy = 0;
+    this.airTotalMs = 0; // tiempo en el aire del salto en curso (para el impacto)
     this.groundLabels = new Set(['road', 'tope', 'coche', 'camioneta', 'poste-caido']);
     scene.matter.world.on('collisionactive', this.onCollisionActive, this);
     scene.matter.world.on('collisionstart', this.onCollisionActive, this);
@@ -133,15 +137,20 @@ export default class Cart {
       const other = wheelA || chassisA ? b : a;
       const label = other.label !== 'Body' ? other.label : other.parent && other.parent.label;
       if (!this.groundLabels.has(label)) continue;
-      if (wheelA || wheelB) this.grounded = true;
-      else this.chassisContact = true;
+      if (wheelA || wheelB) {
+        this.grounded = true;
+        this.wheelContacts.add(this.wheels.indexOf(wheelA ? a : b));
+      } else this.chassisContact = true;
     }
   }
 
   /** Llamar al final del update de la escena, después de leer `grounded`. */
   endStep() {
+    this.wasGrounded = this.grounded;
+    this.lastVy = this.chassis.velocity.y;
     this.grounded = false;
     this.chassisContact = false;
+    this.wheelContacts.clear();
   }
 
   get x() {
@@ -193,6 +202,13 @@ export default class Cart {
       }
       if (next !== cur) m.body.setAngularVelocity(w, next);
     }
+
+    // aterrizaje: avisa con la velocidad vertical que traía (impacto en px/paso)
+    if (this.grounded && !this.wasGrounded && this.airTotalMs >= 120) {
+      this.scene.events.emit('landing', Math.max(0, this.lastVy), this.airTotalMs);
+    }
+    if (this.grounded) this.airTotalMs = 0;
+    else this.airTotalMs += deltaMs;
 
     // en el aire los pedales inclinan el carrito: acelerar = nariz arriba, freno = nariz abajo
     if (!this.grounded) {

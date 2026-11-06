@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_WIDTH, GAME_HEIGHT, PX_PER_METER, SCORE } from '../config.js';
+import { GAME_WIDTH, GAME_HEIGHT, PX_PER_METER, SCORE, CAMERA } from '../config.js';
 import Terrain from '../objects/Terrain.js';
 import { levelById } from '../data/levels.js';
 import { cartById } from '../data/carts.js';
@@ -31,16 +31,14 @@ export default class GameScene extends Phaser.Scene {
     this.level = levelById((data && data.level) || Save.data.level);
     this.cameras.main.setBackgroundColor('#87b7e0');
     this.cameras.main.fadeIn(300);
-    this.sky = new SkyCycle(this, { farDay: 'fondo-tarde', farNight: 'fondo-noche', cycle: this.level.cielo.ciclo });
+    this.sky = new SkyCycle(this, {
+      farDay: 'fondo-tarde',
+      farNight: 'fondo-noche',
+      cycle: this.level.cielo.ciclo,
+    });
 
     this.startX = 120;
-    this.road = new Terrain(
-      this,
-      (x) => Math.max(0, (x - this.startX) / PX_PER_METER),
-      DEBUG.test ? 'elotero' : undefined,
-      new RoadView(this),
-      this.level
-    );
+    this.road = new Terrain(this, (x) => Math.max(0, (x - this.startX) / PX_PER_METER), DEBUG.test ? 'elotero' : undefined, new RoadView(this), this.level);
     this.scenery = new Scenery(this, this.road, this.level.tema);
     this.road.start(-500, 1100);
 
@@ -61,7 +59,14 @@ export default class GameScene extends Phaser.Scene {
     this.particles = new Particles(this, this.cart);
 
     // ganancias de la partida (elotes al banco), por concepto
-    this.earned = { recogidos: 0, metros: 0, marometas: 0, aire: 0, ventas: 0, misiones: 0 };
+    this.earned = {
+      recogidos: 0,
+      metros: 0,
+      marometas: 0,
+      aire: 0,
+      ventas: 0,
+      misiones: 0,
+    };
     this.missionsDone = [];
     this.nextCheckpoint = SCORE.checkpointMeters;
     this.checkpoints = 0;
@@ -81,6 +86,10 @@ export default class GameScene extends Phaser.Scene {
     this.events.on('elote-picked', () => {
       this.earned.recogidos += 1;
       Sfx.eloteRecogido();
+    });
+    this.events.on('landing', (impact) => {
+      if (impact < CAMERA.landingShakeMin) return;
+      this.cameras.main.shake(120, Math.min(0.012, CAMERA.landingShakeK * (impact - CAMERA.landingShakeMin + 2)));
     });
     this.events.on('landed', (gained) => {
       this.earned.aire += gained;
@@ -138,7 +147,12 @@ export default class GameScene extends Phaser.Scene {
     this.pedals = { brake: false, gas: false };
     this.input.once('pointerdown', () => unlockAudio());
     this.keys = this.input.keyboard
-      ? this.input.keyboard.addKeys({ left: 'LEFT', right: 'RIGHT', a: 'A', d: 'D' })
+      ? this.input.keyboard.addKeys({
+          left: 'LEFT',
+          right: 'RIGHT',
+          a: 'A',
+          d: 'D',
+        })
       : null;
     const onBlur = () => this.setPedals(false, false);
     this.game.events.on('blur', onBlur);
@@ -159,8 +173,38 @@ export default class GameScene extends Phaser.Scene {
     this.scene.launch('UI');
 
     const cam = this.cameras.main;
-    cam.scrollX = this.cart.x - GAME_WIDTH * 0.3;
+    cam.scrollX = this.cart.x - GAME_WIDTH * CAMERA.lookAheadBase;
     cam.scrollY = this.cart.y - GAME_HEIGHT * 0.55;
+    cam.setZoom(1);
+  }
+
+  /** Lerp independiente de los fps: k es la fracción por frame de 60 Hz. */
+  static frameLerp(k, delta) {
+    return 1 - Math.pow(1 - k, delta / 16.667);
+  }
+
+  /**
+   * Cámara: el carrito va a la izquierda y más adelante cuanto más rápido;
+   * se aleja con la velocidad y en el aire; en Y sigue más rápido en el aire.
+   */
+  updateCamera(delta) {
+    const cam = this.cameras.main;
+    const c = CAMERA;
+    const vx = this.cart.speedX;
+    const inAir = !this.cart.grounded && this.cart.airTotalMs > 200;
+    const speedT = Phaser.Math.Clamp((Math.abs(vx) - c.zoomSpeed0) / (c.zoomSpeed1 - c.zoomSpeed0), 0, 1);
+    const targetZoom = Phaser.Math.Clamp(1 - (1 - c.zoomMin) * speedT - (inAir ? c.zoomAir : 0), c.zoomMin - c.zoomAir, 1);
+    const zoom = Phaser.Math.Linear(cam.zoom, targetZoom, GameScene.frameLerp(c.lerpZoom, delta));
+    cam.setZoom(zoom);
+
+    // con zoom < 1 la cámara ve más mundo: el centro de la vista queda en (scrollX + W/2)
+    const viewW = GAME_WIDTH / zoom;
+    const viewH = GAME_HEIGHT / zoom;
+    const ahead = Math.max(0, vx) * c.lookAheadPerSpeed;
+    const targetX = this.cart.x - viewW * c.lookAheadBase - ahead + (viewW - GAME_WIDTH) / 2;
+    const targetY = this.cart.y - viewH * 0.55 + (viewH - GAME_HEIGHT) / 2;
+    cam.scrollX = Phaser.Math.Linear(cam.scrollX, targetX, GameScene.frameLerp(c.lerpX, delta));
+    cam.scrollY = Phaser.Math.Linear(cam.scrollY, targetY, GameScene.frameLerp(inAir ? c.lerpYAir : c.lerpY, delta));
   }
 
   /** Estado de los pedales (desde la UI, el teclado o el modo de prueba). */
@@ -188,8 +232,10 @@ export default class GameScene extends Phaser.Scene {
       return;
     }
     const pitch = this.cart.chassis.angle - (this.cart.groundAngle || 0);
-    if (pitch < -0.3) this.setPedals(true, false); // nariz arriba: freno la baja
-    else if (pitch > 0.3) this.setPedals(false, true); // nariz abajo: gas la sube
+    if (pitch < -0.3)
+      this.setPedals(true, false); // nariz arriba: freno la baja
+    else if (pitch > 0.3)
+      this.setPedals(false, true); // nariz abajo: gas la sube
     else this.setPedals(false, false);
   }
 
@@ -240,7 +286,13 @@ export default class GameScene extends Phaser.Scene {
     }
     Save.addBank(this.earnedTotal);
     this.isRecord = Save.setBest(this.level.id, meters);
-    Save.addTotals({ runs: 1, meters, elotes: this.earnedTotal, marometas: this.flips, ventas: this.sales });
+    Save.addTotals({
+      runs: 1,
+      meters,
+      elotes: this.earnedTotal,
+      marometas: this.flips,
+      ventas: this.sales,
+    });
   }
 
   updateCheckpoints() {
@@ -260,7 +312,14 @@ export default class GameScene extends Phaser.Scene {
     this.over = true;
     this.setBraking(false);
     this.bankRun();
-    this.final = { ...this.getStats(), reason, isRecord: this.isRecord, best: Save.bestFor(this.level.id), bank: Save.bank, missions: this.missionsDone };
+    this.final = {
+      ...this.getStats(),
+      reason,
+      isRecord: this.isRecord,
+      best: Save.bestFor(this.level.id),
+      bank: Save.bank,
+      missions: this.missionsDone,
+    };
     this.events.emit('gameover', reason);
     if (DEBUG.test) console.log(`[test] GAMEOVER reason=${reason} ${JSON.stringify(this.final)}`);
     this.cameras.main.shake(300, 0.012);
@@ -317,13 +376,10 @@ export default class GameScene extends Phaser.Scene {
       else if (this.elotes.count === 0) this.gameOver('sin-elotes');
     }
 
+    this.updateCamera(delta);
     const cam = this.cameras.main;
-    this.road.update(cam.scrollX);
+    this.road.update(cam.worldView.x);
     this.sky.update(DEBUG.skyMeters ?? this.meters + this.level.cielo.inicio, cam.scrollX, time);
     this.scenery.setNight(this.sky.night);
-    const targetX = this.cart.x - GAME_WIDTH * 0.3;
-    const targetY = this.cart.y - GAME_HEIGHT * 0.55;
-    cam.scrollX = Phaser.Math.Linear(cam.scrollX, targetX, 0.15);
-    cam.scrollY = Phaser.Math.Linear(cam.scrollY, targetY, 0.12);
   }
 }

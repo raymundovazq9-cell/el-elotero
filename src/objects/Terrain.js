@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ROAD, GAME_WIDTH } from '../config.js';
 import { SAFE_METERS, MAX_METERS } from './Difficulty.js';
 import { DEBUG } from '../debug.js';
+import { groundFilter } from './collision.js';
 
 const COLOR_ROAD = 0x5a5a5a;
 const COLOR_ROAD_LINE = 0x2e2e2e;
@@ -229,6 +230,7 @@ export default class Terrain {
           isStatic: true,
           friction: 0.6,
           label: 'tope',
+          collisionFilter: groundFilter(),
           render: { fillColor: COLOR_TOPE, lineColor: 0x7a3a10 },
         })
       );
@@ -325,6 +327,7 @@ export default class Terrain {
       angle,
       friction: ROAD.friction,
       label: 'road',
+      collisionFilter: groundFilter(),
       render: { visible: false },
     });
   }

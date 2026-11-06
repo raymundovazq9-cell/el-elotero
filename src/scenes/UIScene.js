@@ -148,8 +148,8 @@ export default class UIScene extends Phaser.Scene {
   /** "+1" pequeño en el lugar del elote recogido (coordenadas del mundo → pantalla). */
   showPickup(pos) {
     const cam = this.game_.cameras.main;
-    const x = pos ? pos.x - cam.scrollX : GAME_WIDTH / 2;
-    const y = pos ? pos.y - cam.scrollY : GAME_HEIGHT / 2;
+    const x = pos ? (pos.x - cam.worldView.x) * cam.zoom : GAME_WIDTH / 2;
+    const y = pos ? (pos.y - cam.worldView.y) * cam.zoom : GAME_HEIGHT / 2;
     const t = this.add.text(x, y, '+1', textStyle(26, COLORS.amarilloHex)).setOrigin(0.5);
     this.tweens.add({ targets: t, y: y - 40, alpha: 0, duration: 600, onComplete: () => t.destroy() });
   }
