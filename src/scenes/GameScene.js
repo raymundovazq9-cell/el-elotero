@@ -63,10 +63,12 @@ export default class GameScene extends Phaser.Scene {
 
     this.startX = 120;
     this.finishX = this.cup ? this.startX + this.cup.metros * PX_PER_METER : null;
-    const seed = this.cup ? `copa-${this.raceSeed || this.cup.id}` : DEBUG.test ? 'elotero' : undefined;
+    // pista fija por escenario y por copa: se aprende y los récords comparan lo mismo
+    const seed = this.cup ? `copa-${this.cup.id}-v1` : `pista-${this.level.id}-v1`;
     this.road = new Terrain(this, (x) => Math.max(0, (x - this.startX) / PX_PER_METER), seed, new RoadView(this), this.level, { finishX: this.finishX });
     this.scenery = new Scenery(this, this.road, this.level.tema);
     this.road.start(-500, 1100);
+    if (DEBUG.test) console.log(`[test] pista=${this.road.builder.signature(this.startX + 25000)}`);
 
     this.cartData = cartById((data && data.cart) || Save.data.cart);
     const levels = Object.keys(DEBUG.upgrades).length ? DEBUG.upgrades : Save.upgradesFor(this.cartData.id);
@@ -492,7 +494,7 @@ export default class GameScene extends Phaser.Scene {
         this.nextLog = (this.nextLog || 0) + 1000;
         const c = this.cart;
         console.log(
-          `[test] t=${Math.round(this.testClock)} x=${c.x.toFixed(0)} y=${c.y.toFixed(0)} vx=${c.speedX.toFixed(2)} ang=${c.angleDeg.toFixed(1)} g=${c.grounded} brake=${this.braking} perros=${this.obstacles.hits} lost=${this.elotes.lost} picked=${this.elotes.picked} objs=${this.children.length} bodies=${this.matter.world.getAllBodies().length} stats=${JSON.stringify(this.getStats())}`
+          `[test] t=${Math.round(this.testClock)} x=${c.x.toFixed(0)} y=${c.y.toFixed(0)} vx=${c.speedX.toFixed(2)} ang=${c.angleDeg.toFixed(1)} g=${c.grounded} brake=${this.braking} pieza=${this.road.builder ? this.road.builder.pieceAt(c.x) : ''} perros=${this.obstacles.hits} lost=${this.elotes.lost} picked=${this.elotes.picked} objs=${this.children.length} bodies=${this.matter.world.getAllBodies().length} stats=${JSON.stringify(this.getStats())}`
         );
       }
     }

@@ -1,7 +1,7 @@
-// Escenarios del juego. Cada uno es un terreno infinito con su propio récord.
-// terreno: perfil de colinas = base + Σ amp[i]·sin(2π·x/lambda[i] + fase[i]);
-//   la amplitud se multiplica por min(maxMul, 1 + crecimiento·metros).
-// rasgos: probabilidad base por segmento de 24 px (se multiplica por 1 + t de dificultad).
+// Escenarios del juego. Cada uno es una pista fija (semilla por escenario) con su propio récord.
+// pista.piezas: pesos de las piezas de TrackBuilder (llano, subida, bajada, cresta, dobleCresta,
+//   sierra, valle, trampolin, meseta, barranca, rampaGrande); escala multiplica las alturas.
+// pista.sal: probabilidad por muestra de 24 px de rasgos aleatorios extra (×(1 + t de dificultad)).
 
 export const LEVELS = [
   {
@@ -10,8 +10,12 @@ export const LEVELS = [
     descripcion: 'El barrio de siempre: casas de colores y colinas suaves.',
     precio: 0,
     tema: 'callejon',
-    terreno: { base: 420, amp: [50, 20, 4], lambda: [1000, 420, 200], crecimiento: 0.0012, maxMul: 2.2 },
-    rasgos: { tope: 0.05, bache: 0.03, escalera: 0.04, rampa: 0.05, rampaGrande: 0.02, barranca: 0.015, arco: 0.7 },
+    pista: {
+      base: 420,
+      escala: 1,
+      piezas: { llano: 3, subida: 3, bajada: 3, cresta: 2, dobleCresta: 1, sierra: 1, valle: 2, trampolin: 1, meseta: 1, barranca: 0.5, rampaGrande: 0.5 },
+      sal: { tope: 0.01, bache: 0.015, escalera: 0.01, rampa: 0.02, rampaGrande: 0.005, barranca: 0.005, arco: 0.7 },
+    },
     actores: { perro: 0.025, dona: 0.02, cholo: 0.015, cliente: 0.05, coche: 0.03, camioneta: 0.015, cable: 0.02, poste: 0.01, chile: 0.02, bolsa: 0.015 },
     cielo: { inicio: 0, ciclo: 600 },
     musica: { bpm: 96 },
@@ -22,8 +26,24 @@ export const LEVELS = [
     descripcion: 'Lonas, puestos y doñas con el mandado. Escaleras por todos lados.',
     precio: 1500,
     tema: 'mercado',
-    terreno: { base: 420, amp: [60, 26, 5], lambda: [900, 380, 190], crecimiento: 0.0015, maxMul: 2.4 },
-    rasgos: { tope: 0.06, bache: 0.04, escalera: 0.08, rampa: 0.05, rampaGrande: 0.02, barranca: 0.02, arco: 0.7 },
+    pista: {
+      base: 420,
+      escala: 1.05,
+      piezas: {
+        llano: 2,
+        subida: 2,
+        bajada: 3,
+        cresta: 1.5,
+        dobleCresta: 1,
+        sierra: 3,
+        valle: 1.5,
+        trampolin: 0.5,
+        meseta: 3,
+        barranca: 0.5,
+        rampaGrande: 0.3,
+      },
+      sal: { tope: 0.015, bache: 0.02, escalera: 0.03, rampa: 0.015, rampaGrande: 0.005, barranca: 0.005, arco: 0.7 },
+    },
     actores: { perro: 0.02, dona: 0.04, cholo: 0.02, cliente: 0.08, coche: 0.02, camioneta: 0.02, cable: 0, poste: 0.02, chile: 0.02 },
     cielo: { inicio: 60, ciclo: 700 },
     musica: { bpm: 104 },
@@ -34,8 +54,12 @@ export const LEVELS = [
     descripcion: 'Rampas grandes, luces de noche, la camioneta del gas y los de la CFE.',
     precio: 5000,
     tema: 'feria',
-    terreno: { base: 420, amp: [75, 30, 6], lambda: [850, 360, 190], crecimiento: 0.0018, maxMul: 2.6 },
-    rasgos: { tope: 0.05, bache: 0.04, escalera: 0.04, rampa: 0.08, rampaGrande: 0.05, barranca: 0.03, arco: 0.8 },
+    pista: {
+      base: 420,
+      escala: 1.2,
+      piezas: { llano: 2, subida: 2, bajada: 3, cresta: 3, dobleCresta: 3, sierra: 1, valle: 2, trampolin: 2.5, meseta: 0.5, barranca: 1, rampaGrande: 1.5 },
+      sal: { tope: 0.01, bache: 0.015, escalera: 0.01, rampa: 0.03, rampaGrande: 0.01, barranca: 0.01, arco: 0.8 },
+    },
     actores: { perro: 0.015, dona: 0.02, cholo: 0.025, cliente: 0.05, coche: 0.02, camioneta: 0.04, cable: 0.05, poste: 0.03, chile: 0.03 },
     cielo: { inicio: 330, ciclo: 900 },
     musica: { bpm: 112 },
@@ -46,8 +70,24 @@ export const LEVELS = [
     descripcion: 'Cuestas largas de empedrado, la plaza con su kiosco y la iglesia. Cuidado con el balón.',
     precio: 2500,
     tema: 'pueblo',
-    terreno: { base: 420, amp: [70, 22, 4], lambda: [1300, 450, 200], crecimiento: 0.0014, maxMul: 2.4 },
-    rasgos: { tope: 0.04, bache: 0.05, escalera: 0.05, rampa: 0.05, rampaGrande: 0.02, barranca: 0.02, arco: 0.7 },
+    pista: {
+      base: 420,
+      escala: 1.1,
+      piezas: {
+        llano: 2,
+        subida: 4,
+        bajada: 3,
+        cresta: 1,
+        dobleCresta: 0.5,
+        sierra: 1,
+        valle: 3.5,
+        trampolin: 0.5,
+        meseta: 1.5,
+        barranca: 0.5,
+        rampaGrande: 0.5,
+      },
+      sal: { tope: 0.008, bache: 0.025, escalera: 0.015, rampa: 0.015, rampaGrande: 0.005, barranca: 0.005, arco: 0.7 },
+    },
     actores: { perro: 0.025, dona: 0.025, cholo: 0.01, cliente: 0.07, coche: 0.02, camioneta: 0.015, cable: 0.01, poste: 0.01, chile: 0.02, balon: 0.05 },
     cielo: { inicio: 0, ciclo: 800 },
     musica: { bpm: 100 },
@@ -58,8 +98,24 @@ export const LEVELS = [
     descripcion: 'Rectas largas, saltos enormes, charcos, tráileres y el tamalero en bici.',
     precio: 9000,
     tema: 'carretera',
-    terreno: { base: 420, amp: [55, 18, 3], lambda: [1600, 500, 220], crecimiento: 0.001, maxMul: 2.2 },
-    rasgos: { tope: 0.02, bache: 0.06, escalera: 0, rampa: 0.06, rampaGrande: 0.08, barranca: 0.05, arco: 0.8 },
+    pista: {
+      base: 420,
+      escala: 1,
+      piezas: {
+        llano: 4,
+        subida: 1.5,
+        bajada: 4,
+        cresta: 1.5,
+        dobleCresta: 0.5,
+        sierra: 0.5,
+        valle: 2,
+        trampolin: 1.5,
+        meseta: 0,
+        barranca: 2.5,
+        rampaGrande: 3,
+      },
+      sal: { tope: 0.004, bache: 0.03, escalera: 0, rampa: 0.02, rampaGrande: 0.015, barranca: 0.01, arco: 0.8 },
+    },
     actores: {
       perro: 0.02,
       dona: 0.01,

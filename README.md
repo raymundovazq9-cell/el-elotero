@@ -18,9 +18,14 @@ todos los elotes del carrito o si te quedas atorado 6 segundos sin avanzar.
 
 ## Modos
 
-- **Aventura**: colinas infinitas por escenario, cada uno con su récord de metros. Las colinas crecen con los metros.
-- **Copa**: carrera corta con meta (400 a 700 m) contra tres eloteros del barrio con carritos parecidos al tuyo.
-  Atraviesan tu carrito (no chocan contigo). Premio según el lugar; si te volteas o te quedas sin elotes, quedas último.
+- **Aventura**: pista infinita por escenario, **fija** (siempre la misma, se aprende) y con su récord de metros.
+  Está armada por tramos diseñados que suben de nivel con los metros: subidas que piden impulso (si entras
+  lento te regresas: da reversa y toma vuelo), bajadas con tope al final (frena), crestas que te lanzan
+  (nivela en el aire), sierras (baja la velocidad o pierdes elotes), valles, trampolines con hueco, mesetas
+  con escalera, barrancas y rampas grandes (`src/objects/TrackBuilder.js`).
+- **Copa**: carrera corta con meta (350 a 550 m) contra tres eloteros del barrio con carritos parecidos al tuyo.
+  La pista de cada copa también es fija. Atraviesan tu carrito (no chocan contigo). Premio según el lugar;
+  si te volteas o te quedas sin elotes, quedas último.
 
 ## Economía y trucos
 
@@ -57,12 +62,16 @@ El progreso se guarda en `localStorage` (`elotero.save`).
 
 ## Personajes y obstáculos
 
-Perro y doña (cruzan y te frenan), cholo (roba si pasas lento), cliente (compra si
-pasas lento), coche estacionado, poste caído, camioneta del gas, tamalero en bici
-y tráiler (vehículos lentos que se saltan), cable bajo de la CFE tras las rampas,
-balón que patean los niños (Pueblo), charcos que quitan fricción (Carretera; las
-llantas mejoradas ayudan), chile (turbo 2 s) y bolsa de elotes. Terreno: topes,
-baches, escaleras, rampas, rampas grandes y barrancas.
+Perro y doña: salen a la banqueta con un "!" y bajan a la calle justo cuando vas a
+pasar a tu velocidad actual; si frenas pasan antes y si aceleras los rebasas. Cholo:
+solo en subidas, avisa "¡Órale!" y roba si vas lento un rato en su zona (nunca el
+último elote). Cliente (compra si pasas lento), coche estacionado y poste caído (solo
+en tramos planos, nunca justo después de un bache o rampa), camioneta del gas,
+tamalero en bici y tráiler (vehículos lentos que se saltan), cable bajo de la CFE tras
+las rampas, balón que patean los niños (Pueblo), charcos que quitan fricción
+(Carretera; las llantas mejoradas ayudan), chile (turbo 2 s) y bolsa de elotes. La
+gente tiene espacio mínimo entre sí (`PEOPLE` en `src/objects/Actors.js`). Terreno:
+topes, baches, escaleras, rampas, rampas grandes, huecos y barrancas.
 
 ## Jugar en línea
 
@@ -99,7 +108,11 @@ Se rasterizan a 2× para pantallas retina y se muestran a escala 0.5, así que
 **1 unidad del SVG = 1 px del juego**. La lista de recursos está en `src/assets.js`.
 Los fondos lejanos (siluetas por tema, ventanas de noche, sol y luna) se dibujan
 por código en `src/world/Parallax.js`; el cable de la CFE, el papel picado, los
-focos, el empedrado, las barrancas y la meta también.
+focos, el empedrado, las barrancas y la meta también. Lo que está detrás de la
+calle lleva **bruma de profundidad** (`src/world/haze.js`): casas, puestos y postes
+se mezclan hacia un gris azulado (`<clave>@fondo`) y lo lejano (cerros, iglesia,
+kiosco, carpas) además va desenfocado con un filtro horneado en el SVG, para que el
+elotero y el carrito resalten.
 
 Para la pintura, cada SVG de carrito declara en `vista.pintura` qué colores son la
 base y la sombra; `src/paint.js` los reemplaza y carga la textura `<carrito>@<color>`.
@@ -109,7 +122,7 @@ base y la sombra; `src/paint.js` los reemplaza y carga la textura `<carrito>@<co
 | Parámetro | Efecto |
 |---|---|
 | `?debug=1` | dibuja los cuerpos físicos encima del arte |
-| `?test=1` | arranca directo en el juego con semilla fija y escribe `[test]` en consola cada segundo (también `LOST`, `TRUCO`, `COMBO`, `RACE`, `rivals`) |
+| `?test=1` | arranca directo en el juego y escribe `[test]` en consola cada segundo (también `pista=` con las piezas y su metro, `RASGO`, `CROSSER`, `ROBO`, `LOST`, `TRUCO`, `COMBO`, `RACE`, `rivals`) |
 | `&auto=1` | piloto automático (el mismo `Driver` de los rivales) |
 | `&mode=copa&cup=feria` | arranca una copa |
 | `&gas=0-3000,5000-8000` / `&brake=…` | guiones de pedales en ms de juego |
@@ -128,9 +141,10 @@ src/
   save.js              progreso en localStorage
   paint.js             pintura de carritos (recolor de SVG)
   data/                carritos, mejoras, ropa, pinturas, escenarios, copas, rivales, misiones
-  objects/             Terrain (colinas), Cart, Driver (IA), Rival, Race, EloteManager, Actors, Stall, Tricks
+  objects/             TrackBuilder (pista por tramos), Terrain (calle y rasgos), Cart, Driver (IA), Rival, Race,
+                       EloteManager, Actors, Stall, Tricks
   views/               CartView, EloteroView, EloteroTorso, EloteView, RoadView, CartPreview, MetaView
-  world/               Scenery (temas), SkyCycle + Parallax (fondo), Particles
+  world/               Scenery (temas), SkyCycle + Parallax (fondo), haze (bruma), Particles
   scenes/              Boot, Title, Garage, Cup, Game, UI, Pause, GameOver, RaceResult, Wipe (cortina)
   ui/                  widgets (botones, paneles, papel picado) y transitions
   audio.js, music.js   efectos, motor/ruedas y cumbia sintetizados con Web Audio

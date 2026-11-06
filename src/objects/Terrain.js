@@ -3,6 +3,7 @@ import { ROAD, GAME_WIDTH } from '../config.js';
 import { SAFE_METERS, MAX_METERS } from './Difficulty.js';
 import { DEBUG } from '../debug.js';
 import { groundFilter } from './collision.js';
+import TrackBuilder from './TrackBuilder.js';
 
 const COLOR_ROAD = 0x5a5a5a;
 const COLOR_ROAD_LINE = 0x2e2e2e;
@@ -13,10 +14,11 @@ const SPOT_MAX = 200; // largo máximo de un "spot" libre
 const STAIR = 30; // ancho de cada escalón de una escalera
 
 /**
- * Terreno infinito de colinas (suma de senos con fases aleatorias) construido
- * por tramos. Cada segmento entre dos puntos es un rectángulo estático rotado.
- * Sobre el perfil se insertan rasgos: topes, baches, escaleras (en bajadas) y
- * rampas (antes de una bajada). En las crestas se proponen arcos de elotes.
+ * Terreno de colinas construido por tramos: el perfil lo da TrackBuilder
+ * (piezas diseñadas, fijas por semilla) y cada segmento entre dos muestras es
+ * un rectángulo estático rotado. Sobre el perfil se insertan rasgos: los que
+ * piden las piezas (topes, rampas, escaleras, huecos, barrancas) y unos pocos
+ * aleatorios ("sal"). En las crestas se proponen arcos de elotes.
  */
 export default class Terrain {
   /**
@@ -34,47 +36,25 @@ export default class Terrain {
     this.metersAt = metersAt || (() => 0);
     this.rnd = new Phaser.Math.RandomDataGenerator(seed ? [seed] : undefined);
     this.chunks = [];
-    this.lastPoint = { x: 0, y: level.terreno.base };
+    this.lastPoint = { x: 0, y: level.pista.base };
     this.lastFeatureX = -Infinity;
     this.minFeatureGap = 200;
     this.profileStartX = 0;
-
-    const t = level.terreno;
-    this.waves = t.amp.map((amp, i) => ({
-      amp,
-      lambda: t.lambda[i] * this.rnd.realInRange(0.85, 1.15),
-      phase: this.rnd.realInRange(0, Math.PI * 2),
-    }));
+    this.builder = null; // se crea en start(), cuando se sabe dónde empieza la pista
   }
 
   // ---------- perfil ----------
 
-  ampMul(x) {
-    const t = this.level.terreno;
-    // en pistas finitas (copas) las colinas casi no crecen: la carrera es de velocidad, no de mejoras
-    const maxMul = this.finishX ? Math.min(t.maxMul, 1.1) : t.maxMul;
-    const grow = Math.min(maxMul, 1 + t.crecimiento * Math.max(0, this.metersAt(x))) * (this.finishX ? 0.7 : 1);
-    // entrada suave: las colinas crecen de 0 a 1 en los primeros 500 px después del piso plano
-    const k = Phaser.Math.Clamp((x - this.profileStartX) / 500, 0, 1);
-    const ease = k * k * (3 - 2 * k);
-    // hacia la meta las colinas se apagan en 400 px y después queda plano
-    const fade = this.finishX ? Phaser.Math.Clamp((this.finishX - 300 - x) / 400, 0, 1) : 1;
-    return grow * ease * fade;
-  }
-
   /** Altura (y) del perfil puro en x, antes de rasgos. */
   profile(x) {
-    const mul = this.ampMul(x);
-    let y = this.level.terreno.base;
-    for (const w of this.waves) y += w.amp * mul * Math.sin(((x - this.profileStartX) * Math.PI * 2) / w.lambda + w.phase);
-    return y;
+    return this.builder ? this.builder.heightAt(x) : this.level.pista.base;
   }
 
   slopeAt(x) {
     return (this.profile(x + 4) - this.profile(x - 4)) / 8;
   }
 
-  /** Multiplicador de probabilidad de rasgos según metros (1 → 2). */
+  /** Multiplicador de probabilidad de rasgos aleatorios según metros (1 → 2). */
   chanceMul(meters) {
     return 1 + Phaser.Math.Clamp(meters / MAX_METERS, 0, 1);
   }
@@ -82,13 +62,14 @@ export default class Terrain {
   // ---------- generación ----------
 
   /**
-   * Piso plano inicial de `length` px desde fromX; el perfil arranca al final
-   * de ese piso sin salto (se desplaza la fase para que coincida).
+   * Piso plano inicial de `length` px desde fromX; la pista por piezas arranca
+   * al final de ese piso (toda pieza empieza plana, así que no hay salto).
    */
   start(fromX, length) {
     const endX = fromX + length;
     this.profileStartX = endX;
-    const y = this.profile(endX); // == base, porque la amplitud arranca en 0
+    this.builder = new TrackBuilder(this.rnd, this.level.pista, { startX: endX, metersAt: this.metersAt, finishX: this.finishX });
+    const y = this.level.pista.base;
     const points = [];
     const steps = Math.ceil(length / 100);
     for (let i = 0; i <= steps; i++) points.push({ x: fromX + (length * i) / steps, y });
@@ -99,7 +80,7 @@ export default class Terrain {
 
   generateChunk() {
     const rnd = this.rnd;
-    const r = this.level.rasgos;
+    const r = this.level.pista.sal || {};
     const pts = [{ ...this.lastPoint }];
     const topes = [];
     const features = [];
@@ -131,6 +112,83 @@ export default class Terrain {
       run = null;
     };
 
+    // ---- tallado de rasgos: cada uno devuelve la x donde sigue el perfil, o null si no cabe ----
+    const carveTope = (x0, slope, diffT) => {
+      const nx = x0 + STEP;
+      const mid = (x0 + nx) / 2;
+      const a = Math.atan(slope);
+      const radius = 10 + 6 * diffT;
+      topes.push({ x: mid + Math.sin(a) * 2, y: this.profile(mid) - Math.cos(a) * 2, r: radius, angle: a });
+      pts.push({ x: nx, y: this.profile(nx) });
+      return nx;
+    };
+    const carveBache = (x0, diffT) => {
+      const depth = 12 + 6 * diffT; // menor que la altura libre de cualquier carrito
+      const w = 60 + 30 * diffT;
+      const from = pts.length - 1;
+      pts.push({ x: x0 + depth, y: this.profile(x0 + depth) + depth });
+      pts.push({ x: x0 + w - depth, y: this.profile(x0 + w - depth) + depth });
+      pts.push({ x: x0 + w, y: this.profile(x0 + w) });
+      features.push({ type: 'bache', points: pts.slice(from, from + 4) });
+      return x0 + w;
+    };
+    const carveHueco = (x0, w, depth) => {
+      const from = pts.length - 1;
+      const y0 = this.profile(x0);
+      pts.push({ x: x0, y: y0 });
+      pts.push({ x: x0, y: y0 + depth });
+      pts.push({ x: x0 + w, y: this.profile(x0 + w) + depth });
+      pts.push({ x: x0 + w, y: this.profile(x0 + w) });
+      features.push({ type: 'hueco', points: pts.slice(from) });
+      return x0 + w;
+    };
+    const carveEscalera = (x0) => {
+      const from = pts.length - 1;
+      let sx = x0;
+      let steps = 0;
+      while (steps < 5 && sx + STAIR <= targetX + STEP) {
+        const yFlat = this.profile(sx);
+        const yNext = this.profile(sx + STAIR);
+        if (yNext < yFlat + 6) break; // ya no baja: fin de la escalera
+        pts.push({ x: sx + STAIR, y: yFlat });
+        pts.push({ x: sx + STAIR, y: yNext });
+        sx += STAIR;
+        steps++;
+      }
+      if (!steps) return null;
+      features.push({ type: 'escalera', points: pts.slice(from) });
+      return sx;
+    };
+    const carveBarranca = (x0, drop) => {
+      const y0 = this.profile(x0);
+      const ledge = 50;
+      if (this.profile(x0 + ledge + 260) < y0 + drop + 10) return null;
+      const from = pts.length - 1;
+      const flatY = y0 + drop;
+      pts.push({ x: x0 + ledge, y: y0 });
+      pts.push({ x: x0 + ledge, y: flatY });
+      let lx = x0 + ledge;
+      while (lx - (x0 + ledge) < 260 && this.profile(lx + STEP) < flatY) {
+        lx += STEP;
+        pts.push({ x: lx, y: flatY });
+      }
+      lx += STEP;
+      pts.push({ x: lx, y: Math.max(flatY, this.profile(lx)) });
+      features.push({ type: 'barranca', points: pts.slice(from), drop });
+      this.lastFeatureX = lx + 80;
+      return lx;
+    };
+    const carveRampa = (x0, len, h, big) => {
+      const from = pts.length - 1;
+      const top = { x: x0 + len, y: this.profile(x0 + len) - h };
+      const end = { x: x0 + len, y: this.profile(x0 + len) + 2 };
+      pts.push(top, end);
+      features.push({ type: 'rampa', big, points: pts.slice(from, from + 3) });
+      if (big) arcs.push(...this.makeJumpArc(pts[from], top));
+      this.lastFeatureX = x0 + len + (big ? 260 : 140); // espacio para aterrizar
+      return x0 + len;
+    };
+
     while (x < targetX) {
       const nx = x + STEP;
       const y0 = this.profile(x);
@@ -138,120 +196,52 @@ export default class Terrain {
       const slope = (y1 - y0) / STEP; // > 0 bajando (y crece hacia abajo)
       const meters = this.metersAt(nx);
       const mul = this.chanceMul(meters);
-      const canFeature = meters > SAFE_METERS && x - this.lastFeatureX > this.minFeatureGap && (!this.finishX || x < this.finishX - 500);
+      const diffT = Phaser.Math.Clamp(meters / MAX_METERS, 0, 1);
+      const nearFinish = this.finishX && x >= this.finishX - 500;
 
       // cresta: deja de subir y empieza a bajar → arco de elotes
-      if (prevSlope < -0.04 && slope > 0.04 && meters > 15 && (!this.finishX || x < this.finishX - 300) && rnd.frac() < r.arco) {
+      if (prevSlope < -0.04 && slope > 0.04 && meters > 15 && (!this.finishX || x < this.finishX - 300) && rnd.frac() < (r.arco ?? 0.7)) {
         arcs.push(...this.makeArc(x));
       }
       prevSlope = slope;
 
+      // rasgo pedido por la pieza de la pista
+      const req = this.builder && !nearFinish ? this.builder.takeFeature(x, nx) : null;
+      let next = null;
+      if (req) {
+        if (req.type === 'tope' && !DEBUG.noTopes) next = carveTope(x, slope, diffT);
+        else if (req.type === 'bache') next = carveBache(x, diffT);
+        else if (req.type === 'hueco') next = carveHueco(x, req.w, req.depth);
+        else if (req.type === 'escalera') next = carveEscalera(x);
+        else if (req.type === 'barranca') next = carveBarranca(x, 40 + 50 * diffT);
+        else if (req.type === 'rampa') next = carveRampa(x, req.len || 110, req.h || 30 + 24 * diffT, false);
+        else if (req.type === 'rampaGrande') next = carveRampa(x, 170, 60 + 40 * diffT, true);
+        if (DEBUG.test) console.log(`[test] RASGO ${req.type}@${Math.round(meters)} ${next === null ? 'NO-CABE' : 'ok'}`);
+      }
+
+      // "sal": rasgos aleatorios a baja tasa, solo donde el perfil lo permite
+      const canFeature = !next && meters > SAFE_METERS && x - this.lastFeatureX > this.minFeatureGap && !nearFinish;
       if (canFeature) {
         const roll = rnd.frac();
         let acc = 0;
         const raceK = this.finishX ? 0.6 : 1; // en copas, menos rasgos: que gane el que mejor maneja
         const hit = (p) => {
-          acc += p * mul * raceK;
+          acc += (p || 0) * mul * raceK;
           return roll < acc;
         };
-        const diffT = Phaser.Math.Clamp(meters / MAX_METERS, 0, 1);
+        if (slope > -0.12 && slope < 0.3 && hit(DEBUG.noTopes ? 0 : r.tope)) next = carveTope(x, slope, diffT);
+        else if (Math.abs(slope) < 0.35 && hit(r.bache)) next = carveBache(x, diffT);
+        else if (slope > 0.28 && hit(r.escalera)) next = carveEscalera(x);
+        else if (slope > 0.2 && meters > 60 && hit(r.barranca)) next = carveBarranca(x, 40 + 50 * diffT);
+        else if (Math.abs(slope) < 0.15 && this.profile(x + 350) > y0 + 60 && hit(r.rampaGrande)) next = carveRampa(x, 170, 60 + 40 * diffT, true);
+        else if (Math.abs(slope) < 0.15 && this.profile(x + 220) > y0 + 40 && hit(r.rampa)) next = carveRampa(x, 110, 30 + 24 * diffT, false);
+      }
 
-        if (slope > -0.12 && slope < 0.3 && hit(DEBUG.noTopes ? 0 : r.tope)) {
-          const mid = (x + nx) / 2;
-          const a = Math.atan(slope);
-          const radius = 12 + 8 * diffT;
-          topes.push({ x: mid + Math.sin(a) * 2, y: this.profile(mid) - Math.cos(a) * 2, r: radius, angle: a });
-          pts.push({ x: nx, y: y1 });
-          this.lastFeatureX = nx;
-          flushRun();
-          x = nx;
-          continue;
-        }
-        if (Math.abs(slope) < 0.35 && hit(r.bache)) {
-          const depth = 12 + 6 * diffT; // menor que la altura libre de cualquier carrito
-          const w = 60 + 30 * diffT;
-          const from = pts.length - 1;
-          pts.push({ x: x + depth, y: this.profile(x + depth) + depth });
-          pts.push({ x: x + w - depth, y: this.profile(x + w - depth) + depth });
-          pts.push({ x: x + w, y: this.profile(x + w) });
-          features.push({ type: 'bache', points: pts.slice(from, from + 4) });
-          this.lastFeatureX = x + w;
-          flushRun();
-          x = x + w;
-          continue;
-        }
-        if (slope > 0.28 && hit(r.escalera)) {
-          const from = pts.length - 1;
-          let sx = x;
-          let steps = 0;
-          while (steps < 5 && sx + STAIR <= targetX + STEP) {
-            const yFlat = this.profile(sx);
-            const yNext = this.profile(sx + STAIR);
-            if (yNext < yFlat + 6) break; // ya no baja: fin de la escalera
-            pts.push({ x: sx + STAIR, y: yFlat });
-            pts.push({ x: sx + STAIR, y: yNext });
-            sx += STAIR;
-            steps++;
-          }
-          if (steps > 0) {
-            features.push({ type: 'escalera', points: pts.slice(from) });
-            this.lastFeatureX = sx;
-            flushRun();
-            x = sx;
-            continue;
-          }
-        }
-        // barranca: meseta corta y caída vertical en una bajada que sigue bajando
-        if (slope > 0.2 && meters > 60 && r.barranca && hit(r.barranca)) {
-          const drop = 40 + 50 * diffT;
-          const ledge = 50;
-          if (this.profile(x + ledge + 260) >= y0 + drop + 10) {
-            const from = pts.length - 1;
-            const flatY = y0 + drop;
-            pts.push({ x: x + ledge, y: y0 });
-            pts.push({ x: x + ledge, y: flatY });
-            let lx = x + ledge;
-            while (lx - (x + ledge) < 260 && this.profile(lx + STEP) < flatY) {
-              lx += STEP;
-              pts.push({ x: lx, y: flatY });
-            }
-            lx += STEP;
-            pts.push({ x: lx, y: Math.max(flatY, this.profile(lx)) });
-            features.push({ type: 'barranca', points: pts.slice(from), drop });
-            this.lastFeatureX = lx + 80;
-            flushRun();
-            x = lx;
-            continue;
-          }
-        }
-        // rampa grande: solo si la calle baja bastante después (aterrizaje en bajada)
-        if (Math.abs(slope) < 0.15 && r.rampaGrande && this.profile(x + 350) > y0 + 60 && hit(r.rampaGrande)) {
-          const len = 170;
-          const h = 60 + 40 * diffT;
-          const from = pts.length - 1;
-          const top = { x: x + len, y: this.profile(x + len) - h };
-          const end = { x: x + len, y: this.profile(x + len) + 2 };
-          pts.push(top, end);
-          features.push({ type: 'rampa', big: true, points: pts.slice(from, from + 3) });
-          arcs.push(...this.makeJumpArc(pts[from], top));
-          this.lastFeatureX = x + len + 260;
-          flushRun();
-          x = x + len;
-          continue;
-        }
-        if (Math.abs(slope) < 0.15 && this.profile(x + 220) > y0 + 40 && hit(r.rampa)) {
-          const len = 110;
-          const h = 30 + 24 * diffT;
-          const from = pts.length - 1;
-          const top = { x: x + len, y: this.profile(x + len) - h };
-          const end = { x: x + len, y: this.profile(x + len) + 2 };
-          pts.push(top, end);
-          features.push({ type: 'rampa', points: pts.slice(from, from + 3) });
-          this.lastFeatureX = x + len + 140; // espacio para aterrizar
-          flushRun();
-          x = x + len;
-          continue;
-        }
+      if (next !== null) {
+        this.lastFeatureX = Math.max(this.lastFeatureX, next);
+        flushRun();
+        x = next;
+        continue;
       }
 
       pts.push({ x: nx, y: y1 });

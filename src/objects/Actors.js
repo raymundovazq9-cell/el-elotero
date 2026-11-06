@@ -84,6 +84,7 @@ export default class Actors {
     this.lastPeopleAt = {}; // metros del último de cada tipo
     this.lastPersonM = -Infinity;
     this.noPeopleUntilX = -Infinity;
+    this.noBlockUntilX = -Infinity;
     this.robos = 0;
     this.ventas = 0;
     this.saltos = 0;
@@ -101,11 +102,12 @@ export default class Actors {
     // cables CFE: después de una rampa, colgados entre dos postes
     for (const f of chunk.features || []) {
       if (f.type === 'rampa' && rnd.frac() < this.weights.cable * 6) this.addCable(chunk, f.points[1].x + 80);
-      if (f.type === 'rampa' || f.type === 'barranca') {
-        const endX = f.points[f.points.length - 1].x;
-        this.noPeopleUntilX = Math.max(this.noPeopleUntilX, endX + PEOPLE.afterFeaturePx);
-      }
+      const endX = f.points[f.points.length - 1].x;
+      if (f.type === 'rampa' || f.type === 'barranca') this.noPeopleUntilX = Math.max(this.noPeopleUntilX, endX + PEOPLE.afterFeaturePx);
+      // nada que atore (coche, poste, vehículos) justo después de un bache, hueco, escalera o rampa: llegas sin velocidad
+      this.noBlockUntilX = Math.max(this.noBlockUntilX, endX + 240);
     }
+    for (const t of chunk.topes || []) this.noBlockUntilX = Math.max(this.noBlockUntilX, t.x + 200);
     for (const s of chunk.spots) {
       if (s.used) continue;
       const meters = this.road.metersAt(s.x);
@@ -114,6 +116,7 @@ export default class Actors {
       const kind = this.pick(rnd.frac(), mul, s, meters);
       if (!kind) continue;
       s.used = true;
+      if (kind === 'coche' || kind === 'poste' || VEHICLES[kind]) this.noBlockUntilX = Math.max(this.noBlockUntilX, s.x + 350);
       if (PEOPLE.cooldownMeters[kind] !== undefined) {
         this.lastPeopleAt[kind] = meters;
         this.lastPersonM = meters;
@@ -150,6 +153,8 @@ export default class Actors {
       }
       const vehicle = kind === 'camioneta' || kind === 'tamalero' || kind === 'trailer';
       if ((kind === 'coche' || vehicle) && s.len < 150) continue;
+      // coche, poste y vehículos solo en tramos casi planos y lejos uno de otro
+      if ((kind === 'coche' || vehicle || kind === 'poste') && (s.x < this.noBlockUntilX || Math.abs(s.angle) > 0.15)) continue;
       // lomos, vehículos y postes caídos solo en plano o bajada: en subida atoran al carrito
       if ((kind === 'coche' || vehicle || kind === 'poste') && s.angle < -0.1) continue;
       if (kind === 'charco' && (Math.abs(s.angle) > 0.25 || s.len < 100)) continue;

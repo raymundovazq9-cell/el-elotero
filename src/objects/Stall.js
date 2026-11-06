@@ -26,6 +26,11 @@ export default class Stall {
       this.warned = false;
       return;
     }
+    // dar reversa para tomar vuelo no es estar cansado: solo cuenta parado
+    if (Math.abs(this.cart.speedX) > 1.5) {
+      this.ms = Math.max(0, this.ms - deltaMs);
+      return;
+    }
     this.ms += deltaMs;
     if (!this.warned && this.ms >= CART.stallMs / 2) {
       this.warned = true;

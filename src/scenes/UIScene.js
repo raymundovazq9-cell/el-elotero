@@ -73,7 +73,11 @@ export default class UIScene extends Phaser.Scene {
     ev.on('checkpoint', (m, bonus) => this.showFloat(`¡${m} m! +${bonus}`, COLORS.amarilloHex));
     ev.on('venta', (value) => this.showFloat(`¡Gracias! +${value}`, '#9bffb0'));
     ev.on('robo', (n) => this.showFloat(n > 1 ? `¡Órale! Te quitaron ${n}` : '¡Órale! Te quitaron uno', '#ff6b6b'));
-    ev.on('stall-warning', () => this.showFloat('¡Se está cansando! Dale ACELERAR o reversa', '#ffb347'));
+    ev.on('stall-warning', () => {
+      const g = this.scene.get('Game');
+      const uphill = g && g.cart && (g.cart.groundAngle || 0) < -0.2;
+      this.showFloat(uphill ? '¡Subida fuerte! Da reversa y toma vuelo' : '¡Se está cansando! Dale ACELERAR o reversa', '#ffb347');
+    });
     ev.on('gameover', () => {
       this.releaseAll();
       this.hint.setVisible(false);

@@ -65,6 +65,8 @@ export default class Driver {
     const here = road.slopeAt(x);
     const ahead = road.slopeAt(x + 150);
     const steepAhead = road.slopeAt(x + 80);
+    // subida fuerte adelante: hay que llegar con impulso, nada de soltar el gas
+    if (road.slopeAt(x + 200) < -0.35 || road.slopeAt(x + 320) < -0.35) return { brake: false, gas: true };
     // bajada muy fuerte a toda velocidad: frenada corta
     if (steepAhead > 0.55 && vx > c.spec.maxSpeedX * 0.85 && this.p.cautela > 0.3) {
       this.brakeUntil = now + 250;
