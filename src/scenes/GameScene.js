@@ -11,7 +11,7 @@ import EloteManager from '../objects/EloteManager.js';
 import Actors from '../objects/Actors.js';
 import { difficultyAt } from '../objects/Difficulty.js';
 import { DEBUG, isBrakeScripted, isGasScripted } from '../debug.js';
-import { Sfx, vibrate, unlockAudio } from '../audio.js';
+import { Sfx, vibrate, unlockAudio, EngineSound, setMasterVolume } from '../audio.js';
 import { Music } from '../music.js';
 import { Save } from '../save.js';
 import { dailyMissions, missionDone, todayKey } from '../data/missions.js';
@@ -84,17 +84,22 @@ export default class GameScene extends Phaser.Scene {
       Sfx.eloteCaido();
       vibrate(45);
     });
+    this.pickStreak = 0;
+    this.lastPickAt = -Infinity;
     this.events.on('elote-picked', () => {
       this.earned.recogidos += 1;
-      Sfx.eloteRecogido();
+      // racha: cada elote seguido suena medio tono más alto
+      this.pickStreak = this.time.now - this.lastPickAt < 1000 ? this.pickStreak + 1 : 0;
+      this.lastPickAt = this.time.now;
+      Sfx.ding(this.pickStreak);
     });
     this.events.on('landing', (impact) => {
+      if (impact >= 3) Sfx.thud(impact);
       if (impact < CAMERA.landingShakeMin) return;
       this.cameras.main.shake(120, Math.min(0.012, CAMERA.landingShakeK * (impact - CAMERA.landingShakeMin + 2)));
     });
     this.events.on('landed', (gained) => {
       this.earned.aire += gained;
-      Sfx.aterrizaje();
       vibrate(30);
     });
     this.events.on('marometa', (flips, bonus) => {
@@ -144,6 +149,7 @@ export default class GameScene extends Phaser.Scene {
     this.events.on('stall', () => this.gameOver('cansado'));
     this.events.on('gameover', () => {
       Music.stop();
+      this.engine.silence();
       Sfx.gameOver();
       vibrate([120, 60, 200]);
     });
@@ -151,13 +157,21 @@ export default class GameScene extends Phaser.Scene {
     Music.setTempo(this.level.musica.bpm);
     Music.start();
     this.time.delayedCall(400, () => Sfx.silbato());
-    this.events.on('pause', () => Music.stop());
-    this.events.on('resume', () => Music.start());
-    this.clacDist = 0;
+    this.engine = new EngineSound(this.cartData.motor ? 'motor' : 'empuje');
+    this.events.on('pause', () => {
+      Music.stop();
+      this.engine.silence();
+      setMasterVolume(0.25);
+    });
+    this.events.on('resume', () => {
+      Music.start();
+      setMasterVolume(1);
+    });
 
     this.braking = false;
     this.pedals = { brake: false, gas: false };
     this.input.once('pointerdown', () => unlockAudio());
+    if (DEBUG.test) unlockAudio(); // en pruebas sin toque, para ejercitar el audio
     this.keys = this.input.keyboard
       ? this.input.keyboard.addKeys({
           left: 'LEFT',
@@ -172,6 +186,8 @@ export default class GameScene extends Phaser.Scene {
       Music.stop();
       this.bankRun();
       this.game.events.off('blur', onBlur);
+      this.engine.stop();
+      setMasterVolume(1, 10);
       this.elotes.destroy();
       this.cart.destroy();
       this.obstacles.destroy();
@@ -371,13 +387,7 @@ export default class GameScene extends Phaser.Scene {
     if (!this.over) this.stall.update(delta);
     this.elotes.update();
     this.obstacles.update(delta);
-    if (this.cart.grounded && !this.over) {
-      this.clacDist += Math.abs(this.cart.speedX);
-      if (this.clacDist > 90) {
-        this.clacDist = 0;
-        Sfx.clac();
-      }
-    }
+    if (!this.over) this.engine.update(Math.abs(this.cart.speedX), this.cart.throttle, this.cart.grounded, this.cart.airTotalMs, delta);
     if (!this.over) {
       this.tricks.update(delta);
       this.updateCheckpoints();

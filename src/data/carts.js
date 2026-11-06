@@ -3,6 +3,7 @@
 // centro del chasis físico, posición de la olla y modo/posición del elotero.
 //   boxX / boxWidth: dónde van las paredes y los elotes respecto al centro del chasis.
 //   elotero.modo: 'empujando' (corre detrás) | 'montado' (pedalea sentado) | 'manejando' (va en la cabina)
+//   motor: true si suena a motor (si no, retumbo de ruedas y traqueteo)
 
 export const CARTS = [
   {
@@ -103,6 +104,7 @@ export const CARTS = [
     nombre: 'Motocarro',
     descripcion: 'Con motor: ya no dependes de tus piernas. Sube casi todo.',
     precio: 3000,
+    motor: true,
     fisica: {
       bodyWidth: 170,
       bodyHeight: 26,
@@ -134,6 +136,7 @@ export const CARTS = [
     nombre: 'Camioneta',
     descripcion: 'La troca elotera. Pesada, rápida y aguanta todo.',
     precio: 7000,
+    motor: true,
     fisica: {
       bodyWidth: 210,
       bodyHeight: 30,
