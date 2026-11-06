@@ -64,6 +64,14 @@ balón que patean los niños (Pueblo), charcos que quitan fricción (Carretera; 
 llantas mejoradas ayudan), chile (turbo 2 s) y bolsa de elotes. Terreno: topes,
 baches, escaleras, rampas, rampas grandes y barrancas.
 
+## Jugar en línea
+
+Versión publicada (se actualiza sola con cada push a `main` vía `.github/workflows/pages.yml`):
+
+<https://raymundovazq9-cell.github.io/el-elotero/>
+
+En el celular: girar en horizontal y "Agregar a pantalla de inicio" para jugar a pantalla completa.
+
 ## Correr en la computadora
 
 ```bash
