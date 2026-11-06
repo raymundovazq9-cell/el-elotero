@@ -2,10 +2,16 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 import { SKY_PHASES } from '../theme.js';
 import { svgImage } from '../assets.js';
+import { buildSilhouette, silhouetteTexture, lightsTexture, haloTexture, TileLayer, PARALLAX_TILE } from './Parallax.js';
 
 const CYCLE_METERS = 600;
 const HORIZON = GAME_HEIGHT * 0.42;
 const FAR_SCALE = 0.62; // los cerros SVG se dibujaron para 540 px de ancho
+
+function darken(color, k) {
+  const c = Phaser.Display.Color.IntegerToColor(color);
+  return Phaser.Display.Color.GetColor(Math.round(c.red * (1 - k)), Math.round(c.green * (1 - k)), Math.round(c.blue * (1 - k)));
+}
 
 function lerpColor(a, b, t) {
   const ca = Phaser.Display.Color.ValueToColor(a);
@@ -83,8 +89,14 @@ export default class SkyCycle {
       this.stars.push(s);
       this.root.add(s);
     }
-    this.moon = scene.add.circle(OX + GAME_WIDTH - 90, OY + 110, 26, 0xfff6c2, 1).setAlpha(0);
-    this.root.add(this.moon);
+    // sol y luna con halo, recorren un arco según la hora
+    haloTexture(scene, 'halo-sol', 'rgba(255,236,150,0.95)', 'rgba(255,200,80,0)');
+    haloTexture(scene, 'halo-luna', 'rgba(240,244,255,0.95)', 'rgba(160,180,255,0)');
+    this.sun = scene.add.image(0, 0, 'halo-sol').setScale(1.1);
+    this.sunDisc = scene.add.circle(0, 0, 22, 0xfff1a8, 1);
+    this.moon = scene.add.image(0, 0, 'halo-luna').setScale(0.8).setAlpha(0);
+    this.moonDisc = scene.add.circle(0, 0, 20, 0xfff6e0, 1).setAlpha(0);
+    this.root.add([this.sun, this.sunDisc, this.moon, this.moonDisc]);
 
     // cerros: tantas copias como hagan falta para cubrir el ancho (alternando espejo para que empalmen)
     const mk = (key, isSvg) => {
@@ -118,6 +130,22 @@ export default class SkyCycle {
     this.ground = scene.add.rectangle(OX - GAME_WIDTH * 0.25, OY + HORIZON - 2, GAME_WIDTH * 1.5, GAME_HEIGHT, 0x3f7a48, 1).setOrigin(0);
     this.root.addAt(this.ground, 1);
 
+    // siluetas del tema (parallax medio) y sus ventanas de noche
+    this.theme = opts.theme || 'callejon';
+    this.sil = buildSilhouette(this.theme);
+    this.silColor = -1;
+    const silY = OY + HORIZON + 12;
+    silhouetteTexture(scene, `sil-${this.theme}`, this.sil.shapes, 0x000000);
+    lightsTexture(scene, `luces-${this.theme}`, this.sil.lights);
+    const span = GAME_WIDTH * 1.5;
+    const left = OX - GAME_WIDTH * 0.25;
+    this.silLayer = new TileLayer(scene, this.root, `sil-${this.theme}`, { factor: 0.3, y: silY, left, span, scale: 0.75 });
+    this.lightsLayer = new TileLayer(scene, this.root, `luces-${this.theme}`, { factor: 0.3, y: silY, left, span, scale: 0.75, alpha: 0 });
+    // relleno bajo las siluetas para tapar los cerros
+    this.silGround = scene.add.rectangle(left, silY - 2, span, GAME_HEIGHT, 0x000000, 1).setOrigin(0);
+    this.root.add(this.silGround);
+    this.root.moveBelow(this.silGround, this.silLayer.images[0]); // el relleno va detrás de las siluetas
+
     // nubes
     this.clouds = [];
     for (let i = 0; i < 4; i++) {
@@ -130,6 +158,7 @@ export default class SkyCycle {
       this.root.add(c);
       this.root.moveBelow(c, this.farDay[0]);
     }
+    void PARALLAX_TILE;
 
     // oscurecimiento nocturno sobre el mundo (debajo del HUD)
     this.overlay = scene.add
@@ -184,9 +213,34 @@ export default class SkyCycle {
       c.setAlpha(0.85 - sky.night * 0.6);
     }
 
+    // siluetas: color del cielo oscurecido; se regenera solo cuando cambia
+    const silColor = darken(sky.bottom, 0.42 + sky.night * 0.3);
+    if (silColor !== this.silColor) {
+      this.silColor = silColor;
+      silhouetteTexture(this.scene, `sil-${this.theme}`, this.sil.shapes, silColor);
+      this.silLayer.setTexture(`sil-${this.theme}`);
+      this.silGround.setFillStyle(silColor, 1);
+    }
+    this.silLayer.update(scrollX);
+    this.lightsLayer.update(scrollX);
+    this.lightsLayer.setAlpha(Math.max(0, (sky.night - 0.1) / 0.5));
+
+    // sol y luna: arco de izquierda a derecha durante el día; la luna sale de noche
+    const t = (meters % this.cycle) / this.cycle;
+    const dayT = Phaser.Math.Clamp(t / 0.52, 0, 1); // tarde → atardecer
+    const arc = (k) => ({ x: this.ox + GAME_WIDTH * (0.2 + 0.6 * k), y: -GAME_HEIGHT / 2 + HORIZON + 30 - Math.sin(k * Math.PI) * 190 });
+    const sp = arc(0.35 + dayT * 0.65);
+    this.sun.setPosition(sp.x, sp.y).setAlpha(1 - sky.night * 1.6);
+    this.sunDisc
+      .setPosition(sp.x, sp.y)
+      .setAlpha(1 - sky.night * 1.6)
+      .setFillStyle(sky.night > 0.02 ? 0xffb347 : 0xfff1a8, 1);
+    const nightT = t > 0.5 ? (t - 0.5) / 0.5 : 0;
+    const mp = arc(0.2 + nightT * 0.6);
     const starA = Math.max(0, (sky.night - 0.15) / 0.4);
     for (const s of this.stars) s.setAlpha(starA);
-    this.moon.setAlpha(starA);
+    this.moon.setPosition(mp.x, mp.y).setAlpha(starA);
+    this.moonDisc.setPosition(mp.x, mp.y).setAlpha(starA);
     this.overlay.setFillStyle(0x101a40, sky.night * 0.45);
   }
 

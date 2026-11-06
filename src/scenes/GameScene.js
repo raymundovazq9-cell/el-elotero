@@ -36,6 +36,7 @@ export default class GameScene extends Phaser.Scene {
       farDay: 'fondo-tarde',
       farNight: 'fondo-noche',
       cycle: this.level.cielo.ciclo,
+      theme: this.level.tema,
     });
 
     this.startX = 120;
