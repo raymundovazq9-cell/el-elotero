@@ -52,6 +52,14 @@ export const AI_BACKGROUNDS = false;
 import { CLOTHES, clothKey } from './data/clothes.js';
 for (const c of CLOTHES) SVG_ASSETS.push({ key: clothKey(c.tipo, c.id), url: `assets/svg/${c.tipo}-${c.id}.svg`, scale: SVG_SCALE });
 
+// calcomanías (data/paints.js)
+import { STICKERS } from './data/paints.js';
+for (const st of STICKERS) SVG_ASSETS.push({ key: `calca-${st.id}`, url: `assets/svg/calca-${st.id}.svg`, scale: SVG_SCALE });
+
+// texto de los SVG de carritos, para pintarlos en src/paint.js
+import { CARTS } from './data/carts.js';
+export const TEXT_ASSETS = CARTS.map((c) => ({ key: `svg-${c.id}`, url: `assets/svg/${c.vista.cuerpo}.svg` }));
+
 export const IMAGE_ASSETS = AI_BACKGROUNDS
   ? [
       { key: 'fondo-tarde', url: 'assets/bg/fondo-tarde.png' },
@@ -67,4 +75,5 @@ export function svgImage(scene, x, y, key) {
 export function loadAssets(loader) {
   for (const a of SVG_ASSETS) loader.svg(a.key, a.url, { scale: a.scale });
   for (const a of IMAGE_ASSETS) loader.image(a.key, a.url);
+  for (const a of TEXT_ASSETS) loader.text(a.key, a.url);
 }

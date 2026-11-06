@@ -8,6 +8,7 @@ import { svgImage } from '../assets.js';
 import { buildCartPreview } from '../views/CartPreview.js';
 import { cartById } from '../data/carts.js';
 import SkyCycle from '../world/SkyCycle.js';
+import { loadCartPaints } from '../paint.js';
 import { makeButton, makeIconButton, drawPapelPicado, iconMusic } from '../ui/widgets.js';
 
 const STREET_Y = GAME_HEIGHT - 100; // línea de la banqueta
@@ -15,6 +16,11 @@ const STREET_Y = GAME_HEIGHT - 100; // línea de la banqueta
 export default class TitleScene extends Phaser.Scene {
   constructor() {
     super('Title');
+  }
+
+  preload() {
+    const cartId = Save.data.cart;
+    loadCartPaints(this, [{ cartId, paintId: Save.paintFor(cartId).color }]);
   }
 
   create() {
@@ -66,9 +72,7 @@ export default class TitleScene extends Phaser.Scene {
 
     // botones
     const best = Save.bestFor(Save.data.level);
-    this.add
-      .text(cx, 222, best > 0 ? `Récord: ${best} m` : 'Sin récord todavía', textStyle(26, COLORS.cremaHex))
-      .setOrigin(0.5);
+    this.add.text(cx, 222, best > 0 ? `Récord: ${best} m` : 'Sin récord todavía', textStyle(26, COLORS.cremaHex)).setOrigin(0.5);
     svgImage(this, 70, 56, 'elote').setScale(0.8);
     this.add.text(104, 56, `${Save.bank}`, textStyle(30, COLORS.amarilloHex)).setOrigin(0, 0.5);
 
@@ -81,9 +85,7 @@ export default class TitleScene extends Phaser.Scene {
     };
     this.musicBtn = makeIconButton(this, GAME_WIDTH - 56, 56, 30, COLORS.amarillo, iconMusic(isMuted()), () => this.toggleMusic());
 
-    this.add
-      .text(cx, 372, 'FRENO a la izquierda  ·  ACELERAR a la derecha', textStyle(18, COLORS.cremaHex))
-      .setOrigin(0.5);
+    this.add.text(cx, 372, 'FRENO a la izquierda  ·  ACELERAR a la derecha', textStyle(18, COLORS.cremaHex)).setOrigin(0.5);
 
     this.input.once('pointerdown', () => {
       unlockAudio();

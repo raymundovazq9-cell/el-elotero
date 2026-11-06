@@ -14,6 +14,9 @@ function defaults() {
     upgrades: {}, // { [cartId]: { piernas: 0, llantas: 0, suspension: 0, canasta: 0, frenos: 0 } }
     clothes: { owned: ['sombrero-paja', 'mandil-blanco', 'playera-azul'], equipped: { sombrero: 'paja', mandil: 'blanco', playera: 'azul' } },
     best: {}, // { [levelId]: metros }
+    paint: {}, // { [cartId]: { color: 'rojo', calca: 'balon' | null } }
+    paints: ['original'], // pinturas compradas
+    calcas: [], // calcomanías compradas
     missions: { date: '', done: [] },
     totals: { runs: 0, meters: 0, elotes: 0, marometas: 0, ventas: 0 },
   };
@@ -29,7 +32,10 @@ function read() {
       ...base,
       ...d,
       totals: { ...base.totals, ...(d.totals || {}) },
-      clothes: { owned: [...new Set([...base.clothes.owned, ...((d.clothes && d.clothes.owned) || [])])], equipped: { ...base.clothes.equipped, ...((d.clothes && d.clothes.equipped) || {}) } },
+      clothes: {
+        owned: [...new Set([...base.clothes.owned, ...((d.clothes && d.clothes.owned) || [])])],
+        equipped: { ...base.clothes.equipped, ...((d.clothes && d.clothes.equipped) || {}) },
+      },
     };
   } catch {
     return defaults();
@@ -100,6 +106,8 @@ class SaveStore {
     if (kind === 'cart') return this.data.carts.includes(id);
     if (kind === 'level') return this.data.levels.includes(id);
     if (kind === 'clothes') return this.data.clothes.owned.includes(id);
+    if (kind === 'paint') return this.data.paints.includes(id);
+    if (kind === 'calca') return this.data.calcas.includes(id);
     return false;
   }
 
@@ -108,12 +116,24 @@ class SaveStore {
     if (kind === 'cart') this.data.carts.push(id);
     if (kind === 'level') this.data.levels.push(id);
     if (kind === 'clothes') this.data.clothes.owned.push(id);
+    if (kind === 'paint') this.data.paints.push(id);
+    if (kind === 'calca') this.data.calcas.push(id);
     this.persist();
   }
 
   select(kind, id) {
     if (kind === 'cart') this.data.cart = id;
     if (kind === 'level') this.data.level = id;
+    this.persist();
+  }
+
+  /** Pintura y calcomanía de un carrito. */
+  paintFor(cartId) {
+    return { color: 'original', calca: null, ...(this.data.paint[cartId] || {}) };
+  }
+
+  setPaint(cartId, partial) {
+    this.data.paint[cartId] = { ...this.paintFor(cartId), ...partial };
     this.persist();
   }
 

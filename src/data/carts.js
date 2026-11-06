@@ -4,6 +4,7 @@
 //   boxX / boxWidth: dónde van las paredes y los elotes respecto al centro del chasis.
 //   elotero.modo: 'empujando' (corre detrás) | 'montado' (pedalea sentado) | 'manejando' (va en la cabina)
 //   motor: true si suena a motor (si no, retumbo de ruedas y traqueteo)
+//   vista.pintura: colores del SVG que cambia la pintura (base y sombra); vista.calcomania: dónde va la calca
 
 export const CARTS = [
   {
@@ -32,6 +33,8 @@ export const CARTS = [
     },
     vista: {
       cuerpo: 'carrito',
+      pintura: { base: ['#c0392b'], sombra: ['#8e2a1f'] },
+      calcomania: { x: 42, y: 0 },
       origen: { x: 80, y: 67 },
       olla: { x: 62, y: -55 },
       elotero: { modo: 'empujando', x: -98, y: 2 },
@@ -63,6 +66,8 @@ export const CARTS = [
     },
     vista: {
       cuerpo: 'triciclo',
+      pintura: { base: ['#2e8b57'], sombra: ['#1f6b41'] },
+      calcomania: { x: 56, y: 4 },
       origen: { x: 104, y: 70 },
       olla: { x: 60, y: -52 },
       elotero: { modo: 'montado', x: -50, y: -22 },
@@ -94,6 +99,8 @@ export const CARTS = [
     },
     vista: {
       cuerpo: 'bici-carro',
+      pintura: { base: ['#e4007c'], sombra: [] },
+      calcomania: { x: 58, y: 6 },
       origen: { x: 100, y: 70 },
       olla: { x: 65, y: -52 },
       elotero: { modo: 'montado', x: -38, y: -30 },
@@ -126,6 +133,8 @@ export const CARTS = [
     },
     vista: {
       cuerpo: 'motocarro',
+      pintura: { base: ['#2b6cb0'], sombra: ['#1d4f85'] },
+      calcomania: { x: -70, y: 6 },
       origen: { x: 115, y: 70 },
       olla: { x: -10, y: -56 },
       elotero: { modo: 'manejando', x: 32, y: -22 },
@@ -158,6 +167,8 @@ export const CARTS = [
     },
     vista: {
       cuerpo: 'camioneta',
+      pintura: { base: ['#f2762e'], sombra: ['#d96a24', '#c9661e', '#b5521a'] },
+      calcomania: { x: 70, y: -6 },
       origen: { x: 130, y: 80 },
       olla: { x: 59, y: -74 },
       elotero: { modo: 'manejando', x: 58, y: -10 },

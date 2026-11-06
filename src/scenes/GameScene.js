@@ -17,6 +17,7 @@ import { Music } from '../music.js';
 import { Save } from '../save.js';
 import { dailyMissions, missionDone, todayKey } from '../data/missions.js';
 import CartView from '../views/CartView.js';
+import { loadCartPaints, bodyTexture } from '../paint.js';
 import RoadView from '../views/RoadView.js';
 import Scenery from '../world/Scenery.js';
 import SkyCycle from '../world/SkyCycle.js';
@@ -26,6 +27,11 @@ import EloteView from '../views/EloteView.js';
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super('Game');
+  }
+
+  preload() {
+    const cartId = Save.data.cart;
+    loadCartPaints(this, [{ cartId, paintId: Save.paintFor(cartId).color }]);
   }
 
   create(data) {
@@ -56,7 +62,8 @@ export default class GameScene extends Phaser.Scene {
       shakeFactor: this.upgraded.shakeFactor,
     });
     this.obstacles = new Actors(this, this.cart, this.road, this.elotes, this.level);
-    this.cartView = new CartView(this, this.cart, this.cartData.vista);
+    const paint = Save.paintFor(this.cartData.id);
+    this.cartView = new CartView(this, this.cart, this.cartData.vista, { bodyKey: bodyTexture(this, this.cartData, paint.color), calca: paint.calca });
     this.eloteView = new EloteView(this, this.elotes);
     this.particles = new Particles(this, this.cart);
 

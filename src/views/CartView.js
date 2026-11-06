@@ -11,17 +11,23 @@ export default class CartView {
    * @param {import('../objects/Cart.js').default} cart
    * @param {object} vista datos de dibujo del modelo (data/carts.js → vista)
    */
-  constructor(scene, cart, vista) {
+  constructor(scene, cart, vista, opts = {}) {
     this.scene = scene;
     this.cart = cart;
     this.vista = vista;
+    this.depth = opts.depth ?? 0;
 
-    this.body = svgImage(scene, 0, 0, vista.cuerpo).setDepth(0);
+    this.body = svgImage(scene, 0, 0, opts.bodyKey || vista.cuerpo).setDepth(this.depth);
+    // calcomanía pegada al cuerpo
+    this.sticker = null;
+    if (opts.calca && vista.calcomania && scene.textures.exists(`calca-${opts.calca}`)) {
+      this.sticker = svgImage(scene, 0, 0, `calca-${opts.calca}`).setDepth(this.depth + 0.05);
+    }
     this.body.setOrigin((vista.origen.x * SVG_SCALE) / this.body.width, (vista.origen.y * SVG_SCALE) / this.body.height);
     this.wheels = cart.wheelSpecs.map((ws) =>
       svgImage(scene, 0, 0, 'rueda')
         .setScale((ws.r / WHEEL_IMAGE_R) * (1 / SVG_SCALE))
-        .setDepth(0.5)
+        .setDepth(this.depth + 0.5)
     );
     this.elotero = new EloteroView(scene, cart, vista.elotero);
 
@@ -93,6 +99,10 @@ export default class CartView {
     const b = this.cart.chassis;
     this.body.setPosition(b.position.x, b.position.y).setRotation(b.angle);
     this.body.setScale((1 + 0.08 * this.squash) / SVG_SCALE, (1 - 0.12 * this.squash) / SVG_SCALE);
+    if (this.sticker) {
+      const sp = this.local(this.vista.calcomania.x, this.vista.calcomania.y);
+      this.sticker.setPosition(sp.x, sp.y).setRotation(b.angle);
+    }
     if (this.walls) this.walls.setPosition(b.position.x, b.position.y).setRotation(b.angle);
     this.cart.wheels.forEach((w, i) => {
       this.wheels[i].setPosition(w.position.x, w.position.y).setRotation(w.angle);
@@ -104,6 +114,7 @@ export default class CartView {
 
   setVisible(v) {
     this.body.setVisible(v);
+    if (this.sticker) this.sticker.setVisible(v);
     this.wheels.forEach((w) => w.setVisible(v));
     this.elotero.setVisible(v);
     this.steam.setVisible(v);
@@ -113,6 +124,7 @@ export default class CartView {
     this.scene.events.off('landing', this.onLanding, this);
     if (this.walls) this.walls.destroy();
     this.body.destroy();
+    if (this.sticker) this.sticker.destroy();
     this.wheels.forEach((w) => w.destroy());
     this.elotero.destroy();
     this.steam.destroy();

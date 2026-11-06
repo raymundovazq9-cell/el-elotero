@@ -3,6 +3,7 @@ import { CART } from '../config.js';
 import { slotLocalFor } from '../objects/EloteManager.js';
 import { buildEloteroTorso, ARM_POSES } from './EloteroTorso.js';
 import { Save } from '../save.js';
+import { bodyTexture } from '../paint.js';
 
 const WHEEL_IMAGE_R = 17;
 
@@ -40,9 +41,13 @@ export function buildCartPreview(scene, cartData, opts = {}) {
   parts.push(legB, torso, legF);
 
   // cuerpo
-  const body = svgImage(scene, 0, 0, v.cuerpo);
+  const paint = opts.paint || Save.paintFor(cartData.id);
+  const body = svgImage(scene, 0, 0, bodyTexture(scene, cartData, paint.color));
   body.setOrigin((v.origen.x * SVG_SCALE) / body.width, (v.origen.y * SVG_SCALE) / body.height);
   parts.push(body);
+  if (paint.calca && v.calcomania && scene.textures.exists(`calca-${paint.calca}`)) {
+    parts.push(svgImage(scene, v.calcomania.x, v.calcomania.y, `calca-${paint.calca}`));
+  }
 
   // ruedas
   const wheels = spec.wheels.map((ws) => svgImage(scene, ws.x, ws.y, 'rueda').setScale((ws.r / WHEEL_IMAGE_R) * (1 / SVG_SCALE)));

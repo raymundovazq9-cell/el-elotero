@@ -14,7 +14,7 @@
   <line x1="25" y1="72" x2="135" y2="72" stroke="#8e2a1f" stroke-width="2"/>
   <!-- letrero -->
   <rect x="48" y="58" width="64" height="18" rx="4" fill="#fff4d6" stroke="#1a1a1a" stroke-width="2"/>
-  <text x="80" y="72" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#c0392b" text-anchor="middle">ELOTES</text>
+  <text x="80" y="72" font-family="Arial, Helvetica, sans-serif" font-size="14" font-weight="bold" fill="#a93226" text-anchor="middle">ELOTES</text>
   <!-- bote de vapor al frente -->
   <rect x="128" y="14" width="28" height="24" rx="5" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="3"/>
   <ellipse cx="142" cy="14" rx="15" ry="4" fill="#c7d0da" stroke="#1a1a1a" stroke-width="2.5"/>

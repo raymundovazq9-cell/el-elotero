@@ -13,10 +13,13 @@ import { setMuted, isMuted, Sfx, unlockAudio } from '../audio.js';
 import { Music } from '../music.js';
 import { DEBUG } from '../debug.js';
 import { dailyMissions, todayKey } from '../data/missions.js';
+import { PAINTS, STICKERS } from '../data/paints.js';
+import { loadCartPaints } from '../paint.js';
 
 const TABS = [
   { id: 'carrito', label: 'CARRITO' },
   { id: 'mejoras', label: 'MEJORAS' },
+  { id: 'pintura', label: 'PINTURA' },
   { id: 'ropa', label: 'ROPA' },
   { id: 'lugar', label: 'LUGAR' },
   { id: 'misiones', label: 'MISIONES' },
@@ -31,6 +34,13 @@ const ROWS_Y = 172;
 export default class GarageScene extends Phaser.Scene {
   constructor() {
     super('Garage');
+  }
+
+  preload() {
+    // todas las pinturas compradas del carrito activo (y la original de todos), para la vista previa
+    const items = CARTS.map((c) => ({ cartId: c.id, paintId: Save.paintFor(c.id).color }));
+    for (const id of Save.data.paints) items.push({ cartId: Save.data.cart, paintId: id });
+    loadCartPaints(this, items);
   }
 
   create(data) {
@@ -59,8 +69,8 @@ export default class GarageScene extends Phaser.Scene {
     // pestañas
     this.tabButtons = {};
     TABS.forEach((t, i) => {
-      const x = PANEL_X + 56 + i * 108;
-      this.tabButtons[t.id] = makeButton(this, x, 108, 102, 48, COLORS.naranja, t.label, () => this.setTab(t.id), { fontSize: 17 });
+      const x = PANEL_X + 47 + i * 90;
+      this.tabButtons[t.id] = makeButton(this, x, 108, 86, 48, COLORS.naranja, t.label, () => this.setTab(t.id), { fontSize: 15 });
     });
     makePanel(this, PANEL_X + PANEL_W / 2, 306, PANEL_W, 326, 0x000000, 0.35, 22);
 
@@ -126,6 +136,7 @@ export default class GarageScene extends Phaser.Scene {
     this.clearContent();
     if (this.tab === 'carrito') this.renderCarts();
     else if (this.tab === 'mejoras') this.renderUpgrades();
+    else if (this.tab === 'pintura') this.renderPaint();
     else if (this.tab === 'ropa') this.renderClothes();
     else if (this.tab === 'lugar') this.renderLevels();
     else if (this.tab === 'misiones') this.renderMissions();
@@ -135,7 +146,11 @@ export default class GarageScene extends Phaser.Scene {
   renderMissions() {
     const key = DEBUG.missionSeed || todayKey();
     const done = Save.missionsDone(key);
-    this.content.push(this.add.text(PANEL_X + PANEL_W / 2, ROWS_Y - 14, 'Misiones de hoy (cada una se cumple en una sola partida)', textStyle(16, COLORS.cremaHex)).setOrigin(0.5));
+    this.content.push(
+      this.add
+        .text(PANEL_X + PANEL_W / 2, ROWS_Y - 14, 'Misiones de hoy (cada una se cumple en una sola partida)', textStyle(16, COLORS.cremaHex))
+        .setOrigin(0.5)
+    );
     dailyMissions(key).forEach((m, i) => {
       const ok = done.includes(m.id);
       const y = this.row(i + 0.6, m.texto, ok ? 'Cumplida' : `Premio: ${m.premio} elotes`, {
@@ -146,6 +161,82 @@ export default class GarageScene extends Phaser.Scene {
       if (!ok) this.content.push(svgImage(this, PANEL_X + PANEL_W - 190, y, 'elote').setScale(0.5));
       this.content[this.content.length - (ok ? 1 : 2)].setAlpha(1);
     });
+  }
+
+  /** Pintura (fichas de color) y calcomanías del carrito activo. */
+  renderPaint() {
+    const cartId = Save.data.cart;
+    const paint = Save.paintFor(cartId);
+    const cx0 = PANEL_X + 20;
+    this.content.push(this.add.text(cx0, ROWS_Y - 14, 'Pintura', textStyle(22, COLORS.amarilloHex)).setOrigin(0, 0.5));
+    const colW = (PANEL_W - 40) / PAINTS.length;
+    PAINTS.forEach((p, i) => {
+      const x = cx0 + colW * (i + 0.5);
+      const y = ROWS_Y + 30;
+      const owned = Save.owns('paint', p.id);
+      const selected = paint.color === p.id;
+      const color = p.color ? parseInt(p.color.slice(1), 16) : COLORS.naranja;
+      const label = selected ? '✓' : owned ? '' : `${p.precio}`;
+      const onClick = () => {
+        if (owned) {
+          Save.setPaint(cartId, { color: p.id });
+          Sfx.clac();
+          this.reloadPaint(cartId, p.id);
+        } else {
+          this.tryBuy(p.precio, () => {
+            Save.own('paint', p.id);
+            Save.setPaint(cartId, { color: p.id });
+            this.reloadPaint(cartId, p.id);
+          });
+        }
+      };
+      const b = makeButton(this, x, y, colW - 8, 52, color, label, onClick, {
+        fontSize: 15,
+        textColor: p.id === 'blanco' || p.id === 'dorado' ? COLORS.negro : COLORS.blanco,
+      });
+      if (selected) b.setEnabled(false);
+      if (selected) b.setAlpha(1);
+      this.content.push(b);
+      this.content.push(this.add.text(x, y + 40, p.nombre, textStyle(12, COLORS.cremaHex, { strokeThickness: 2 })).setOrigin(0.5));
+    });
+
+    this.content.push(this.add.text(cx0, ROWS_Y + 112, 'Calcomanías', textStyle(22, COLORS.amarilloHex)).setOrigin(0, 0.5));
+    const stW = (PANEL_W - 40) / (STICKERS.length + 1);
+    const items = [{ id: null, nombre: 'Ninguna', precio: 0 }, ...STICKERS];
+    items.forEach((st, i) => {
+      const x = cx0 + stW * (i + 0.5);
+      const y = ROWS_Y + 160;
+      const owned = st.id === null || Save.owns('calca', st.id);
+      const selected = paint.calca === st.id;
+      const label = selected ? '✓' : owned ? '' : `${st.precio}`;
+      const onClick = () => {
+        if (owned) {
+          Save.setPaint(cartId, { calca: st.id });
+          Sfx.clac();
+          this.refresh();
+        } else {
+          this.tryBuy(st.precio, () => {
+            Save.own('calca', st.id);
+            Save.setPaint(cartId, { calca: st.id });
+          });
+        }
+      };
+      const b = makeButton(this, x, y, stW - 8, 56, selected ? COLORS.verde : COLORS.azul, label, onClick, { fontSize: 15 });
+      if (selected) b.setEnabled(false);
+      if (selected) b.setAlpha(1);
+      this.content.push(b);
+      if (st.id) this.content.push(svgImage(this, x, y - 4, `calca-${st.id}`).setScale(0.6));
+      this.content.push(this.add.text(x, y + 42, st.nombre, textStyle(12, COLORS.cremaHex, { strokeThickness: 2 })).setOrigin(0.5));
+    });
+  }
+
+  /** Carga la textura pintada si falta y redibuja. */
+  reloadPaint(cartId, paintId) {
+    loadCartPaints(this, [{ cartId, paintId }]);
+    if (this.load.list.size > 0) {
+      this.load.once('complete', () => this.refresh());
+      this.load.start();
+    } else this.refresh();
   }
 
   /** Tres columnas (sombreros, mandiles, playeras) con una ficha por prenda. */
@@ -161,10 +252,11 @@ export default class GarageScene extends Phaser.Scene {
         const y = ROWS_Y + 28 + i * 50;
         let color = COLORS.naranja;
         let label = `${c.nombre.replace(/^(Sombrero de |Mandil |Playera |Camisa de |Máscara de )/, '')}  ·  ${c.precio}`;
-        let onClick = () => this.tryBuy(c.precio, () => {
-          Save.own('clothes', key);
-          Save.equip(c.tipo, c.id);
-        });
+        let onClick = () =>
+          this.tryBuy(c.precio, () => {
+            Save.own('clothes', key);
+            Save.equip(c.tipo, c.id);
+          });
         let disabled = Save.bank < c.precio;
         if (equipped) {
           color = COLORS.verde;
@@ -224,11 +316,17 @@ export default class GarageScene extends Phaser.Scene {
     CARTS.forEach((c, i) => {
       const owned = Save.owns('cart', c.id);
       const selected = Save.data.cart === c.id;
-      const btn = this.buyButton(c.precio, owned, selected, () => Save.own('cart', c.id) || Save.select('cart', c.id), () => {
-        Save.select('cart', c.id);
-        Sfx.clac();
-        this.refresh();
-      });
+      const btn = this.buyButton(
+        c.precio,
+        owned,
+        selected,
+        () => Save.own('cart', c.id) || Save.select('cart', c.id),
+        () => {
+          Save.select('cart', c.id);
+          Sfx.clac();
+          this.refresh();
+        }
+      );
       const y = this.row(i, c.nombre, c.descripcion, btn);
       if (!owned) this.content.push(svgImage(this, PANEL_X + PANEL_W - 190, y, 'elote').setScale(0.5));
     });
@@ -242,7 +340,12 @@ export default class GarageScene extends Phaser.Scene {
       const btn =
         price === null
           ? { color: COLORS.verde, label: 'MÁXIMO', disabled: true }
-          : { color: COLORS.naranja, label: `${price}`, disabled: Save.bank < price, onClick: () => this.tryBuy(price, () => Save.setUpgrade(cartId, u.id, lv + 1)) };
+          : {
+              color: COLORS.naranja,
+              label: `${price}`,
+              disabled: Save.bank < price,
+              onClick: () => this.tryBuy(price, () => Save.setUpgrade(cartId, u.id, lv + 1)),
+            };
       const y = this.row(i, u.nombre, u.descripcion, btn);
       // barra de 6 segmentos
       const g = this.add.graphics();
@@ -262,11 +365,17 @@ export default class GarageScene extends Phaser.Scene {
     LEVELS.forEach((l, i) => {
       const owned = Save.owns('level', l.id);
       const selected = Save.data.level === l.id;
-      const btn = this.buyButton(l.precio, owned, selected, () => Save.own('level', l.id) || Save.select('level', l.id), () => {
-        Save.select('level', l.id);
-        Sfx.clac();
-        this.refresh();
-      });
+      const btn = this.buyButton(
+        l.precio,
+        owned,
+        selected,
+        () => Save.own('level', l.id) || Save.select('level', l.id),
+        () => {
+          Save.select('level', l.id);
+          Sfx.clac();
+          this.refresh();
+        }
+      );
       const best = Save.bestFor(l.id);
       const y = this.row(i, l.nombre, `${l.descripcion}${best ? `  ·  récord ${best} m` : ''}`, btn);
       if (!owned) this.content.push(svgImage(this, PANEL_X + PANEL_W - 190, y, 'elote').setScale(0.5));
