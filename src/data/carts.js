@@ -30,6 +30,7 @@ export const CARTS = [
       suspensionDamping: 0.12,
       maxSpeedX: 16,
       airTilt: 0.04,
+      antiWheelie: 0.75, // cuánto se corta el gas al levantar la nariz
     },
     vista: {
       cuerpo: 'carrito',
@@ -63,6 +64,7 @@ export const CARTS = [
       suspensionDamping: 0.14,
       maxSpeedX: 15,
       airTilt: 0.034,
+      antiWheelie: 0.7, // cuánto se corta el gas al levantar la nariz
     },
     vista: {
       cuerpo: 'triciclo',
@@ -83,8 +85,8 @@ export const CARTS = [
       bodyHeight: 16,
       wallHeight: 42,
       boxX: 40,
-      boxWidth: 70,
-      density: 0.003,
+      boxWidth: 78,
+      density: 0.0036,
       wheels: [
         { x: -50, y: 30, r: 19 },
         { x: 62, y: 30, r: 19 },
@@ -96,6 +98,7 @@ export const CARTS = [
       suspensionDamping: 0.1,
       maxSpeedX: 18,
       airTilt: 0.05,
+      antiWheelie: 0.85, // cuánto se corta el gas al levantar la nariz
     },
     vista: {
       cuerpo: 'bici-carro',
@@ -130,6 +133,7 @@ export const CARTS = [
       suspensionDamping: 0.15,
       maxSpeedX: 19,
       airTilt: 0.035,
+      antiWheelie: 0.9, // cuánto se corta el gas al levantar la nariz
     },
     vista: {
       cuerpo: 'motocarro',
@@ -164,6 +168,7 @@ export const CARTS = [
       suspensionDamping: 0.18,
       maxSpeedX: 21,
       airTilt: 0.03,
+      antiWheelie: 0.8, // cuánto se corta el gas al levantar la nariz
     },
     vista: {
       cuerpo: 'camioneta',
@@ -185,7 +190,7 @@ export const CARTS = [
       bodyHeight: 26,
       wallHeight: 40,
       boxX: -45,
-      boxWidth: 70,
+      boxWidth: 78,
       density: 0.0042,
       wheels: [
         { x: -50, y: 30, r: 20 },
@@ -198,6 +203,7 @@ export const CARTS = [
       suspensionDamping: 0.13,
       maxSpeedX: 20,
       airTilt: 0.05,
+      antiWheelie: 0.85, // cuánto se corta el gas al levantar la nariz
       canastaBase: -1, // un elote menos de inicio y dos menos de tope
     },
     vista: {
@@ -233,6 +239,7 @@ export const CARTS = [
       suspensionDamping: 0.2,
       maxSpeedX: 22,
       airTilt: 0.028,
+      antiWheelie: 0.8, // cuánto se corta el gas al levantar la nariz
       canastaBase: 3, // tres elotes más de inicio y seis más de tope
     },
     vista: {

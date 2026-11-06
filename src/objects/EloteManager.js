@@ -7,11 +7,12 @@ const COLOR_PICKUP = 0xfff3b0;
 
 /** Posición local (en el marco del carrito) del elote número i para una caja dada. */
 export function slotLocalFor(spec, i) {
-  const inner = (spec.boxWidth || spec.bodyWidth) - spec.wallThickness * 2 - 4;
-  const perRow = Math.max(1, Math.floor(inner / (ELOTES.width + 3)));
+  // acomodo apretado: en cajas angostas (bici, cuatrimoto) caben dos por fila y la pila no rebasa las paredes
+  const inner = (spec.boxWidth || spec.bodyWidth) - spec.wallThickness * 2 - 2;
+  const spacing = ELOTES.width + 1;
+  const perRow = Math.max(1, Math.floor((inner + 1) / spacing));
   const row = Math.floor(i / perRow);
   const col = i % perRow;
-  const spacing = ELOTES.width + 3;
   const x = (spec.boxX || 0) + (col - (perRow - 1) / 2) * spacing + (row % 2 ? 6 : 0);
   const y = -(spec.bodyHeight / 2 + ELOTES.height / 2 + 1) - row * (ELOTES.height + 1);
   return { x, y };

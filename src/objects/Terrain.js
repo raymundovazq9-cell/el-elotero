@@ -52,8 +52,8 @@ export default class Terrain {
   ampMul(x) {
     const t = this.level.terreno;
     // en pistas finitas (copas) las colinas casi no crecen: la carrera es de velocidad, no de mejoras
-    const maxMul = this.finishX ? Math.min(t.maxMul, 1.15) : t.maxMul;
-    const grow = Math.min(maxMul, 1 + t.crecimiento * Math.max(0, this.metersAt(x)));
+    const maxMul = this.finishX ? Math.min(t.maxMul, 1.1) : t.maxMul;
+    const grow = Math.min(maxMul, 1 + t.crecimiento * Math.max(0, this.metersAt(x))) * (this.finishX ? 0.7 : 1);
     // entrada suave: las colinas crecen de 0 a 1 en los primeros 500 px después del piso plano
     const k = Phaser.Math.Clamp((x - this.profileStartX) / 500, 0, 1);
     const ease = k * k * (3 - 2 * k);
@@ -149,8 +149,9 @@ export default class Terrain {
       if (canFeature) {
         const roll = rnd.frac();
         let acc = 0;
+        const raceK = this.finishX ? 0.6 : 1; // en copas, menos rasgos: que gane el que mejor maneja
         const hit = (p) => {
-          acc += p * mul;
+          acc += p * mul * raceK;
           return roll < acc;
         };
         const diffT = Phaser.Math.Clamp(meters / MAX_METERS, 0, 1);

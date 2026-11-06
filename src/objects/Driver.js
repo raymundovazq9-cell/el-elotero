@@ -49,13 +49,17 @@ export default class Driver {
       this.stuckMs = 0;
     } else if (c.grounded) this.stuckMs += dt;
     if (this.stuckMs > 1500) {
+      // cada intento da más reversa (700, 1300, 1900 ms...)
       this.stuckMs = 0;
-      this.reverseUntil = now + 700;
+      this.attempts = (this.attempts || 0) + 1;
+      this.reverseUntil = now + 700 + 600 * Math.min(3, this.attempts - 1);
     }
+    if (x > this.maxX) this.attempts = 0;
     if (now < this.reverseUntil) return { brake: true, gas: false };
     if (now < this.brakeUntil) return { brake: true, gas: false };
     // nariz muy levantada en el piso: suelta el gas para no irse de espaldas
     const pitch = c.chassis.angle - (c.groundAngle || 0);
+    if (pitch < -0.9) return { brake: true, gas: false }; // caballito peligroso: frena para bajar la nariz
     if (pitch < -0.55) return { brake: false, gas: false };
 
     const here = road.slopeAt(x);

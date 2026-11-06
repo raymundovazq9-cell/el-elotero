@@ -95,6 +95,7 @@ export default class Cart {
     this.wasGrounded = true;
     this.chassisContact = false;
     this.wheelContacts = new Set(); // índices de las ruedas que tocan el piso
+    this.touching = new Set(); // etiquetas de lo que toca (depuración)
     this.lastVy = 0;
     this.airTotalMs = 0; // tiempo en el aire del salto en curso (para el impacto)
     this.groundLabels = new Set(['road', 'tope', 'coche', 'camioneta', 'tamalero', 'trailer', 'poste-caido']);
@@ -139,6 +140,7 @@ export default class Cart {
       if (!wheelA && !wheelB && !chassisA && !chassisB) continue;
       const other = wheelA || chassisA ? b : a;
       const label = other.label !== 'Body' ? other.label : other.parent && other.parent.label;
+      this.touching.add(label);
       if (label === 'elote' && (chassisA || chassisB)) {
         this.chassisContact = true; // tirado sobre sus propios elotes
         continue;
@@ -158,6 +160,7 @@ export default class Cart {
     this.grounded = false;
     this.chassisContact = false;
     this.wheelContacts.clear();
+    this.touching.clear();
   }
 
   get x() {

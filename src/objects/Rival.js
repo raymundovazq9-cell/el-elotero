@@ -122,6 +122,7 @@ export default class Rival {
       gas = d.gas && now > this.clumsyUntil;
     }
     c.setThrottle(brake ? -1 : gas ? 1 : 0);
+    if (c.touching.size) this.lastTouch = [...c.touching].join(',');
     c.update(delta);
 
     if (c.tipped) {

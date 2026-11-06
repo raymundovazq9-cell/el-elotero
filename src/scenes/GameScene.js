@@ -40,7 +40,7 @@ export default class GameScene extends Phaser.Scene {
     const data = this.scene.settings.data || {};
     if (data.mode === 'copa') {
       // misma semilla que en create(): los rivales y sus pinturas quedan definidos aquí
-      this.raceSeed = `${data.cup}-${Math.floor(Math.random() * 1e9)}`;
+      this.raceSeed = DEBUG.test ? `${data.cup}-${DEBUG.mseed || 'test'}` : `${data.cup}-${Math.floor(Math.random() * 1e9)}`;
       this.rivalSpecs = pickRivals(this.raceSeed, cartId, Save.upgradesFor(cartId));
       for (const r of this.rivalSpecs) items.push({ cartId: r.cartId, paintId: r.paint.color });
     }
@@ -497,7 +497,7 @@ export default class GameScene extends Phaser.Scene {
       if (DEBUG.test && this.testClock && Math.floor(this.testClock / 1000) !== this.lastRivalLog) {
         this.lastRivalLog = Math.floor(this.testClock / 1000);
         console.log(
-          `[test] rivals ${this.rivals.map((r) => `${r.name}:${r.x.toFixed(0)}/${r.cart.speedX.toFixed(1)}/${r.cart.angleDeg.toFixed(0)}${r.cart.tipped ? 'T' : ''}/r${r.resets}n${r.nudges}`).join(' ')} place=${this.race.playerPlace}`
+          `[test] rivals ${this.rivals.map((r) => `${r.name}:${r.x.toFixed(0)}/${r.cart.speedX.toFixed(1)}/${r.cart.angleDeg.toFixed(0)}${r.cart.tipped ? 'T' : ''}/t${Math.round(r.cart.tipTimer)}/g${r.cart.grounded ? 1 : 0}${r.cart.chassisContact ? 'c' : ''}/r${r.resets}n${r.nudges}${Math.abs(r.cart.speedX) < 0.5 ? `[${[...r.cart.touching].join(',')}|${r.lastTouch || ''}]` : ''}`).join(' ')} place=${this.race.playerPlace}`
         );
       }
     }
