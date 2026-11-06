@@ -79,6 +79,15 @@ export default class CartView {
     });
     this.steam.setDepth(-0.5);
 
+    // sombra de contacto: ancla el carrito al plano de la calle (solo el jugador)
+    this.road = opts.road || null;
+    this.shadow = null;
+    if (this.road) {
+      const xs = cart.wheelSpecs.map((ws) => ws.x);
+      this.shadowWidth = Math.max(...xs) - Math.min(...xs) + 44;
+      this.shadow = scene.add.ellipse(0, 0, this.shadowWidth, 12, 0x000000, 0.22).setDepth(this.depth - 0.6);
+    }
+
     this.squash = 0; // 0..1, aplasta el cuerpo al aterrizar
     this.rival = !!opts.rival;
     if (!this.rival) scene.events.on('landing', this.onLanding, this);
@@ -127,6 +136,20 @@ export default class CartView {
       const p = this.local(s.x, s.y);
       img.setPosition(p.x, p.y).setRotation(b.angle + (i % 3) * 0.12 - 0.12);
     });
+    if (this.shadow) {
+      const gy = this.road.surfaceYAt(b.position.x);
+      if (gy === null) this.shadow.setVisible(false);
+      else {
+        const h = Math.max(0, gy - b.position.y - 40); // altura sobre el piso
+        const k = Phaser.Math.Clamp(1 - h / 140, 0, 1);
+        this.shadow
+          .setVisible(k > 0.02)
+          .setPosition(b.position.x, gy + 2)
+          .setRotation(Math.atan(this.road.slopeAt(b.position.x)))
+          .setScale(0.7 + 0.3 * k, 1)
+          .setAlpha(0.22 * k);
+      }
+    }
     this.elotero.sync(delta);
   }
 
@@ -146,6 +169,7 @@ export default class CartView {
     if (this.sticker) this.sticker.setVisible(v);
     this.wheels.forEach((w) => w.setVisible(v));
     this.elotero.setVisible(v);
+    if (this.shadow) this.shadow.setVisible(v);
     this.steam.setVisible(v);
   }
 
@@ -154,6 +178,7 @@ export default class CartView {
     this.fakeElotes.forEach((e) => e.destroy());
     if (this.walls) this.walls.destroy();
     this.body.destroy();
+    if (this.shadow) this.shadow.destroy();
     if (this.sticker) this.sticker.destroy();
     this.wheels.forEach((w) => w.destroy());
     this.elotero.destroy();

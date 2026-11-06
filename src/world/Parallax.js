@@ -84,8 +84,8 @@ export function buildSilhouette(theme) {
   return { shapes, lights };
 }
 
-function drawShapes(g, shapes, color) {
-  g.fillStyle(color, 1);
+function drawShapes(g, shapes, color, alpha = 1) {
+  g.fillStyle(color, alpha);
   for (const s of shapes) {
     if (s.type === 'box') {
       g.fillRect(s.x, s.y, s.w, s.h);
@@ -103,7 +103,7 @@ function drawShapes(g, shapes, color) {
     } else if (s.type === 'rueda') {
       const cx = s.x + s.w / 2;
       const cy = s.y - s.h / 2 - 10;
-      g.lineStyle(4, color, 1);
+      g.lineStyle(4, color, alpha);
       g.strokeCircle(cx, cy, s.w / 2 - 4);
       for (let i = 0; i < 8; i++) {
         const a = (i / 8) * Math.PI * 2;
@@ -143,6 +143,19 @@ function drawShapes(g, shapes, color) {
 export function silhouetteTexture(scene, key, shapes, color) {
   if (scene.textures.exists(key)) scene.textures.remove(key);
   const g = scene.make.graphics({ x: 0, y: 0, add: false });
+  // borde suave: tres pasadas desplazadas y tenues bajo la silueta sólida
+  for (const [dx, dy] of [
+    [-1.5, 0],
+    [1.5, 0],
+    [0, -1.5],
+  ]) {
+    drawShapes(
+      g,
+      shapes.map((s) => ({ ...s, x: s.x + dx, y: s.y + dy })),
+      color,
+      0.35
+    );
+  }
   drawShapes(g, shapes, color);
   g.generateTexture(key, TILE_W, TILE_H + 10);
   g.destroy();

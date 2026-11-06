@@ -69,6 +69,31 @@ for (const st of STICKERS) SVG_ASSETS.push({ key: `calca-${st.id}`, url: `assets
 import { CARTS } from './data/carts.js';
 export const TEXT_ASSETS = CARTS.map((c) => ({ key: `svg-${c.id}`, url: `assets/svg/${c.vista.cuerpo}.svg` }));
 
+/**
+ * Escenografía con bruma de profundidad (src/world/haze.js): k = cuánto se
+ * mezcla hacia el gris azulado, blur = desenfoque horneado en el SVG (solo lo lejano).
+ */
+const FAR = { k: 0.55, blur: 1.4 };
+const MID = { k: 0.32, blur: 0 };
+export const FONDO_VARIANTS = [
+  { key: 'cerros', ...FAR },
+  { key: 'iglesia', ...FAR },
+  { key: 'kiosco', ...FAR },
+  { key: 'carpa', ...FAR },
+  { key: 'rueda-fortuna', ...FAR },
+  { key: 'casa-detalles-a', ...MID },
+  { key: 'casa-detalles-b', ...MID },
+  { key: 'puesto', ...MID },
+  { key: 'puesto-mercado', ...MID },
+  { key: 'puesto-feria', ...MID },
+  { key: 'senora', ...MID },
+  { key: 'poste', ...MID },
+  { key: 'nopal', ...MID },
+  { key: 'senal', ...MID },
+  { key: 'lona', ...MID },
+];
+for (const v of FONDO_VARIANTS) TEXT_ASSETS.push({ key: `svg-${v.key}`, url: `assets/svg/${v.key}.svg` });
+
 export const IMAGE_ASSETS = AI_BACKGROUNDS
   ? [
       { key: 'fondo-tarde', url: 'assets/bg/fondo-tarde.png' },

@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 import { SKY_PHASES } from '../theme.js';
 import { svgImage } from '../assets.js';
+import { fondoKey } from './haze.js';
 import { buildSilhouette, silhouetteTexture, lightsTexture, haloTexture, TileLayer, PARALLAX_TILE } from './Parallax.js';
 
 const CYCLE_METERS = 600;
@@ -122,7 +123,7 @@ export default class SkyCycle {
         img.setDisplaySize(GAME_WIDTH * 2, (GAME_WIDTH * 2 * img.height) / img.width);
       }
     } else {
-      this.farDay = mk('cerros', true);
+      this.farDay = mk(fondoKey(scene, 'cerros'), true);
       this.farNight = null;
     }
     this.farWidth = this.farDay[0].displayWidth;
@@ -214,7 +215,7 @@ export default class SkyCycle {
     }
 
     // siluetas: color del cielo oscurecido; se regenera solo cuando cambia
-    const silColor = darken(sky.bottom, 0.42 + sky.night * 0.3);
+    const silColor = darken(sky.bottom, 0.34 + sky.night * 0.3);
     if (silColor !== this.silColor) {
       this.silColor = silColor;
       silhouetteTexture(this.scene, `sil-${this.theme}`, this.sil.shapes, silColor);

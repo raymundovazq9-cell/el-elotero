@@ -1,14 +1,17 @@
 import { svgImage } from '../assets.js';
+import { fondoKey, mixColor, HAZE_INT } from './haze.js';
 
 const HOUSE_COLORS = [0xe4007c, 0x3a86ff, 0xf7c948, 0x2e8b57, 0xf2762e, 0x8e44ad, 0xfff4d6, 0x1abc9c];
-const FLAG_COLORS = [0xe4007c, 0x2e8b57, 0x3a86ff, 0xf7c948, 0xf2762e, 0xffffff];
+const FLAG_COLORS = [0xe4007c, 0x2e8b57, 0x3a86ff, 0xf7c948, 0xf2762e, 0xffffff].map((c) => mixColor(c, HAZE_INT, 0.25));
+const MID_K = 0.32; // bruma de lo que está justo detrás de la calle
+const OUTLINE = mixColor(0x1a1a1a, HAZE_INT, MID_K);
 
 const DEPTH_HOUSE = -50;
 const DEPTH_POST = -40;
 const DEPTH_PROPS = -45;
-const DEPTH_FLAGS = 20;
+const DEPTH_FLAGS = -39; // papel picado y focos: detrás del carrito, delante de los postes
 const DEPTH_FAR = -60; // rueda de la fortuna, carpas
-const FOCO_COLORS = [0xff4d6d, 0xffd166, 0x06d6a0, 0x4cc9f0, 0xff8c42];
+const FOCO_COLORS = [0xff4d6d, 0xffd166, 0x06d6a0, 0x4cc9f0, 0xff8c42].map((c) => mixColor(c, HAZE_INT, 0.2));
 
 /** Ajustes por escenario. */
 const THEMES = {
@@ -91,7 +94,7 @@ export default class Scenery {
       const key = th.far[this.farIndex % th.far.length];
       const fy = this.houseBaseY(this.nextFarX - 100, this.nextFarX + 100);
       if (fy !== null) {
-        const img = svgImage(this.scene, this.nextFarX, fy + 6, key)
+        const img = svgImage(this.scene, this.nextFarX, fy + 6, fondoKey(this.scene, key))
           .setOrigin(0.5, 1)
           .setDepth(DEPTH_FAR);
         items.push(img);
@@ -100,7 +103,7 @@ export default class Scenery {
           img.setOrigin(0.5, 0.5).setPosition(this.nextFarX, fy + 6 - 90);
           this.scene.tweens.add({ targets: img, rotation: Math.PI * 2, duration: 14000, repeat: -1 });
           const base = this.scene.add.graphics().setDepth(DEPTH_FAR - 0.1);
-          base.lineStyle(10, 0xc0392b, 1);
+          base.lineStyle(10, mixColor(0xc0392b, HAZE_INT, 0.55), 1);
           base.lineBetween(this.nextFarX - 50, fy + 6, this.nextFarX, fy + 6 - 90);
           base.lineBetween(this.nextFarX + 50, fy + 6, this.nextFarX, fy + 6 - 90);
           items.push(base);
@@ -124,7 +127,7 @@ export default class Scenery {
         const py = this.sidewalkY(px);
         if (py !== null)
           items.push(
-            svgImage(this.scene, px, py + 4, th.puesto)
+            svgImage(this.scene, px, py + 4, fondoKey(this.scene, th.puesto))
               .setOrigin(0.5, 1)
               .setDepth(DEPTH_PROPS)
           );
@@ -132,7 +135,7 @@ export default class Scenery {
         const px = x + w * rnd.realInRange(0.2, 0.8);
         const py = this.sidewalkY(px);
         if (py !== null) {
-          const s = svgImage(this.scene, px, py + 4, 'senora')
+          const s = svgImage(this.scene, px, py + 4, fondoKey(this.scene, 'senora'))
             .setOrigin(0.5, 1)
             .setDepth(DEPTH_PROPS);
           if (rnd.frac() < 0.5) s.setFlipX(true);
@@ -144,7 +147,7 @@ export default class Scenery {
         const py = this.sidewalkY(px);
         if (py !== null) {
           const key = th.props[rnd.between(0, th.props.length - 1)];
-          const s = svgImage(this.scene, px, py + 4, key)
+          const s = svgImage(this.scene, px, py + 4, fondoKey(this.scene, key))
             .setOrigin(0.5, 1)
             .setDepth(DEPTH_PROPS);
           if (key === 'nopal') s.setScale(0.5 * rnd.realInRange(0.7, 1.1));
@@ -164,7 +167,7 @@ export default class Scenery {
       const px = this.nextPostX;
       const py = this.sidewalkY(px);
       if (py === null) break;
-      const post = svgImage(this.scene, px, py + 2, 'poste')
+      const post = svgImage(this.scene, px, py + 2, fondoKey(this.scene, 'poste'))
         .setOrigin(0.5, 1)
         .setDepth(DEPTH_POST);
       items.push(post);
@@ -192,8 +195,8 @@ export default class Scenery {
     const key = `casa-pared-${color.toString(16)}`;
     if (!this.scene.textures.exists(key)) {
       const g = this.scene.make.graphics({ x: 0, y: 0, add: false });
-      g.fillStyle(color, 1);
-      g.lineStyle(6, 0x1a1a1a, 1);
+      g.fillStyle(mixColor(color, HAZE_INT, MID_K), 1);
+      g.lineStyle(4, OUTLINE, 1);
       g.fillRect(16, 60, 288, 240);
       g.strokeRect(16, 60, 288, 240);
       g.fillRoundedRect(4, 44, 312, 28, 6);
@@ -211,7 +214,7 @@ export default class Scenery {
     const scaleX = w / 160;
     const scale = rnd.realInRange(0.95, 1.2);
     const pared = this.scene.add.image(cx, yBase, this.wallTexture(color)).setOrigin(0.5, 1).setDepth(DEPTH_HOUSE);
-    const det = svgImage(this.scene, cx, yBase, `casa-detalles-${variant}`)
+    const det = svgImage(this.scene, cx, yBase, fondoKey(this.scene, `casa-detalles-${variant}`))
       .setOrigin(0.5, 1)
       .setDepth(DEPTH_HOUSE + 0.1);
     const win = svgImage(this.scene, cx, yBase, `casa-ventanas-${variant}`)
@@ -224,7 +227,7 @@ export default class Scenery {
   }
 
   drawCables(g, a, b) {
-    g.lineStyle(2, 0x222222, 0.9);
+    g.lineStyle(1.5, mixColor(0x222222, HAZE_INT, 0.45), 0.6);
     for (let i = 0; i < 2; i++) {
       const off = i * 14;
       const sag = 26 + i * 6;
@@ -240,7 +243,7 @@ export default class Scenery {
 
   drawFlags(g, a, b) {
     const n = 10;
-    g.lineStyle(2, 0x333333, 0.8);
+    g.lineStyle(1.5, mixColor(0x333333, HAZE_INT, 0.4), 0.6);
     const pts = [];
     for (let i = 0; i <= n; i++) {
       const t = i / n;
@@ -253,9 +256,9 @@ export default class Scenery {
     g.strokePath();
     for (let i = 1; i < n; i++) {
       const p = pts[i];
-      g.fillStyle(FLAG_COLORS[i % FLAG_COLORS.length], 0.92);
+      g.fillStyle(FLAG_COLORS[i % FLAG_COLORS.length], 0.75);
       g.fillRect(p.x - 9, p.y, 18, 22);
-      g.lineStyle(1.5, 0x1a1a1a, 0.6);
+      g.lineStyle(1.5, OUTLINE, 0.5);
       g.strokeRect(p.x - 9, p.y, 18, 22);
     }
   }
@@ -263,7 +266,7 @@ export default class Scenery {
   /** Lona de mercado estirada entre dos postes, a media altura. */
   drawLona(a, b) {
     const w = Math.hypot(b.x - a.x, b.y - a.y);
-    const img = svgImage(this.scene, (a.x + b.x) / 2, (a.y + b.y) / 2 + 26, 'lona')
+    const img = svgImage(this.scene, (a.x + b.x) / 2, (a.y + b.y) / 2 + 26, fondoKey(this.scene, 'lona'))
       .setDepth(DEPTH_POST - 0.5)
       .setAlpha(0.95);
     img.setScale((w / 220) * 0.5, 0.36).setRotation(Math.atan2(b.y - a.y, b.x - a.x));
@@ -280,7 +283,7 @@ export default class Scenery {
       const x = a.x + (b.x - a.x) * t;
       const y = a.y + 30 + (b.y - a.y) * t + Math.sin(t * Math.PI) * 40 + 10;
       const c = this.scene.add.circle(x, y, 6, FOCO_COLORS[i % FOCO_COLORS.length], 1).setDepth(DEPTH_FLAGS);
-      c.setStrokeStyle(2, 0x1a1a1a, 1);
+      c.setStrokeStyle(2, OUTLINE, 1);
       const halo = this.scene.add.circle(x, y, 12, FOCO_COLORS[i % FOCO_COLORS.length], 0).setDepth(DEPTH_FLAGS - 0.1);
       this.focos.push(halo);
       out.push(c, halo);

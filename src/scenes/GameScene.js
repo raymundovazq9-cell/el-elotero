@@ -81,7 +81,7 @@ export default class GameScene extends Phaser.Scene {
     });
     this.obstacles = new Actors(this, this.cart, this.road, this.elotes, this.level, { race: this.mode === 'copa', llantas: levels.llantas || 0 });
     const paint = Save.paintFor(this.cartData.id);
-    this.cartView = new CartView(this, this.cart, this.cartData.vista, { bodyKey: bodyTexture(this, this.cartData, paint.color), calca: paint.calca });
+    this.cartView = new CartView(this, this.cart, this.cartData.vista, { bodyKey: bodyTexture(this, this.cartData, paint.color), calca: paint.calca, road: this.road });
     this.eloteView = new EloteView(this, this.elotes);
     this.particles = new Particles(this, this.cart);
 

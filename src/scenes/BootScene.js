@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { DEBUG } from '../debug.js';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 import { loadAssets } from '../assets.js';
+import { loadFondoVariants } from '../world/haze.js';
 import { COLORS, FONT_FAMILY } from '../theme.js';
 
 export default class BootScene extends Phaser.Scene {
@@ -29,6 +30,13 @@ export default class BootScene extends Phaser.Scene {
 
   async create() {
     this.input.addPointer(1);
+    // segunda fase: variantes con bruma de la escenografía, generadas del texto de los SVG
+    if (loadFondoVariants(this) > 0) {
+      await new Promise((resolve) => {
+        this.load.once('complete', resolve);
+        this.load.start();
+      });
+    }
     try {
       await Promise.race([
         Promise.all([document.fonts.load('600 32px Fredoka'), document.fonts.load('400 32px Fredoka'), document.fonts.load('700 32px Fredoka')]),
