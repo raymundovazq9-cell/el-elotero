@@ -81,7 +81,11 @@ export default class GameScene extends Phaser.Scene {
     });
     this.obstacles = new Actors(this, this.cart, this.road, this.elotes, this.level, { race: this.mode === 'copa', llantas: levels.llantas || 0 });
     const paint = Save.paintFor(this.cartData.id);
-    this.cartView = new CartView(this, this.cart, this.cartData.vista, { bodyKey: bodyTexture(this, this.cartData, paint.color), calca: paint.calca, road: this.road });
+    this.cartView = new CartView(this, this.cart, this.cartData.vista, {
+      bodyKey: bodyTexture(this, this.cartData, paint.color),
+      calca: paint.calca,
+      road: this.road,
+    });
     this.eloteView = new EloteView(this, this.elotes);
     this.particles = new Particles(this, this.cart);
 
@@ -176,6 +180,15 @@ export default class GameScene extends Phaser.Scene {
     });
     for (const ev of ['perro-hit', 'dona-hit', 'bump', 'cable-hit', 'robo'])
       this.events.on(ev, () => (this.lastHit = `${ev}@${Math.round(this.testClock || 0)}`));
+    if (DEBUG.test) {
+      this.events.on('crosser-appear', (k) =>
+        console.log(`[test] CROSSER kind=${k} state=appear t=${Math.round(this.testClock || 0)} vx=${this.cart.speedX.toFixed(1)}`)
+      );
+      this.events.on('crosser-dodged', (k) => console.log(`[test] CROSSER kind=${k} state=dodged t=${Math.round(this.testClock || 0)}`));
+      this.events.on('perro-hit', () => console.log(`[test] CROSSER kind=perro state=hit t=${Math.round(this.testClock || 0)}`));
+      this.events.on('dona-hit', () => console.log(`[test] CROSSER kind=dona state=hit t=${Math.round(this.testClock || 0)}`));
+      this.events.on('robo', (n) => console.log(`[test] ROBO n=${n} t=${Math.round(this.testClock || 0)}`));
+    }
     this.events.on('perro-hit', () => {
       Sfx.perro();
       vibrate([60, 40, 80]);

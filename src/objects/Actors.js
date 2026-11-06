@@ -1,15 +1,31 @@
 import Phaser from 'phaser';
 import { labelOf } from './EloteManager.js';
-import { svgImage } from '../assets.js';
+import { svgImage, SVG_SCALE } from '../assets.js';
 import { SCORE } from '../config.js';
 import { MAX_METERS, SAFE_METERS } from './Difficulty.js';
 import { groundFilter } from './collision.js';
 
 export const CROSSER = {
-  triggerDistance: 460, // px por delante del carrito para que "salga"
-  lifetimeMs: 1800, // tiempo que tarda en cruzar
-  slowFactor: 0.3,
-  shake: 5,
+  warnMs: 600, // en la banqueta con el "!" antes de bajar a la calle (sin colisión)
+  roadMs: { perro: 650, dona: 1100 }, // tiempo que está atravesado en la calle
+  leaveMs: 260,
+  // sale cuando faltan ~(aviso + un tercio del cruce) segundos a la velocidad actual:
+  // si mantienes la velocidad te lo topas; frenando pasa antes; acelerando lo rebasas
+  triggerMin: 280,
+  triggerMax: 720,
+  slowFactor: 0.4,
+  shake: 4,
+};
+// gente (perro, doña, cholo, cliente): espacio mínimo para que no sea un desfile
+export const PEOPLE = {
+  minMeters: 50, // nadie antes de estos metros
+  gapMeters: 35, // entre dos personas cualesquiera
+  cooldownMeters: { perro: 70, dona: 70, cholo: 120, cliente: 50 },
+  afterFeaturePx: 180, // nadie justo después de una rampa o barranca
+  maxSlope: 0.3,
+  maxMul: 1.4, // la dificultad por metros no los multiplica más que esto
+  choloWarnPx: 320,
+  choloSlowMs: 350, // hay que ir lento este tiempo en su zona para que robe
 };
 
 export const COCHE = { width: 150, height: 34, ramp: 55 };
@@ -64,6 +80,10 @@ export default class Actors {
     this.lastPuddleAt = 0;
     this.lastBallAt = 0;
     this.hits = 0;
+    this.dodged = 0;
+    this.lastPeopleAt = {}; // metros del último de cada tipo
+    this.lastPersonM = -Infinity;
+    this.noPeopleUntilX = -Infinity;
     this.robos = 0;
     this.ventas = 0;
     this.saltos = 0;
@@ -81,25 +101,53 @@ export default class Actors {
     // cables CFE: después de una rampa, colgados entre dos postes
     for (const f of chunk.features || []) {
       if (f.type === 'rampa' && rnd.frac() < this.weights.cable * 6) this.addCable(chunk, f.points[1].x + 80);
+      if (f.type === 'rampa' || f.type === 'barranca') {
+        const endX = f.points[f.points.length - 1].x;
+        this.noPeopleUntilX = Math.max(this.noPeopleUntilX, endX + PEOPLE.afterFeaturePx);
+      }
     }
     for (const s of chunk.spots) {
       if (s.used) continue;
       const meters = this.road.metersAt(s.x);
       if (meters < SAFE_METERS + 10) continue;
       const mul = 1 + Phaser.Math.Clamp(meters / MAX_METERS, 0, 1);
-      const kind = this.pick(rnd.frac(), mul, s);
+      const kind = this.pick(rnd.frac(), mul, s, meters);
       if (!kind) continue;
       s.used = true;
+      if (PEOPLE.cooldownMeters[kind] !== undefined) {
+        this.lastPeopleAt[kind] = meters;
+        this.lastPersonM = meters;
+      }
       this.place(kind, chunk, s);
     }
   }
 
+  /** ¿Puede salir una persona de este tipo en este spot? */
+  personAllowed(kind, s, meters) {
+    if (meters < PEOPLE.minMeters) return false;
+    if (meters - this.lastPersonM < PEOPLE.gapMeters) return false;
+    if (meters - (this.lastPeopleAt[kind] ?? -Infinity) < PEOPLE.cooldownMeters[kind]) return false;
+    if (s.x < this.noPeopleUntilX) return false;
+    if (Math.abs(Math.tan(s.angle)) > PEOPLE.maxSlope) return false;
+    // el cholo solo en subidas, donde de por sí vas lento: se ve venir
+    if (kind === 'cholo' && s.angle > -0.12) return false;
+    return true;
+  }
+
   /** Elige un actor por pesos; devuelve null si no toca nada. */
-  pick(roll, mul, s) {
+  pick(roll, mul, s, meters = 0) {
     let acc = 0;
+    const peopleMul = Math.min(mul, PEOPLE.maxMul);
     for (const [kind, w] of Object.entries(this.weights)) {
       if (!w) continue;
       if (kind === 'cable') continue; // va aparte, junto a las rampas
+      const person = PEOPLE.cooldownMeters[kind] !== undefined;
+      if (person) {
+        if (!this.personAllowed(kind, s, meters)) continue;
+        acc += w * peopleMul;
+        if (roll < acc) return kind;
+        continue;
+      }
       const vehicle = kind === 'camioneta' || kind === 'tamalero' || kind === 'trailer';
       if ((kind === 'coche' || vehicle) && s.len < 150) continue;
       // lomos, vehículos y postes caídos solo en plano o bajada: en subida atoran al carrito
@@ -152,7 +200,7 @@ export default class Actors {
       .setOrigin(0.5, 1)
       .setDepth(-44);
     const bubble = this.scene.add
-      .text(s.x, img.y - 100, kind === 'cliente' ? '¡Elotes!' : '...', {
+      .text(s.x, img.y - 100, kind === 'cliente' ? '¡Elotes!' : '', {
         fontFamily: 'Fredoka, Arial',
         fontSize: '20px',
         color: kind === 'cliente' ? '#2e8b57' : '#c0392b',
@@ -162,7 +210,7 @@ export default class Actors {
       .setOrigin(0.5)
       .setDepth(-43);
     this.extras(chunk).push(img, bubble);
-    this.zones.set(body, { kind, img, bubble, done: false, x: s.x });
+    this.zones.set(body, { kind, img, bubble, done: false, x: s.x, warned: false, slowSince: 0 });
   }
 
   addCoche(chunk, s) {
@@ -368,31 +416,68 @@ export default class Actors {
 
   // ---------- perros y doñas ----------
 
+  /** Distancia a la que "sale" según la velocidad actual: llega justo cuando estás por pasar. */
+  crosserTrigger(kind) {
+    const pxPerSec = Math.max(0, this.cart.speedX) * 60;
+    const secs = (CROSSER.warnMs + 0.35 * CROSSER.roadMs[kind]) / 1000;
+    return Phaser.Math.Clamp(pxPerSec * secs, CROSSER.triggerMin, CROSSER.triggerMax);
+  }
+
+  /** Aparece en la banqueta con el "!": todavía no estorba. */
   activateCrosser(p) {
-    const m = this.scene.matter;
     const h = p.kind === 'perro' ? 24 : 60;
-    const w = p.kind === 'perro' ? 40 : 34;
     const lift = h / 2 + 2;
-    const x = p.x - p.n.x * lift;
-    const y = p.y - p.n.y * lift;
-    p.body = m.add.rectangle(x, y, w, h, { isStatic: true, isSensor: true, angle: p.angle, label: 'crosser', render: { visible: false } });
-    p.img = svgImage(this.scene, x, y, p.kind)
+    p.roadX = p.x - p.n.x * lift;
+    p.roadY = p.y - p.n.y * lift;
+    p.h = h;
+    const sx = p.x - p.n.x * (lift + 14);
+    const sy = p.y - p.n.y * (lift + 14);
+    p.img = svgImage(this.scene, sx, sy, p.kind)
       .setOrigin(0.5, p.kind === 'perro' ? 0.75 : 0.95)
       .setRotation(p.angle)
-      .setDepth(-3);
-    p.tween = this.scene.tweens.add({ targets: p.img, y: y - 5, duration: p.kind === 'perro' ? 110 : 180, yoyo: true, repeat: -1 });
+      .setDepth(-45)
+      .setScale(0.92 / SVG_SCALE);
+    p.tween = this.scene.tweens.add({ targets: p.img, y: sy - 4, duration: p.kind === 'perro' ? 110 : 180, yoyo: true, repeat: -1 });
     p.label = this.scene.add
-      .text(x, y - (p.kind === 'perro' ? 52 : 92), '!', {
+      .text(sx, sy - (p.kind === 'perro' ? 52 : 92), '!', {
         fontFamily: 'Fredoka, Arial',
         fontSize: '40px',
         color: '#ff3b3b',
         stroke: '#000',
         strokeThickness: 5,
       })
-      .setOrigin(0.5);
-    p.state = 'active';
-    p.timer = CROSSER.lifetimeMs;
+      .setOrigin(0.5)
+      .setDepth(-2);
+    p.state = 'warn';
+    p.timer = CROSSER.warnMs;
     this.scene.events.emit('crosser-appear', p.kind);
+  }
+
+  /** Baja a la calle: ahora sí estorba. */
+  crosserToRoad(p) {
+    const m = this.scene.matter;
+    const w = p.kind === 'perro' ? 40 : 34;
+    p.body = m.add.rectangle(p.roadX, p.roadY, w, p.h, { isStatic: true, isSensor: true, angle: p.angle, label: 'crosser', render: { visible: false } });
+    if (p.tween) p.tween.stop();
+    p.img.setDepth(-3).setScale(1 / SVG_SCALE);
+    p.tween = this.scene.tweens.add({ targets: p.img, x: p.roadX, y: p.roadY, duration: 160, ease: 'Sine.easeOut' });
+    p.state = 'road';
+    p.timer = CROSSER.roadMs[p.kind];
+  }
+
+  /** Terminó de cruzar sin que lo tocaras: se va por delante de la calle. */
+  crosserLeave(p) {
+    if (p.body) this.scene.matter.world.remove(p.body);
+    p.body = null;
+    if (p.label) p.label.destroy();
+    p.label = null;
+    if (p.tween) p.tween.stop();
+    p.img.setDepth(1);
+    p.tween = this.scene.tweens.add({ targets: p.img, y: p.roadY + 26, alpha: 0, scale: 1.08 / SVG_SCALE, duration: CROSSER.leaveMs, ease: 'Sine.easeIn' });
+    p.state = 'leave';
+    p.timer = CROSSER.leaveMs;
+    this.dodged++;
+    this.scene.events.emit('crosser-dodged', p.kind);
   }
 
   removeCrosser(p) {
@@ -436,7 +521,7 @@ export default class Actors {
       const label = labelOf(other);
       if (label === 'crosser') {
         const p = this.crossers.find((q) => q.body === other);
-        if (p && p.state === 'active') this.hitCrosser(p);
+        if (p && p.state === 'road') this.hitCrosser(p);
       } else if (label === 'chile' || label === 'bolsa') {
         const pk = this.pickups.get(other);
         if (pk) this.takePickup(other, pk);
@@ -470,14 +555,31 @@ export default class Actors {
       if (!other || labelOf(other) !== 'zona') continue;
       const z = this.zones.get(other);
       if (!z || z.done) continue;
-      if (Math.abs(this.cart.speedX) < ZONE.slowSpeed) this.triggerZone(z);
+      const slow = Math.abs(this.cart.speedX) < ZONE.slowSpeed;
+      if (z.kind !== 'cholo') {
+        if (slow) this.triggerZone(z);
+        continue;
+      }
+      // el cholo necesita que vayas lento un rato: un frenón y arrancón te salva
+      const now = this.scene.time.now;
+      if (!slow) {
+        z.slowSince = 0;
+        continue;
+      }
+      if (!z.slowSince) z.slowSince = now;
+      if (now - z.slowSince >= PEOPLE.choloSlowMs) this.triggerZone(z);
     }
   }
 
   triggerZone(z) {
     z.done = true;
     if (z.kind === 'cholo') {
-      const n = Math.min(this.elotes.count, this.road.rnd.frac() < 0.5 ? 1 : 2);
+      // nunca se lleva el último elote
+      const n = Math.min(this.elotes.count - 1, this.road.rnd.frac() < 0.5 ? 1 : 2);
+      if (n <= 0) {
+        z.bubble.setText('¡Ni uno!');
+        return;
+      }
       for (let i = 0; i < n; i++) {
         const pos = this.elotes.removeOne();
         if (pos) this.flyElote(pos, z.img.x, z.img.y - 60);
@@ -550,15 +652,29 @@ export default class Actors {
   update(deltaMs) {
     const cx = this.cart.x;
     for (const p of this.crossers) {
-      if (p.state === 'waiting' && cx > p.x - CROSSER.triggerDistance) {
-        this.activateCrosser(p);
-      } else if (p.state === 'active') {
-        p.timer -= deltaMs;
-        if (p.label) p.label.setVisible(Math.floor(p.timer / 150) % 2 === 0);
-        if (p.timer <= 0) this.removeCrosser(p);
+      if (p.state === 'waiting') {
+        if (cx > p.x - this.crosserTrigger(p.kind)) this.activateCrosser(p);
+        continue;
       }
+      if (p.state === 'done') continue;
+      p.timer -= deltaMs;
+      if (p.label) p.label.setVisible(Math.floor(p.timer / 150) % 2 === 0);
+      if (p.timer > 0) continue;
+      if (p.state === 'warn') this.crosserToRoad(p);
+      else if (p.state === 'road') this.crosserLeave(p);
+      else this.removeCrosser(p);
     }
     this.crossers = this.crossers.filter((p) => p.state !== 'done');
+
+    // el cholo te ve venir y avisa
+    for (const z of this.zones.values()) {
+      if (z.kind !== 'cholo' || z.warned || z.done || cx < z.x - PEOPLE.choloWarnPx) continue;
+      z.warned = true;
+      z.bubble.setText('¡Órale, elotes!').setScale(0);
+      this.scene.tweens.add({ targets: z.bubble, scale: 1, duration: 220, ease: 'Back.easeOut' });
+      this.scene.tweens.add({ targets: z.img, y: z.img.y - 10, duration: 140, yoyo: true, repeat: 1 });
+      this.scene.events.emit('cholo-warn');
+    }
 
     for (const b of this.balls) {
       if (b.state === 'waiting' && cx > b.x - BALON.triggerDistance) this.kickBall(b);
