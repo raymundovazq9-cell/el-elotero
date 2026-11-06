@@ -1,7 +1,7 @@
 import { svgImage, SVG_SCALE } from '../assets.js';
 import { CART } from '../config.js';
 import { slotLocalFor } from '../objects/EloteManager.js';
-import { buildEloteroTorso } from './EloteroTorso.js';
+import { buildEloteroTorso, ARM_POSES } from './EloteroTorso.js';
 import { Save } from '../save.js';
 
 const WHEEL_IMAGE_R = 17;
@@ -18,9 +18,13 @@ export function buildCartPreview(scene, cartData, opts = {}) {
 
   // elotero (detrás del carrito)
   const p = v.elotero;
-  const legB = svgImage(scene, p.x, p.y, 'elotero-pierna').setOrigin(8 / 20, 2 / 46).setTint(0xbdbdbd);
+  const legB = svgImage(scene, p.x, p.y, 'elotero-pierna')
+    .setOrigin(8 / 20, 2 / 46)
+    .setTint(0xbdbdbd);
   const legF = svgImage(scene, p.x, p.y, 'elotero-pierna').setOrigin(8 / 20, 2 / 46);
   const torso = buildEloteroTorso(scene, opts.equipped || Save.data.clothes.equipped).setPosition(p.x, p.y);
+  torso.armFront.setRotation(ARM_POSES[p.modo].front);
+  torso.armBack.setRotation(ARM_POSES[p.modo].back);
   if (p.modo === 'empujando') {
     legB.setRotation(0.5);
     legF.setRotation(-0.4);
@@ -47,7 +51,11 @@ export function buildCartPreview(scene, cartData, opts = {}) {
   // elotes en la caja
   for (let i = 0; i < elotes; i++) {
     const s = slotLocalFor(spec, i);
-    parts.push(svgImage(scene, s.x, s.y, 'elote').setScale(0.27).setRotation((i % 3) * 0.12 - 0.12));
+    parts.push(
+      svgImage(scene, s.x, s.y, 'elote')
+        .setScale(0.27)
+        .setRotation((i % 3) * 0.12 - 0.12)
+    );
   }
 
   const container = scene.add.container(opts.x || 0, opts.y || 0, parts);
