@@ -49,7 +49,8 @@ export default class Cart {
 
     this.chassis = m.body.create({
       parts: [base, wallL, wallR],
-      friction: 0.3,
+      friction: 1.2, // alta para que mande la fricción de los elotes (Matter usa el mínimo del par)
+      frictionStatic: 1.2,
       frictionAir: 0.006,
       collisionFilter: { group: GROUP_CART },
       label: 'cart',

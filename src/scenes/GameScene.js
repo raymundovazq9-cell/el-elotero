@@ -7,6 +7,7 @@ import { applyUpgrades } from '../data/upgrades.js';
 import Cart from '../objects/Cart.js';
 import Stall from '../objects/Stall.js';
 import Tricks from '../objects/Tricks.js';
+import Driver from '../objects/Driver.js';
 import EloteManager from '../objects/EloteManager.js';
 import Actors from '../objects/Actors.js';
 import { difficultyAt } from '../objects/Difficulty.js';
@@ -81,6 +82,12 @@ export default class GameScene extends Phaser.Scene {
       vibrate(25);
     });
     this.events.on('elote-lost', () => {
+      if (DEBUG.test) {
+        const c = this.cart;
+        console.log(
+          `[test] LOST t=${Math.round(this.testClock || 0)} vx=${c.speedX.toFixed(1)} vy=${c.chassis.velocity.y.toFixed(1)} ang=${c.angleDeg.toFixed(0)} g=${c.grounded} air=${c.airTotalMs} lastImpact=${this.lastImpact || 0} lastHit=${this.lastHit || ''}`
+        );
+      }
       Sfx.eloteCaido();
       vibrate(45);
     });
@@ -94,6 +101,7 @@ export default class GameScene extends Phaser.Scene {
       Sfx.ding(this.pickStreak);
     });
     this.events.on('landing', (impact) => {
+      this.lastImpact = `${impact.toFixed(1)}@${Math.round(this.testClock || 0)}`;
       if (impact >= 3) Sfx.thud(impact);
       if (impact < CAMERA.landingShakeMin) return;
       this.cameras.main.shake(120, Math.min(0.012, CAMERA.landingShakeK * (impact - CAMERA.landingShakeMin + 2)));
@@ -124,6 +132,8 @@ export default class GameScene extends Phaser.Scene {
       this.earned.ventas += value;
       Sfx.eloteRecogido();
     });
+    for (const ev of ['perro-hit', 'dona-hit', 'bump', 'cable-hit', 'robo'])
+      this.events.on(ev, () => (this.lastHit = `${ev}@${Math.round(this.testClock || 0)}`));
     this.events.on('perro-hit', () => {
       Sfx.perro();
       vibrate([60, 40, 80]);
@@ -253,18 +263,11 @@ export default class GameScene extends Phaser.Scene {
     this.setPedals(v, this.pedals.gas);
   }
 
-  /** Piloto de pruebas: gas en el piso; en el aire nivela con los pedales. */
+  /** Piloto de pruebas (?auto=1): el mismo Driver de los rivales, sin retraso. */
   autoDrive() {
-    if (this.cart.grounded) {
-      this.setPedals(false, true);
-      return;
-    }
-    const pitch = this.cart.chassis.angle - (this.cart.groundAngle || 0);
-    if (pitch < -0.3)
-      this.setPedals(true, false); // nariz arriba: freno la baja
-    else if (pitch > 0.3)
-      this.setPedals(false, true); // nariz abajo: gas la sube
-    else this.setPedals(false, false);
+    if (!this.driver) this.driver = new Driver(this, this.cart, this.road, { cautela: 0.7, reaccion: 0 });
+    const d = this.driver.decide();
+    this.setPedals(d.brake, d.gas);
   }
 
   difficultyAt(meters) {

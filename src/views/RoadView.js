@@ -89,6 +89,7 @@ export default class RoadView {
     for (const f of chunk.features || []) {
       if (f.type === 'bache') this.drawBache(g, f);
       if (f.type === 'rampa') this.drawRampa(g, f);
+      if (f.type === 'barranca') this.drawBarranca(g, f);
     }
     for (const t of chunk.topes || []) {
       extras.push(svgImage(this.scene, t.x, t.y, 'tope').setOrigin(0.5, 0.92).setRotation(t.angle).setDepth(-5));
@@ -138,6 +139,19 @@ export default class RoadView {
     g.moveTo(p3.x + 4, p3.y - 1);
     g.lineTo(p3.x + 16, p3.y - 5);
     g.strokePath();
+  }
+
+  /** Barranca: cara de tierra con piedras y una rayita de peligro en el borde. */
+  drawBarranca(g, f) {
+    const [, edge, foot] = f.points;
+    g.fillStyle(0x6b4a2e, 1);
+    g.fillRect(edge.x - 10, edge.y, 12, foot.y - edge.y);
+    g.fillStyle(0x4a3320, 1);
+    for (let y = edge.y + 10; y < foot.y - 6; y += 16) g.fillRoundedRect(edge.x - 8, y, 7, 8, 2);
+    g.fillStyle(0xf7c948, 1);
+    for (let i = 0; i < 3; i++) g.fillRect(edge.x - 46 + i * 16, edge.y - 3, 8, 4);
+    g.fillStyle(0x1a1a1a, 1);
+    for (let i = 0; i < 3; i++) g.fillRect(edge.x - 38 + i * 16, edge.y - 3, 8, 4);
   }
 
   drawRampa(g, f) {

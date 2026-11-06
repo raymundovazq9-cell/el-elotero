@@ -25,7 +25,7 @@ export const ROAD = {
 export const CART = {
   bodyWidth: 110,
   bodyHeight: 26,
-  wallHeight: 32,
+  wallHeight: 38,
   wallThickness: 8,
   boxX: 0, // centro de la caja de elotes respecto al chasis
   boxWidth: 110,
@@ -57,7 +57,8 @@ export const ELOTES = {
   height: 12,
   radius: 9, // radio del sensor de los recogibles
   density: 0.0012,
-  friction: 0.8,
+  friction: 1.1, // > 1 para que aguanten subidas de hasta ~48°
+  frictionAir: 0.006, // igual que el chasis: en el aire no se rezagan respecto al carrito
   restitution: 0.05,
   lostDistance: 170, // px desde el chasis para darse por perdido
 };

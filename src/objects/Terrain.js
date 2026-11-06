@@ -195,6 +195,44 @@ export default class Terrain {
             continue;
           }
         }
+        // barranca: meseta corta y caída vertical en una bajada que sigue bajando
+        if (slope > 0.2 && meters > 60 && r.barranca && hit(r.barranca)) {
+          const drop = 40 + 50 * diffT;
+          const ledge = 50;
+          if (this.profile(x + ledge + 260) >= y0 + drop + 10) {
+            const from = pts.length - 1;
+            const flatY = y0 + drop;
+            pts.push({ x: x + ledge, y: y0 });
+            pts.push({ x: x + ledge, y: flatY });
+            let lx = x + ledge;
+            while (lx - (x + ledge) < 260 && this.profile(lx + STEP) < flatY) {
+              lx += STEP;
+              pts.push({ x: lx, y: flatY });
+            }
+            lx += STEP;
+            pts.push({ x: lx, y: Math.max(flatY, this.profile(lx)) });
+            features.push({ type: 'barranca', points: pts.slice(from), drop });
+            this.lastFeatureX = lx + 80;
+            flushRun();
+            x = lx;
+            continue;
+          }
+        }
+        // rampa grande: solo si la calle baja bastante después (aterrizaje en bajada)
+        if (Math.abs(slope) < 0.15 && r.rampaGrande && this.profile(x + 350) > y0 + 60 && hit(r.rampaGrande)) {
+          const len = 170;
+          const h = 60 + 40 * diffT;
+          const from = pts.length - 1;
+          const top = { x: x + len, y: this.profile(x + len) - h };
+          const end = { x: x + len, y: this.profile(x + len) + 2 };
+          pts.push(top, end);
+          features.push({ type: 'rampa', big: true, points: pts.slice(from, from + 3) });
+          arcs.push(...this.makeJumpArc(pts[from], top));
+          this.lastFeatureX = x + len + 260;
+          flushRun();
+          x = x + len;
+          continue;
+        }
         if (Math.abs(slope) < 0.15 && this.profile(x + 220) > y0 + 40 && hit(r.rampa)) {
           const len = 110;
           const h = 30 + 24 * diffT;
@@ -237,6 +275,28 @@ export default class Terrain {
     }
     this.scene.events.emit('chunk', chunk);
     return chunk;
+  }
+
+  /**
+   * Elotes a la salida de una rampa, sobre la parábola de un salto típico
+   * (12 px/paso en la dirección de la rampa; la gravedad de Matter da ~0.33 px/paso²).
+   */
+  makeJumpArc(base, top) {
+    const dx = top.x - base.x;
+    const dy = top.y - base.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const v = 12;
+    const vx = (v * dx) / len;
+    const vy = (v * dy) / len;
+    const g = 0.333;
+    const pts = [];
+    for (let k = 1; k <= 6; k++) {
+      const t = 2 + k * 2.6;
+      const px = top.x + vx * t;
+      const py = top.y - 34 + vy * t + 0.5 * g * t * t;
+      pts.push({ x: px, y: Math.min(py, this.profile(px) - 30) });
+    }
+    return pts;
   }
 
   /** Arco de elotes que sale de una cresta siguiendo una parábola. */

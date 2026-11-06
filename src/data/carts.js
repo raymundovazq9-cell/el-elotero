@@ -14,7 +14,7 @@ export const CARTS = [
     fisica: {
       bodyWidth: 110,
       bodyHeight: 26,
-      wallHeight: 32,
+      wallHeight: 38,
       boxX: 0,
       boxWidth: 110,
       density: 0.004,
@@ -45,7 +45,7 @@ export const CARTS = [
     fisica: {
       bodyWidth: 150,
       bodyHeight: 26,
-      wallHeight: 34,
+      wallHeight: 40,
       boxX: 22,
       boxWidth: 100,
       density: 0.0045,
@@ -76,7 +76,7 @@ export const CARTS = [
     fisica: {
       bodyWidth: 130,
       bodyHeight: 16,
-      wallHeight: 36,
+      wallHeight: 42,
       boxX: 40,
       boxWidth: 70,
       density: 0.003,
@@ -108,7 +108,7 @@ export const CARTS = [
     fisica: {
       bodyWidth: 170,
       bodyHeight: 26,
-      wallHeight: 36,
+      wallHeight: 42,
       boxX: -45,
       boxWidth: 90,
       density: 0.005,
@@ -140,7 +140,7 @@ export const CARTS = [
     fisica: {
       bodyWidth: 210,
       bodyHeight: 30,
-      wallHeight: 38,
+      wallHeight: 44,
       boxX: -52,
       boxWidth: 100,
       density: 0.006,

@@ -61,7 +61,8 @@ export default class EloteManager {
       chamfer: { radius: 5 },
       density: ELOTES.density,
       friction: ELOTES.friction,
-      frictionAir: 0.02,
+      frictionStatic: 1.2,
+      frictionAir: ELOTES.frictionAir,
       restitution: ELOTES.restitution,
       label: 'elote',
       render: { fillColor: COLOR_ELOTE, lineColor: COLOR_ELOTE_LINE },
@@ -186,6 +187,12 @@ export default class EloteManager {
     }
   }
 
+  /** Frena los elotes junto con el carrito (al chocar con la doña o el perro). */
+  scaleVelocity(k) {
+    const m = this.scene.matter.body;
+    for (const e of this.elotes) m.setVelocity(e, { x: e.velocity.x * k, y: e.velocity.y });
+  }
+
   /** Impulso aleatorio a los elotes (golpes fuertes). */
   shake(strength = 4) {
     const m = this.scene.matter.body;
@@ -193,7 +200,7 @@ export default class EloteManager {
     for (const e of this.elotes) {
       m.setVelocity(e, {
         x: e.velocity.x + (Math.random() - 0.5) * strength,
-        y: e.velocity.y - Math.random() * strength,
+        y: e.velocity.y - Math.random() * strength * 0.45,
       });
     }
   }

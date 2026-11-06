@@ -8,8 +8,8 @@ import { groundFilter } from './collision.js';
 export const CROSSER = {
   triggerDistance: 460, // px por delante del carrito para que "salga"
   lifetimeMs: 1800, // tiempo que tarda en cruzar
-  slowFactor: 0.22,
-  shake: 7,
+  slowFactor: 0.3,
+  shake: 5,
 };
 
 export const COCHE = { width: 150, height: 34, ramp: 55 };
@@ -124,7 +124,9 @@ export default class Actors {
     });
     chunk.bodies.push(body);
     const gy = this.road.surfaceYAt(s.x);
-    const img = svgImage(this.scene, s.x, (gy === null ? s.y : gy) - 10, kind).setOrigin(0.5, 1).setDepth(-44);
+    const img = svgImage(this.scene, s.x, (gy === null ? s.y : gy) - 10, kind)
+      .setOrigin(0.5, 1)
+      .setDepth(-44);
     const bubble = this.scene.add
       .text(s.x, img.y - 100, kind === 'cliente' ? '¡Elotes!' : '...', {
         fontFamily: 'Fredoka, Arial',
@@ -167,7 +169,13 @@ export default class Actors {
     const m = this.scene.matter;
     const x = s.x - s.n.x * POSTE.radius;
     const y = s.y - s.n.y * POSTE.radius;
-    const body = m.add.circle(x, y, POSTE.radius, { isStatic: true, friction: 0.7, label: 'poste-caido', collisionFilter: groundFilter(), render: { visible: false } });
+    const body = m.add.circle(x, y, POSTE.radius, {
+      isStatic: true,
+      friction: 0.7,
+      label: 'poste-caido',
+      collisionFilter: groundFilter(),
+      render: { visible: false },
+    });
     chunk.bodies.push(body);
     this.extras(chunk).push(svgImage(this.scene, x, y, 'poste-caido').setOrigin(0.5, 0.6).setRotation(s.angle).setDepth(-4));
   }
@@ -194,7 +202,7 @@ export default class Actors {
     const topY1 = y1 - 16 - 190;
     const topY2 = y2 - 16 - 190;
     const midGround = this.road.surfaceYAt((x1 + x2) / 2) ?? (y1 + y2) / 2;
-    const sag = Math.max(20, (midGround - CABLE.height) - (topY1 + topY2) / 2);
+    const sag = Math.max(20, midGround - CABLE.height - (topY1 + topY2) / 2);
     const bodies = [];
     const pts = [];
     for (let i = 0; i <= CABLE.links; i++) {
@@ -223,8 +231,12 @@ export default class Actors {
       .text(mid.x, mid.y + 14, 'CFE', { fontFamily: 'Arial', fontSize: '13px', fontStyle: 'bold', color: '#1a1a1a' })
       .setOrigin(0.5)
       .setDepth(-1.9);
-    const p1 = svgImage(this.scene, x1, y1 - 14, 'poste').setOrigin(0.5, 1).setDepth(-2.5);
-    const p2 = svgImage(this.scene, x2, y2 - 14, 'poste').setOrigin(0.5, 1).setDepth(-2.5);
+    const p1 = svgImage(this.scene, x1, y1 - 14, 'poste')
+      .setOrigin(0.5, 1)
+      .setDepth(-2.5);
+    const p2 = svgImage(this.scene, x2, y2 - 14, 'poste')
+      .setOrigin(0.5, 1)
+      .setDepth(-2.5);
     this.extras(chunk).push(g, sign, p1, p2);
     const cable = { done: false, x: (x1 + x2) / 2, y: mid.y };
     for (const b of bodies) this.cables.set(b, cable);
@@ -290,7 +302,13 @@ export default class Actors {
       .setDepth(-3);
     p.tween = this.scene.tweens.add({ targets: p.img, y: y - 5, duration: p.kind === 'perro' ? 110 : 180, yoyo: true, repeat: -1 });
     p.label = this.scene.add
-      .text(x, y - (p.kind === 'perro' ? 52 : 92), '!', { fontFamily: 'Fredoka, Arial', fontSize: '40px', color: '#ff3b3b', stroke: '#000', strokeThickness: 5 })
+      .text(x, y - (p.kind === 'perro' ? 52 : 92), '!', {
+        fontFamily: 'Fredoka, Arial',
+        fontSize: '40px',
+        color: '#ff3b3b',
+        stroke: '#000',
+        strokeThickness: 5,
+      })
       .setOrigin(0.5);
     p.state = 'active';
     p.timer = CROSSER.lifetimeMs;
@@ -313,6 +331,7 @@ export default class Actors {
     for (const b of [this.cart.chassis, ...this.cart.wheels]) {
       m.setVelocity(b, { x: b.velocity.x * CROSSER.slowFactor, y: b.velocity.y * CROSSER.slowFactor });
     }
+    this.elotes.scaleVelocity(CROSSER.slowFactor + 0.2);
     this.elotes.shake(CROSSER.shake);
     this.hits++;
     this.removeCrosser(p);
