@@ -35,9 +35,7 @@ export default class UIScene extends Phaser.Scene {
     this.game.events.on('blur', this.releaseAll, this);
     this.events.once('shutdown', () => this.game.events.off('blur', this.releaseAll, this));
 
-    this.hint = this.add
-      .text(cx, GAME_HEIGHT - 36, 'Izquierda frena · Derecha acelera', textStyle(22, COLORS.cremaHex))
-      .setOrigin(0.5);
+    this.hint = this.add.text(cx, GAME_HEIGHT - 36, 'Izquierda frena · Derecha acelera', textStyle(22, COLORS.cremaHex)).setOrigin(0.5);
     this.time.delayedCall(4000, () => this.tweens.add({ targets: this.hint, alpha: 0, duration: 400 }));
 
     this.floats = [];
@@ -52,6 +50,10 @@ export default class UIScene extends Phaser.Scene {
     ev.on('bolsa', (n) => this.showFloat(n > 0 ? `¡Bolsa de elotes! +${n}` : 'Carrito lleno', COLORS.amarilloHex));
     ev.on('camioneta-saltada', () => this.showFloat('¡Saltaste la camioneta!', '#9bffb0'));
     ev.on('landed', (gained) => this.showFloat(`¡Buen salto! +${gained}`, '#9be7ff'));
+    ev.on('caballito', (bonus) => this.showFloat(`¡Caballito! +${bonus}`, '#ffd166'));
+    ev.on('perfecto', (bonus) => this.showFloat(`¡Aterrizaje perfecto! +${bonus}`, '#9bffb0'));
+    ev.on('combo', (n) => this.showCombo(n));
+    ev.on('combo-roto', () => this.hideCombo());
     ev.on('marometa', (flips, bonus) => this.showFloat(flips > 1 ? `¡${flips} MAROMETAS! +${bonus}` : `¡MAROMETA! +${bonus}`, '#ff6bd6'));
     ev.on('checkpoint', (m, bonus) => this.showFloat(`¡${m} m! +${bonus}`, COLORS.amarilloHex));
     ev.on('venta', (value) => this.showFloat(`¡Gracias! +${value}`, '#9bffb0'));
@@ -65,7 +67,27 @@ export default class UIScene extends Phaser.Scene {
       for (const p of Object.values(this.pedals)) p.container.setVisible(false);
     });
 
+    // combo y tiempo en el aire (bajo el HUD, centrados)
+    this.comboText = this.add
+      .text(cx, 96, '', textStyle(40, '#ff6bd6', { strokeThickness: 6 }))
+      .setOrigin(0.5)
+      .setAlpha(0);
+    this.airText = this.add.text(cx, 134, '', textStyle(24, '#9be7ff')).setOrigin(0.5).setAlpha(0);
+
     this.cameras.main.fadeIn(300);
+  }
+
+  showCombo(n) {
+    this.comboText.setText(`COMBO ×${n}`).setAlpha(1).setScale(1.5);
+    if (this.comboTween) this.comboTween.stop();
+    this.comboTween = this.tweens.add({ targets: this.comboText, scale: 1, duration: 320, ease: 'Back.easeOut' });
+    if (this.comboFade) this.comboFade.remove();
+    this.comboFade = this.time.delayedCall(2500, () => this.hideCombo());
+  }
+
+  hideCombo() {
+    if (this.comboText.alpha === 0) return;
+    this.tweens.add({ targets: this.comboText, alpha: 0, scale: 0.6, duration: 250 });
   }
 
   pause() {
@@ -158,11 +180,15 @@ export default class UIScene extends Phaser.Scene {
     this.floats = this.floats.filter((f) => f.active);
     const slot = this.floats.length;
     const y = GAME_HEIGHT * 0.28 + slot * 40;
-    const t = this.add.text(GAME_WIDTH / 2, y, msg, textStyle(34, color)).setOrigin(0.5).setAlpha(0);
+    const t = this.add
+      .text(GAME_WIDTH / 2, y, msg, textStyle(34, color))
+      .setOrigin(0.5)
+      .setAlpha(0)
+      .setScale(0.4);
     this.floats.push(t);
+    this.tweens.add({ targets: t, alpha: 1, scale: 1, duration: 260, ease: 'Back.easeOut' });
     this.tweens.add({
       targets: t,
-      alpha: 1,
       y: y - 50,
       duration: 250,
       onComplete: () => {
@@ -178,5 +204,12 @@ export default class UIScene extends Phaser.Scene {
     this.metersText.setText(`${s.meters} m`);
     this.elotesText.setText(`${s.elotes}`);
     this.scoreText.setText(`${s.total}`);
+    // tiempo en el aire en vivo
+    const air = g.tricks && !g.over ? g.tricks.airMs : 0;
+    if (air >= 400) {
+      this.airText.setText(`${(air / 1000).toFixed(1)} s en el aire`).setAlpha(1);
+    } else if (this.airText.alpha > 0) {
+      this.airText.setAlpha(Math.max(0, this.airText.alpha - 0.08));
+    }
   }
 }

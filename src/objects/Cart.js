@@ -187,7 +187,9 @@ export default class Cart {
 
     // anti-caballito: con la nariz muy levantada respecto al piso, el empuje baja
     const pitch = this.chassis.angle - (this.groundAngle || 0);
-    const gasFactor = this.grounded ? 1 - Phaser.Math.Clamp((-pitch - 0.35) / 0.45, 0, 1) : 1;
+    // (con antiWheelie < 1 el caballito es posible, pero cuesta empuje; pasando 0.8 rad se corta)
+    const lift = Phaser.Math.Clamp((-pitch - 0.35) / 0.45, 0, 1);
+    const gasFactor = !this.grounded ? 1 : lift >= 1 ? 0 : 1 - c.antiWheelie * lift;
 
     for (const w of this.wheels) {
       const cur = w.angularVelocity;

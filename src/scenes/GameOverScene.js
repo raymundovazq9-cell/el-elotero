@@ -16,6 +16,7 @@ const LINES = [
   ['metros', 'Bono por metros'],
   ['marometas', 'Marometas'],
   ['aire', 'Tiempo en el aire'],
+  ['trucos', 'Caballitos y trucos'],
   ['ventas', 'Ventas a clientes'],
   ['misiones', 'Misiones cumplidas'],
 ];

@@ -19,6 +19,9 @@ export const MISSION_POOL = [
   { id: 'feria-200', tipo: 'meters', meta: 200, level: 'feria', texto: 'Llega a 200 m en la Feria', premio: 200 },
   { id: 'cuidadoso-150', tipo: 'cuidadoso', meta: 150, texto: 'Llega a 150 m sin tirar ni un elote', premio: 110 },
   { id: 'aire-10', tipo: 'aire', meta: 10, texto: 'Gana 10 elotes por tiempo en el aire', premio: 80 },
+  { id: 'caballito-3', tipo: 'caballitos', meta: 3, texto: 'Haz 3 segundos de caballito en una partida', premio: 90 },
+  { id: 'perfecto-2', tipo: 'perfectos', meta: 2, texto: 'Cae en 2 aterrizajes perfectos', premio: 100 },
+  { id: 'combo-3', tipo: 'maxCombo', meta: 3, texto: 'Encadena un combo ×3', premio: 120 },
 ];
 
 export const MISSIONS_PER_DAY = 3;

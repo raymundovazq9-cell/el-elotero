@@ -64,6 +64,7 @@ export default class GameScene extends Phaser.Scene {
       metros: 0,
       marometas: 0,
       aire: 0,
+      trucos: 0,
       ventas: 0,
       misiones: 0,
     };
@@ -101,6 +102,17 @@ export default class GameScene extends Phaser.Scene {
       this.earned.marometas += bonus;
       Sfx.silbato();
       vibrate([40, 30, 40]);
+    });
+    this.events.on('truco', (kind, bonus) => {
+      this.earned.trucos += bonus;
+      if (kind !== 'caballito') Sfx.silbato();
+      if (DEBUG.test) console.log(`[test] TRUCO ${kind} +${bonus} combo=${this.tricks.combo}`);
+    });
+    this.maxCombo = 0;
+    this.events.on('combo', (n) => {
+      this.maxCombo = Math.max(this.maxCombo, n);
+      vibrate(20);
+      if (DEBUG.test) console.log(`[test] COMBO x${n}`);
     });
     this.events.on('venta', (value) => {
       this.sales += 1;
@@ -249,7 +261,7 @@ export default class GameScene extends Phaser.Scene {
 
   get earnedTotal() {
     const e = this.earned;
-    return e.recogidos + e.metros + e.marometas + e.aire + e.ventas + e.misiones;
+    return e.recogidos + e.metros + e.marometas + e.aire + e.trucos + e.ventas + e.misiones;
   }
 
   getStats() {
@@ -260,6 +272,10 @@ export default class GameScene extends Phaser.Scene {
       earned: { ...this.earned },
       total: this.earnedTotal,
       flips: this.flips,
+      caballitos: this.tricks.wheelies,
+      perfectos: this.tricks.perfects,
+      combo: this.tricks.combo,
+      maxCombo: this.maxCombo,
       sales: this.sales,
       robos: this.obstacles.robos,
       saltos: this.obstacles.saltos,

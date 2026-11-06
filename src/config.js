@@ -41,6 +41,7 @@ export const CART = {
   wheelAccel: 0.06, // cuánto sube por paso al acelerar
   wheelSpeedReverse: -0.22, // reversa lenta al mantener FRENO
   wheelBrakeRate: 0.05, // cuánto baja por paso al frenar
+  antiWheelie: 0.5, // cuánto baja el empuje al levantar la nariz (1 = se corta del todo)
   airTilt: 0.04, // velocidad angular en el aire con los pedales
   airTiltMin: 220, // ms en el aire antes de permitir inclinar (los brinquitos no cuentan)
   maxSpeedX: 16,
@@ -85,4 +86,12 @@ export const SCORE = {
   checkpointMeters: 100,
   checkpointBase: 5, // elotes en el primer checkpoint; sube 5 en cada uno
   saleValue: 3, // elotes por vender uno a un cliente
+  truckJumpBonus: 6, // por saltar la camioneta del gas
+  wheelieMinMs: 600, // caballito: tiempo con solo la rueda trasera antes de contar
+  wheeliePitch: 0.3, // rad de nariz arriba respecto al piso para contar caballito
+  wheeliePerSecond: 2, // elotes por cada segundo de caballito
+  perfectPitch: 0.12, // rad de tolerancia para "aterrizaje perfecto"
+  perfectBonus: 3,
+  comboWindowMs: 2500, // trucos seguidos dentro de esta ventana suben el combo
+  comboMax: 5,
 };
