@@ -17,6 +17,7 @@ export function ensureParticleTextures(scene) {
   circle('chispa', 0xf7c948, 4);
   circle('brillo', 0xfff1a8, 3);
   circle('eloteBit', 0xf5d547, 4);
+  circle('gota', 0x4cc9f0, 4);
   circle('flama', 0xff7a1a, 6);
   PAPEL_COLORS.forEach((c, i) => {
     const key = `papel-${i}`;
@@ -136,6 +137,17 @@ export default class Particles {
     scene.events.on('elote-picked', this.onPicked, this);
     scene.events.on('landing', this.onLanding, this);
     scene.events.on('checkpoint', this.onCheckpoint, this);
+    scene.events.on('charco', this.onPuddle, this);
+    this.drops = scene.add.particles(0, 0, 'gota', {
+      speed: { min: 80, max: 260 },
+      angle: { min: 220, max: 320 },
+      scale: { start: 1, end: 0.3 },
+      alpha: { start: 0.9, end: 0 },
+      lifespan: 500,
+      gravityY: 700,
+      emitting: false,
+    });
+    this.drops.setDepth(0.8);
     scene.events.on('perro-hit', this.onPerro, this);
     scene.events.on('dona-hit', this.onPerro, this);
     scene.events.on('cable-hit', this.onCable, this);
@@ -163,6 +175,10 @@ export default class Particles {
   onLanding(impact) {
     const n = Phaser.Math.Clamp(Math.round(impact * 1.6), 3, 24);
     for (const w of this.cart.wheels) this.dirt.emitParticleAt(w.position.x, w.position.y + w.circleRadius * 0.8, n);
+  }
+
+  onPuddle() {
+    for (const w of this.cart.wheels) this.drops.emitParticleAt(w.position.x, w.position.y + w.circleRadius * 0.6, 12);
   }
 
   onCheckpoint() {
@@ -209,6 +225,8 @@ export default class Particles {
     ev.off('elote-picked', this.onPicked, this);
     ev.off('landing', this.onLanding, this);
     ev.off('checkpoint', this.onCheckpoint, this);
+    ev.off('charco', this.onPuddle, this);
+    this.drops.destroy();
     ev.off('perro-hit', this.onPerro, this);
     ev.off('dona-hit', this.onPerro, this);
     ev.off('cable-hit', this.onCable, this);

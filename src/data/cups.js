@@ -6,6 +6,8 @@ export const CUPS = [
   { id: 'callejon', level: 'callejon', nombre: 'Copa del Callejón', metros: 400, premio: 250 },
   { id: 'mercado', level: 'mercado', nombre: 'Copa del Mercado', metros: 500, premio: 400 },
   { id: 'feria', level: 'feria', nombre: 'Copa de la Feria', metros: 600, premio: 600 },
+  { id: 'pueblo', level: 'pueblo', nombre: 'Copa del Pueblo', metros: 550, premio: 500 },
+  { id: 'carretera', level: 'carretera', nombre: 'Copa de la Carretera', metros: 700, premio: 800 },
 ];
 
 export const PLACE_FACTOR = [1, 0.55, 0.3, 0.12];

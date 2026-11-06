@@ -22,7 +22,7 @@ export default class Tricks {
     this.wheelies = 0;
     this.perfects = 0;
 
-    scene.events.on('camioneta-saltada', this.onTruckJump, this);
+    scene.events.on('vehiculo-saltado', this.onTruckJump, this);
     scene.events.on('bump', this.breakCombo, this);
     scene.events.on('elote-lost', this.breakCombo, this);
     scene.events.on('perro-hit', this.breakCombo, this);
@@ -56,9 +56,9 @@ export default class Tricks {
     this.lastTrickAt = -Infinity;
   }
 
-  onTruckJump() {
-    const bonus = this.trick('camioneta', SCORE.truckJumpBonus);
-    this.scene.events.emit('truco', 'camioneta', bonus);
+  onTruckJump(kind, base) {
+    const bonus = this.trick(kind || 'camioneta', base || SCORE.truckJumpBonus);
+    this.scene.events.emit('truco', kind || 'camioneta', bonus);
   }
 
   update(deltaMs) {
@@ -117,7 +117,7 @@ export default class Tricks {
 
   destroy() {
     const ev = this.scene.events;
-    ev.off('camioneta-saltada', this.onTruckJump, this);
+    ev.off('vehiculo-saltado', this.onTruckJump, this);
     ev.off('bump', this.breakCombo, this);
     ev.off('elote-lost', this.breakCombo, this);
     ev.off('perro-hit', this.breakCombo, this);

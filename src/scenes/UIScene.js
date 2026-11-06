@@ -48,7 +48,10 @@ export default class UIScene extends Phaser.Scene {
     ev.on('cable-hit', () => this.showFloat('¡Los cables de la CFE!', '#9be7ff'));
     ev.on('chile', () => this.showFloat('¡Chile! ¡Pícale!', '#ff6b6b'));
     ev.on('bolsa', (n) => this.showFloat(n > 0 ? `¡Bolsa de elotes! +${n}` : 'Carrito lleno', COLORS.amarilloHex));
-    ev.on('camioneta-saltada', () => this.showFloat('¡Saltaste la camioneta!', '#9bffb0'));
+    const SALTOS = { camioneta: '¡Saltaste la camioneta!', tamalero: '¡Saltaste al tamalero!', trailer: '¡Saltaste el tráiler!' };
+    ev.on('vehiculo-saltado', (kind) => this.showFloat(SALTOS[kind] || '¡Qué salto!', '#9bffb0'));
+    ev.on('balon-hit', () => this.showFloat('¡Gol! Te pegó el balón', '#ff9f43'));
+    ev.on('charco', () => this.showFloat('¡Charco!', '#9be7ff'));
     ev.on('landed', (gained) => this.showFloat(`¡Buen salto! +${gained}`, '#9be7ff'));
     ev.on('caballito', (bonus) => this.showFloat(`¡Caballito! +${bonus}`, '#ffd166'));
     ev.on('perfecto', (bonus) => this.showFloat(`¡Aterrizaje perfecto! +${bonus}`, '#9bffb0'));

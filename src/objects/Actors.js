@@ -14,6 +14,14 @@ export const CROSSER = {
 
 export const COCHE = { width: 150, height: 34, ramp: 55 };
 export const CAMIONETA = { width: 190, height: 46, ramp: 60, speed: 1.7, triggerDistance: 760, cleanupBehind: 900 };
+// vehículos lentos que avanzan en tu carril (se saltan o se rebotan)
+export const VEHICLES = {
+  camioneta: { ...CAMIONETA, img: 'camioneta-gas', originY: 0.86, bonus: 6 },
+  tamalero: { width: 110, height: 44, ramp: 35, speed: 1.1, triggerDistance: 760, cleanupBehind: 900, img: 'tamalero', originY: 0.86, bonus: 5 },
+  trailer: { width: 300, height: 54, ramp: 70, speed: 2.4, triggerDistance: 900, cleanupBehind: 1100, img: 'trailer', originY: 0.86, bonus: 10 },
+};
+export const BALON = { triggerDistance: 420, radius: 14 };
+export const CHARCO = { width: 110 };
 export const ZONE = { width: 150, height: 70, slowSpeed: 3.2 };
 export const CABLE = { height: 150, links: 7, span: 260, shake: 11 };
 export const POSTE = { radius: 12 };
@@ -48,8 +56,13 @@ export default class Actors {
     this.zones = new Map(); // body -> { kind, img, done }
     this.pickups = new Map(); // body -> { kind, img, tween }
     this.cables = new Map(); // body -> cable
-    this.trucks = []; // camionetas en movimiento
+    this.trucks = []; // vehículos en movimiento
     this.pendingTrucks = [];
+    this.balls = []; // balones esperando o en juego
+    this.puddles = new Set(); // cuerpos de calle con charco
+    this.puddleFriction = 0.1 + 0.07 * (opts.llantas || 0);
+    this.lastPuddleAt = 0;
+    this.lastBallAt = 0;
     this.hits = 0;
     this.robos = 0;
     this.ventas = 0;
@@ -87,9 +100,11 @@ export default class Actors {
     for (const [kind, w] of Object.entries(this.weights)) {
       if (!w) continue;
       if (kind === 'cable') continue; // va aparte, junto a las rampas
-      if ((kind === 'coche' || kind === 'camioneta') && s.len < COCHE.width + 30) continue;
-      // lomos y postes caídos solo en plano o bajada: en subida atoran al carrito
-      if ((kind === 'coche' || kind === 'camioneta' || kind === 'poste') && s.angle < -0.1) continue;
+      const vehicle = kind === 'camioneta' || kind === 'tamalero' || kind === 'trailer';
+      if ((kind === 'coche' || vehicle) && s.len < 150) continue;
+      // lomos, vehículos y postes caídos solo en plano o bajada: en subida atoran al carrito
+      if ((kind === 'coche' || vehicle || kind === 'poste') && s.angle < -0.1) continue;
+      if (kind === 'charco' && (Math.abs(s.angle) > 0.25 || s.len < 100)) continue;
       acc += w * mul;
       if (roll < acc) return kind;
     }
@@ -103,8 +118,12 @@ export default class Actors {
       this.addZone(kind, chunk, s);
     } else if (kind === 'coche') {
       this.addCoche(chunk, s);
-    } else if (kind === 'camioneta') {
-      this.pendingTrucks.push({ x: s.x, chunk });
+    } else if (kind === 'camioneta' || kind === 'tamalero' || kind === 'trailer') {
+      this.pendingTrucks.push({ x: s.x, chunk, kind });
+    } else if (kind === 'balon') {
+      this.balls.push({ x: s.x, y: s.y, n: s.n, chunk, state: 'waiting' });
+    } else if (kind === 'charco') {
+      this.addPuddle(chunk, s);
     } else if (kind === 'poste') {
       this.addPoste(chunk, s);
     } else if (kind === 'chile' || kind === 'bolsa') {
@@ -247,43 +266,99 @@ export default class Actors {
     for (const b of bodies) this.cables.set(b, cable);
   }
 
-  // ---------- camioneta del gas ----------
+  // ---------- charcos ----------
+
+  /** Charco: los segmentos de calle bajo el spot pierden fricción (las llantas mejoradas ayudan). */
+  addPuddle(chunk, s) {
+    const half = CHARCO.width / 2;
+    for (const b of chunk.bodies) {
+      if (b.label !== 'road' || Math.abs(b.position.x - s.x) > half) continue;
+      b.friction = this.puddleFriction;
+      this.puddles.add(b);
+    }
+    const g = this.scene.add.graphics().setDepth(-4);
+    g.fillStyle(0x4cc9f0, 0.8);
+    g.lineStyle(2, 0x1d6fa5, 0.8);
+    const cos = Math.cos(s.angle);
+    const sin = Math.sin(s.angle);
+    g.setPosition(s.x - s.n.x * 2, s.y - s.n.y * 2).setRotation(s.angle);
+    g.fillEllipse(0, 0, CHARCO.width, 10);
+    g.strokeEllipse(0, 0, CHARCO.width, 10);
+    g.fillStyle(0xffffff, 0.35);
+    g.fillEllipse(-20, -2, 30, 3);
+    void cos;
+    void sin;
+    this.extras(chunk).push(g);
+  }
+
+  // ---------- balón ----------
+
+  /** Un niño patea el balón hacia la calle cuando te acercas. */
+  kickBall(b) {
+    const m = this.scene.matter;
+    const x = b.x + 70;
+    const y = b.y - 70;
+    const body = m.add.circle(x, y, BALON.radius, {
+      restitution: 0.72,
+      friction: 0.4,
+      frictionAir: 0.006,
+      density: 0.001,
+      label: 'balon',
+      render: { visible: false },
+    });
+    m.body.setVelocity(body, { x: -4.5, y: -7 });
+    m.body.setAngularVelocity(body, -0.2);
+    b.body = body;
+    b.img = svgImage(this.scene, x, y, 'balon').setDepth(1);
+    b.state = 'active';
+    b.timer = 7000;
+    this.scene.events.emit('balon');
+  }
+
+  removeBall(b) {
+    if (b.body) this.scene.matter.world.remove(b.body);
+    if (b.img) b.img.destroy();
+    b.state = 'done';
+  }
+
+  // ---------- vehículos lentos (camioneta del gas, tamalero, tráiler) ----------
 
   spawnTruck(p) {
-    const m = this.scene.matter;
+    const v = VEHICLES[p.kind] || VEHICLES.camioneta;
     const y = this.road.surfaceYAt(p.x);
     if (y === null) return;
     const angle = Math.atan(this.road.slopeAt(p.x));
-    const body = this.trapezoid(p.x, y, angle, CAMIONETA, 'camioneta');
-    const img = svgImage(this.scene, p.x, y, 'camioneta-gas').setOrigin(0.5, 0.86).setRotation(angle).setDepth(-0.2);
-    this.trucks.push({ body, img, x: p.x });
-    this.scene.events.emit('camioneta-appear');
+    const body = this.trapezoid(p.x, y, angle, v, p.kind);
+    const img = svgImage(this.scene, p.x, y, v.img).setOrigin(0.5, v.originY).setRotation(angle).setDepth(-0.2);
+    this.trucks.push({ body, img, x: p.x, kind: p.kind, v });
+    this.scene.events.emit(`${p.kind}-appear`);
   }
 
   moveTruck(t) {
     const m = this.scene.matter;
-    t.x += CAMIONETA.speed;
+    const v = t.v;
+    t.x += v.speed;
     const y = this.road.surfaceYAt(t.x);
     if (y === null) return;
     const angle = Math.atan(this.road.slopeAt(t.x));
     const c = m.vertices.centre([
-      { x: -CAMIONETA.width / 2, y: 0 },
-      { x: -CAMIONETA.width / 2 + CAMIONETA.ramp, y: -CAMIONETA.height },
-      { x: CAMIONETA.width / 2 - CAMIONETA.ramp, y: -CAMIONETA.height },
-      { x: CAMIONETA.width / 2, y: 0 },
+      { x: -v.width / 2, y: 0 },
+      { x: -v.width / 2 + v.ramp, y: -v.height },
+      { x: v.width / 2 - v.ramp, y: -v.height },
+      { x: v.width / 2, y: 0 },
     ]);
     const cos = Math.cos(angle);
     const sin = Math.sin(angle);
     m.body.setPosition(t.body, { x: t.x + c.x * cos - c.y * sin, y: y + c.x * sin + c.y * cos });
     m.body.setAngle(t.body, angle);
     t.img.setPosition(t.x, y).setRotation(angle);
-    // salto sobre la camioneta: el carrito pasa por arriba sin tocarla
-    if (!t.jumped && this.cart.x > t.x + CAMIONETA.width / 2 && !this.cart.grounded) {
+    // salto sobre el vehículo: el carrito pasa por arriba sin tocarlo
+    if (!t.jumped && this.cart.x > t.x + v.width / 2 && !this.cart.grounded) {
       t.jumped = true;
       this.saltos += 1;
-      this.scene.events.emit('camioneta-saltada');
+      this.scene.events.emit('vehiculo-saltado', t.kind, v.bonus);
     }
-    if (this.cart.x > t.x + CAMIONETA.width / 2) t.jumped = true;
+    if (this.cart.x > t.x + v.width / 2) t.jumped = true;
   }
 
   removeTruck(t) {
@@ -372,6 +447,19 @@ export default class Actors {
           this.elotes.shake(CABLE.shake);
           this.scene.events.emit('cable-hit', { x: c.x, y: c.y });
         }
+      } else if (label === 'balon') {
+        const now = this.scene.time.now;
+        if (now - this.lastBallAt > 600) {
+          this.lastBallAt = now;
+          this.elotes.shake(3);
+          this.scene.events.emit('balon-hit');
+        }
+      } else if (label === 'road' && this.puddles.has(other)) {
+        const now = this.scene.time.now;
+        if (now - this.lastPuddleAt > 900 && Math.abs(this.cart.speedX) > 2) {
+          this.lastPuddleAt = now;
+          this.scene.events.emit('charco', { x: other.position.x, y: other.position.y - 12 });
+        }
       }
     }
   }
@@ -446,7 +534,9 @@ export default class Actors {
       return false;
     });
     this.pendingTrucks = this.pendingTrucks.filter((t) => t.chunk !== chunk);
+    this.balls = this.balls.filter((b) => !(b.chunk === chunk && b.state === 'waiting'));
     for (const b of chunk.bodies) {
+      this.puddles.delete(b);
       this.zones.delete(b);
       this.cables.delete(b);
       const pk = this.pickups.get(b);
@@ -470,8 +560,18 @@ export default class Actors {
     }
     this.crossers = this.crossers.filter((p) => p.state !== 'done');
 
+    for (const b of this.balls) {
+      if (b.state === 'waiting' && cx > b.x - BALON.triggerDistance) this.kickBall(b);
+      else if (b.state === 'active') {
+        b.timer -= deltaMs;
+        b.img.setPosition(b.body.position.x, b.body.position.y).setRotation(b.body.angle);
+        if (b.timer <= 0 || cx - b.body.position.x > 700 || b.body.position.y > cx + 3000) this.removeBall(b);
+      }
+    }
+    this.balls = this.balls.filter((b) => b.state !== 'done');
+
     this.pendingTrucks = this.pendingTrucks.filter((t) => {
-      if (cx > t.x - CAMIONETA.triggerDistance) {
+      if (cx > t.x - (VEHICLES[t.kind] || CAMIONETA).triggerDistance) {
         this.spawnTruck(t);
         return false;
       }
@@ -479,7 +579,7 @@ export default class Actors {
     });
     this.trucks = this.trucks.filter((t) => {
       this.moveTruck(t);
-      if (cx - t.x > CAMIONETA.cleanupBehind) {
+      if (cx - t.x > t.v.cleanupBehind) {
         this.removeTruck(t);
         return false;
       }
@@ -488,6 +588,7 @@ export default class Actors {
   }
 
   destroy() {
+    for (const b of this.balls) if (b.state === 'active') this.removeBall(b);
     this.scene.events.off('chunk', this.onChunk, this);
     this.scene.events.off('chunk-destroyed', this.onChunkDestroyed, this);
     this.scene.matter.world.off('collisionstart', this.onCollisionStart, this);

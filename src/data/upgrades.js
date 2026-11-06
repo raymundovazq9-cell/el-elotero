@@ -16,7 +16,7 @@ export const MAX_LEVEL = 6;
 /** Precio base por nivel (1..6); se multiplica por el factor del carrito. */
 const BASE_PRICES = [50, 100, 200, 400, 800, 1600];
 
-export const CART_PRICE_FACTOR = { carrito: 1, triciclo: 1.5, bici: 2, motocarro: 3, camioneta: 5 };
+export const CART_PRICE_FACTOR = { carrito: 1, triciclo: 1.5, bici: 2, motocarro: 3, camioneta: 5, cuatrimoto: 3.5, combi: 6 };
 
 /** Precio para subir del nivel actual al siguiente (null si ya está al máximo). */
 export function upgradePrice(cartId, currentLevel) {
@@ -48,8 +48,8 @@ export function applyUpgrades(fisica, lv = {}) {
   if (out.wheelSpeedReverse !== undefined) out.wheelSpeedReverse = fisica.wheelSpeedReverse * (1 + 0.1 * f);
   return {
     fisica: out,
-    maxElotes: ELOTES.max + 2 * c,
-    startElotes: ELOTES.start + c,
+    maxElotes: ELOTES.max + 2 * c + 2 * (fisica.canastaBase || 0),
+    startElotes: Math.max(3, ELOTES.start + c + (fisica.canastaBase || 0)),
     shakeFactor: 1 - 0.1 * s,
   };
 }

@@ -79,7 +79,7 @@ export default class GameScene extends Phaser.Scene {
       max: this.upgraded.maxElotes,
       shakeFactor: this.upgraded.shakeFactor,
     });
-    this.obstacles = new Actors(this, this.cart, this.road, this.elotes, this.level, { race: this.mode === 'copa' });
+    this.obstacles = new Actors(this, this.cart, this.road, this.elotes, this.level, { race: this.mode === 'copa', llantas: levels.llantas || 0 });
     const paint = Save.paintFor(this.cartData.id);
     this.cartView = new CartView(this, this.cart, this.cartData.vista, { bodyKey: bodyTexture(this, this.cartData, paint.color), calca: paint.calca });
     this.eloteView = new EloteView(this, this.elotes);
@@ -193,6 +193,13 @@ export default class GameScene extends Phaser.Scene {
       vibrate(80);
     });
     this.events.on('camioneta-appear', () => Sfx.bocina());
+    this.events.on('trailer-appear', () => Sfx.bocina(true));
+    this.events.on('tamalero-appear', () => Sfx.tamales());
+    this.events.on('balon-hit', () => {
+      Sfx.golpe();
+      vibrate(30);
+    });
+    this.events.on('charco', () => Sfx.splash());
     this.events.on('chile', () => {
       this.cart.boostUntil = this.time.now + 2000;
       Sfx.chile();

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 110" width="180" height="110">
+  <!-- centro del chasis físico: (90, 60). Caja atrás (x 10..80), manubrio al frente. -->
+  <!-- panel trasero de la caja -->
+  <rect x="12" y="16" width="66" height="30" fill="#5b3a80" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- paredes -->
+  <rect x="10" y="12" width="9" height="36" rx="2" fill="#6c3483" stroke="#1a1a1a" stroke-width="3"/>
+  <rect x="71" y="12" width="9" height="36" rx="2" fill="#6c3483" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- chasis / salpicaderas -->
+  <path d="M8 48 L172 48 L176 60 L168 74 L120 76 L116 66 L64 66 L60 76 L12 74 L6 60 Z" fill="#8e44ad" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M20 74 Q40 50 62 74" fill="#6c3483" stroke="#1a1a1a" stroke-width="3"/>
+  <path d="M118 74 Q140 50 162 74" fill="#6c3483" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- asiento -->
+  <rect x="84" y="36" width="44" height="14" rx="6" fill="#2b2b2b" stroke="#1a1a1a" stroke-width="2.5"/>
+  <!-- manubrio -->
+  <path d="M134 48 L150 22" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M142 22 L158 22" stroke="#2b2b2b" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <!-- faro -->
+  <rect x="160" y="40" width="12" height="10" rx="3" fill="#fff1a8" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- olla al frente -->
+  <rect x="146" y="2" width="24" height="20" rx="5" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="3"/>
+  <ellipse cx="158" cy="2" rx="13" ry="4" fill="#c7d0da" stroke="#1a1a1a" stroke-width="2.5"/>
+  <!-- letrero -->
+  <rect x="22" y="52" width="46" height="12" rx="3" fill="#fff4d6" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="45" y="61" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="bold" fill="#a93226" text-anchor="middle">ELOTES</text>
+</svg>

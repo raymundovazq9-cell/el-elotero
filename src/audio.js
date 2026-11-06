@@ -146,10 +146,20 @@ export const Sfx = {
     noise({ dur: 0.06, vol: 0.1, delay: 0.07 });
     tone({ freq: 2400, to: 1200, dur: 0.12, type: 'square', vol: 0.05, delay: 0.02 });
   },
-  /** Bocina de la camioneta del gas. */
-  bocina() {
-    tone({ freq: 392, dur: 0.18, type: 'square', vol: 0.09 });
-    tone({ freq: 523, dur: 0.28, type: 'square', vol: 0.09, delay: 0.2 });
+  /** Bocina de la camioneta del gas (grave = tráiler). */
+  bocina(grave = false) {
+    const k = grave ? 0.5 : 1;
+    tone({ freq: 392 * k, dur: grave ? 0.4 : 0.18, type: 'square', vol: 0.09 });
+    tone({ freq: 523 * k, dur: grave ? 0.5 : 0.28, type: 'square', vol: 0.09, delay: grave ? 0.1 : 0.2 });
+  },
+  /** "Ta-ma-les, oa-xa-que-ños": cantadito del tamalero. */
+  tamales() {
+    [660, 660, 880, 784, 784, 660, 587].forEach((f, i) => tone({ freq: f, dur: 0.14, type: 'triangle', vol: 0.08, delay: i * 0.15 }));
+  },
+  /** Salpicón del charco. */
+  splash() {
+    noise({ dur: 0.18, vol: 0.1 });
+    tone({ freq: 500, to: 200, dur: 0.12, type: 'sine', vol: 0.05 });
   },
   /** Chile: silbido que sube. */
   chile() {

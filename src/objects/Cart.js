@@ -97,7 +97,7 @@ export default class Cart {
     this.wheelContacts = new Set(); // índices de las ruedas que tocan el piso
     this.lastVy = 0;
     this.airTotalMs = 0; // tiempo en el aire del salto en curso (para el impacto)
-    this.groundLabels = new Set(['road', 'tope', 'coche', 'camioneta', 'poste-caido']);
+    this.groundLabels = new Set(['road', 'tope', 'coche', 'camioneta', 'tamalero', 'trailer', 'poste-caido']);
     scene.matter.world.on('collisionactive', this.onCollisionActive, this);
     scene.matter.world.on('collisionstart', this.onCollisionActive, this);
     scene.matter.world.on('collisionstart', this.onCollisionStart, this);
@@ -119,7 +119,7 @@ export default class Cart {
       const mineB = this.isMine(b);
       if (!mineA && !mineB) continue;
       const other = mineA ? b : a;
-      if (other.label === 'tope' || other.label === 'coche' || other.label === 'camioneta' || other.label === 'poste-caido') {
+      if (['tope', 'coche', 'camioneta', 'tamalero', 'trailer', 'poste-caido'].includes(other.label)) {
         this.lastBump = now;
         if (!this.silent) this.scene.events.emit('bump', other.label);
         return;

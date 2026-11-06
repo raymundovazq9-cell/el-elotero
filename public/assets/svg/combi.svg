@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 150" width="270" height="150">
+  <!-- centro del chasis físico: (135, 56) = parrilla del techo. Los elotes van en la parrilla (x 60..210). -->
+  <!-- carrocería -->
+  <path d="M18 122 L18 76 Q18 64 30 64 L190 64 L222 70 L252 96 L254 122 Z" fill="#1abc9c" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+  <!-- franja -->
+  <path d="M18 98 L254 98 L254 108 L18 108 Z" fill="#fff4d6" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- ventanas -->
+  <rect x="34" y="70" width="40" height="24" rx="4" fill="#bfe3ff" stroke="#1a1a1a" stroke-width="2.5"/>
+  <rect x="84" y="70" width="40" height="24" rx="4" fill="#bfe3ff" stroke="#1a1a1a" stroke-width="2.5"/>
+  <rect x="134" y="70" width="40" height="24" rx="4" fill="#bfe3ff" stroke="#1a1a1a" stroke-width="2.5"/>
+  <path d="M190 68 L218 72 L240 92 L190 92 Z" fill="#bfe3ff" fill-opacity="0.35" stroke="#1a1a1a" stroke-width="2.5" stroke-linejoin="round"/>
+  <!-- la V del frente -->
+  <path d="M254 100 L232 122 L254 122 Z" fill="#148f77" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- faro, calavera y defensas -->
+  <circle cx="244" cy="112" r="6" fill="#fff1a8" stroke="#1a1a1a" stroke-width="2"/>
+  <rect x="18" y="106" width="8" height="10" rx="2" fill="#d64545" stroke="#1a1a1a" stroke-width="2"/>
+  <rect x="10" y="118" width="26" height="8" rx="3" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="2"/>
+  <rect x="236" y="118" width="28" height="8" rx="3" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="2"/>
+  <!-- salpicaderas -->
+  <path d="M38 122 Q63 92 88 122" fill="#148f77" stroke="#1a1a1a" stroke-width="3"/>
+  <path d="M182 122 Q207 92 232 122" fill="#148f77" stroke="#1a1a1a" stroke-width="3"/>
+  <rect x="18" y="122" width="236" height="6" fill="#2b2b2b"/>
+  <!-- parrilla del techo: base y paredes -->
+  <rect x="56" y="46" width="158" height="18" rx="3" fill="#2b2b2b" stroke="#1a1a1a" stroke-width="2.5"/>
+  <rect x="62" y="22" width="146" height="26" fill="#148f77" stroke="#1a1a1a" stroke-width="2"/>
+  <rect x="58" y="12" width="9" height="36" rx="2" fill="#2b2b2b" stroke="#1a1a1a" stroke-width="3"/>
+  <rect x="203" y="12" width="9" height="36" rx="2" fill="#2b2b2b" stroke="#1a1a1a" stroke-width="3"/>
+  <!-- olla al frente del techo -->
+  <rect x="222" y="30" width="26" height="22" rx="5" fill="#9aa5b1" stroke="#1a1a1a" stroke-width="3"/>
+  <ellipse cx="235" cy="30" rx="14" ry="4" fill="#c7d0da" stroke="#1a1a1a" stroke-width="2.5"/>
+  <!-- letrero -->
+  <rect x="96" y="108" width="80" height="12" rx="3" fill="#fff4d6" stroke="#1a1a1a" stroke-width="2"/>
+  <text x="136" y="117" font-family="Arial, Helvetica, sans-serif" font-size="9" font-weight="bold" fill="#a93226" text-anchor="middle">ELOTES Y ESQUITES</text>
+</svg>

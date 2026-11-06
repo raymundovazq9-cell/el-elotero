@@ -15,6 +15,28 @@ const THEMES = {
   callejon: { houseChance: 1, puesto: 'puesto', puestoChance: 0.18, senoraChance: 0.24, flags: 'papel', lonas: false, far: [] },
   mercado: { houseChance: 0.55, puesto: 'puesto-mercado', puestoChance: 0.5, senoraChance: 0.3, flags: 'papel', lonas: true, far: [] },
   feria: { houseChance: 0.5, puesto: 'puesto-feria', puestoChance: 0.35, senoraChance: 0.2, flags: 'focos', lonas: false, far: ['rueda-fortuna', 'carpa'] },
+  pueblo: {
+    houseChance: 0.6,
+    puesto: 'puesto',
+    puestoChance: 0.15,
+    senoraChance: 0.3,
+    flags: 'papel',
+    lonas: false,
+    far: ['iglesia', 'kiosco'],
+    props: ['nopal'],
+    propChance: 0.2,
+  },
+  carretera: {
+    houseChance: 0.12,
+    puesto: 'puesto',
+    puestoChance: 0.04,
+    senoraChance: 0.04,
+    flags: 'none',
+    lonas: false,
+    far: [],
+    props: ['nopal', 'senal', 'nopal'],
+    propChance: 0.5,
+  },
 };
 
 /**
@@ -69,7 +91,9 @@ export default class Scenery {
       const key = th.far[this.farIndex % th.far.length];
       const fy = this.houseBaseY(this.nextFarX - 100, this.nextFarX + 100);
       if (fy !== null) {
-        const img = svgImage(this.scene, this.nextFarX, fy + 6, key).setOrigin(0.5, 1).setDepth(DEPTH_FAR);
+        const img = svgImage(this.scene, this.nextFarX, fy + 6, key)
+          .setOrigin(0.5, 1)
+          .setDepth(DEPTH_FAR);
         items.push(img);
         if (key === 'rueda-fortuna') {
           // la rueda gira: la imagen gira sobre su eje (centro del aro)
@@ -98,13 +122,33 @@ export default class Scenery {
       if (roll < th.puestoChance) {
         const px = x + w * 0.5;
         const py = this.sidewalkY(px);
-        if (py !== null) items.push(svgImage(this.scene, px, py + 4, th.puesto).setOrigin(0.5, 1).setDepth(DEPTH_PROPS));
+        if (py !== null)
+          items.push(
+            svgImage(this.scene, px, py + 4, th.puesto)
+              .setOrigin(0.5, 1)
+              .setDepth(DEPTH_PROPS)
+          );
       } else if (roll < th.puestoChance + th.senoraChance) {
         const px = x + w * rnd.realInRange(0.2, 0.8);
         const py = this.sidewalkY(px);
         if (py !== null) {
-          const s = svgImage(this.scene, px, py + 4, 'senora').setOrigin(0.5, 1).setDepth(DEPTH_PROPS);
+          const s = svgImage(this.scene, px, py + 4, 'senora')
+            .setOrigin(0.5, 1)
+            .setDepth(DEPTH_PROPS);
           if (rnd.frac() < 0.5) s.setFlipX(true);
+          items.push(s);
+        }
+      } else if (th.props && roll < th.puestoChance + th.senoraChance + (th.propChance || 0)) {
+        // adornos del tema (nopales, señales) en la banqueta
+        const px = x + w * rnd.realInRange(0.2, 0.8);
+        const py = this.sidewalkY(px);
+        if (py !== null) {
+          const key = th.props[rnd.between(0, th.props.length - 1)];
+          const s = svgImage(this.scene, px, py + 4, key)
+            .setOrigin(0.5, 1)
+            .setDepth(DEPTH_PROPS);
+          if (key === 'nopal') s.setScale(0.5 * rnd.realInRange(0.7, 1.1));
+          if (rnd.frac() < 0.5 && key === 'nopal') s.setFlipX(true);
           items.push(s);
         }
       }
@@ -120,7 +164,9 @@ export default class Scenery {
       const px = this.nextPostX;
       const py = this.sidewalkY(px);
       if (py === null) break;
-      const post = svgImage(this.scene, px, py + 2, 'poste').setOrigin(0.5, 1).setDepth(DEPTH_POST);
+      const post = svgImage(this.scene, px, py + 2, 'poste')
+        .setOrigin(0.5, 1)
+        .setDepth(DEPTH_POST);
       items.push(post);
       const lamp = this.scene.add.circle(px + 14, py - 142, 10, 0xfff1a8, 0).setDepth(DEPTH_POST + 1);
       this.lamps.push(lamp);
@@ -129,7 +175,7 @@ export default class Scenery {
       if (this.lastPost && px - this.lastPost.x < 520) {
         this.drawCables(g, this.lastPost, top);
         if (th.flags === 'focos') items.push(...this.drawFocos(this.lastPost, top));
-        else if (this.flagTurn) this.drawFlags(gf, this.lastPost, top);
+        else if (th.flags !== 'none' && this.flagTurn) this.drawFlags(gf, this.lastPost, top);
         if (th.lonas && rnd.frac() < 0.55) items.push(this.drawLona(this.lastPost, top));
         this.flagTurn = !this.flagTurn;
       }
@@ -165,8 +211,13 @@ export default class Scenery {
     const scaleX = w / 160;
     const scale = rnd.realInRange(0.95, 1.2);
     const pared = this.scene.add.image(cx, yBase, this.wallTexture(color)).setOrigin(0.5, 1).setDepth(DEPTH_HOUSE);
-    const det = svgImage(this.scene, cx, yBase, `casa-detalles-${variant}`).setOrigin(0.5, 1).setDepth(DEPTH_HOUSE + 0.1);
-    const win = svgImage(this.scene, cx, yBase, `casa-ventanas-${variant}`).setOrigin(0.5, 1).setDepth(DEPTH_HOUSE + 0.2).setAlpha(0);
+    const det = svgImage(this.scene, cx, yBase, `casa-detalles-${variant}`)
+      .setOrigin(0.5, 1)
+      .setDepth(DEPTH_HOUSE + 0.1);
+    const win = svgImage(this.scene, cx, yBase, `casa-ventanas-${variant}`)
+      .setOrigin(0.5, 1)
+      .setDepth(DEPTH_HOUSE + 0.2)
+      .setAlpha(0);
     for (const img of [pared, det, win]) img.setScale(scaleX * 0.5, scale * 0.5);
     this.windows.push(win);
     return [pared, det, win];
@@ -212,7 +263,9 @@ export default class Scenery {
   /** Lona de mercado estirada entre dos postes, a media altura. */
   drawLona(a, b) {
     const w = Math.hypot(b.x - a.x, b.y - a.y);
-    const img = svgImage(this.scene, (a.x + b.x) / 2, (a.y + b.y) / 2 + 26, 'lona').setDepth(DEPTH_POST - 0.5).setAlpha(0.95);
+    const img = svgImage(this.scene, (a.x + b.x) / 2, (a.y + b.y) / 2 + 26, 'lona')
+      .setDepth(DEPTH_POST - 0.5)
+      .setAlpha(0.95);
     img.setScale((w / 220) * 0.5, 0.36).setRotation(Math.atan2(b.y - a.y, b.x - a.x));
     if (this.rnd.frac() < 0.5) img.setFlipX(true);
     return img;

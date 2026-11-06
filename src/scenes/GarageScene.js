@@ -282,15 +282,23 @@ export default class GarageScene extends Phaser.Scene {
   }
 
   /** Fila genérica: título, descripción y un botón a la derecha. */
-  row(i, title, desc, btn) {
-    const y = ROWS_Y + i * ROW_H;
+  row(i, title, desc, btn, rowH = ROW_H) {
+    const compact = rowH < ROW_H;
+    const y = ROWS_Y + i * rowH;
     const x0 = PANEL_X + 20;
-    this.content.push(this.add.text(x0, y - 12, title, textStyle(24, COLORS.cremaHex)).setOrigin(0, 0.5));
+    this.content.push(this.add.text(x0, y - (compact ? 9 : 12), title, textStyle(compact ? 20 : 24, COLORS.cremaHex)).setOrigin(0, 0.5));
     this.content.push(
-      this.add.text(x0, y + 14, desc, textStyle(14, '#cfd8e6', { strokeThickness: 2, align: 'left', wordWrap: { width: PANEL_W - 230 } })).setOrigin(0, 0.5)
+      this.add
+        .text(
+          x0,
+          y + (compact ? 10 : 14),
+          desc,
+          textStyle(compact ? 12 : 14, '#cfd8e6', { strokeThickness: 2, align: 'left', wordWrap: { width: PANEL_W - 230 } })
+        )
+        .setOrigin(0, 0.5)
     );
     if (btn) {
-      const b = makeButton(this, PANEL_X + PANEL_W - 90, y, 150, 46, btn.color, btn.label, btn.onClick, { fontSize: 20 });
+      const b = makeButton(this, PANEL_X + PANEL_W - 90, y, 150, compact ? 36 : 46, btn.color, btn.label, btn.onClick, { fontSize: compact ? 17 : 20 });
       if (btn.disabled) b.setEnabled(false);
       this.content.push(b);
     }
@@ -328,7 +336,7 @@ export default class GarageScene extends Phaser.Scene {
           this.refresh();
         }
       );
-      const y = this.row(i, c.nombre, c.descripcion, btn);
+      const y = this.row(i, c.nombre, c.descripcion, btn, 42);
       if (!owned) this.content.push(svgImage(this, PANEL_X + PANEL_W - 190, y, 'elote').setScale(0.5));
     });
   }
