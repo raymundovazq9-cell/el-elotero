@@ -15,6 +15,7 @@ import { DEBUG } from '../debug.js';
 import { dailyMissions, todayKey } from '../data/missions.js';
 import { PAINTS, STICKERS } from '../data/paints.js';
 import { loadCartPaints } from '../paint.js';
+import { wipeTo } from '../ui/transitions.js';
 
 const TABS = [
   { id: 'carrito', label: 'CARRITO' },
@@ -58,6 +59,32 @@ export default class GarageScene extends Phaser.Scene {
     g.fillRect(0, 430, 380, 110);
     g.fillStyle(0xcfc5ad, 1);
     g.fillRect(0, 418, 380, 14);
+    // cono de luz sobre el carrito y reflejo en el piso
+    g.fillStyle(0xfff1a8, 0.09);
+    g.fillTriangle(200, 150, 40, 432, 360, 432);
+    g.fillStyle(0xffffff, 0.12);
+    g.fillEllipse(200, 428, 280, 18);
+    const lamp = this.add.graphics();
+    lamp.fillStyle(0x2b2b2b, 1);
+    lamp.fillRoundedRect(170, 136, 60, 16, 6);
+    lamp.fillStyle(0xfff1a8, 1);
+    lamp.fillEllipse(200, 152, 40, 8);
+    // focos de feria alrededor del carrito que parpadean
+    this.bulbs = [];
+    const FOCO = [0xff4d6d, 0xffd166, 0x06d6a0, 0x4cc9f0];
+    for (let i = 0; i < 9; i++) {
+      const bx = 20 + i * 42;
+      const b = this.add.circle(bx, 162 + (i % 2) * 6, 6, FOCO[i % FOCO.length], 1).setStrokeStyle(2, 0x1a1a1a, 1);
+      this.bulbs.push(b);
+    }
+    this.time.addEvent({
+      delay: 420,
+      loop: true,
+      callback: () => {
+        this.bulbTick = (this.bulbTick || 0) + 1;
+        this.bulbs.forEach((b, i) => b.setAlpha((i + this.bulbTick) % 2 ? 1 : 0.35));
+      },
+    });
 
     // barra superior
     this.backBtn = makeButton(this, 70, 40, 110, 52, COLORS.azul, 'ATRÁS', () => this.back(), { fontSize: 24 });
@@ -109,8 +136,14 @@ export default class GarageScene extends Phaser.Scene {
     if (this.previewTexts) this.previewTexts.forEach((t) => t.destroy());
     const cart = cartById(Save.data.cart);
     const up = applyUpgrades(cart.fisica, Save.upgradesFor(cart.id));
-    this.preview = buildCartPreview(this, cart, { x: 200, y: 395, elotes: up.startElotes });
+    const wheelBottom = Math.max(...cart.fisica.wheels.map((w) => w.y + w.r));
+    this.preview = buildCartPreview(this, cart, { x: 200, y: 428 - wheelBottom, elotes: up.startElotes });
     this.preview.spin(1800);
+    if (this.bounceNext) {
+      this.bounceNext = false;
+      this.preview.setScale(1.12);
+      this.tweens.add({ targets: this.preview, scale: 1, duration: 320, ease: 'Back.easeOut' });
+    }
     const level = levelById(Save.data.level);
     this.previewTexts = [
       this.add.text(190, 95, cart.nombre, textStyle(32, COLORS.cremaHex)).setOrigin(0.5),
@@ -318,7 +351,27 @@ export default class GarageScene extends Phaser.Scene {
     }
     Sfx.eloteRecogido();
     onBuy();
-    this.refresh();
+    this.bounceNext = true;
+    // elotes que vuelan del banco a la vista previa y banco que cuenta hacia abajo
+    const from = { x: GAME_WIDTH - 230, y: 40 };
+    const to = { x: 200, y: 360 };
+    for (let i = 0; i < 6; i++) {
+      const e = svgImage(this, from.x, from.y, 'elote').setScale(0.5).setDepth(50);
+      this.tweens.add({
+        targets: e,
+        x: to.x + (i - 3) * 14,
+        y: to.y,
+        scale: 0.3,
+        alpha: 0.2,
+        duration: 450,
+        delay: i * 40,
+        ease: 'Cubic.easeIn',
+        onComplete: () => e.destroy(),
+      });
+    }
+    const shown = { v: Save.bank + price };
+    this.tweens.add({ targets: shown, v: Save.bank, duration: 500, onUpdate: () => this.bankText.setText(`${Math.round(shown.v)}`) });
+    this.time.delayedCall(420, () => this.refresh());
   }
 
   renderCarts() {
@@ -399,20 +452,17 @@ export default class GarageScene extends Phaser.Scene {
   play() {
     unlockAudio();
     Sfx.inicio();
-    this.cameras.main.fadeOut(250);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Game'));
+    wipeTo(this, 'Game');
   }
 
   cups() {
     unlockAudio();
     Sfx.clac();
-    this.cameras.main.fadeOut(200);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Cup'));
+    wipeTo(this, 'Cup');
   }
 
   back() {
-    this.cameras.main.fadeOut(200);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Title'));
+    wipeTo(this, 'Title');
   }
 }
 

@@ -4,6 +4,9 @@ import { COLORS, textStyle } from '../theme.js';
 import { makeButton, makeCard } from '../ui/widgets.js';
 import { svgImage } from '../assets.js';
 import { levelById } from '../data/levels.js';
+import { wipeTo } from '../ui/transitions.js';
+import { confettiBurst } from '../world/Particles.js';
+import { Sfx } from '../audio.js';
 
 const TITLES = {
   volcadura: '¡SE VOLTEÓ!',
@@ -54,13 +57,16 @@ export default class GameOverScene extends Phaser.Scene {
       .setOrigin(0.5);
     items.push(recordText);
 
-    // columna derecha: desglose de elotes ganados
+    // columna derecha: desglose de elotes ganados (con conteo animado)
+    const counters = [];
     let y = -135;
     for (const [key, label] of LINES) {
       const v = earned[key] || 0;
       if (!v) continue;
       items.push(this.add.text(40, y, label, dark).setOrigin(0, 0.5));
-      items.push(this.add.text(330, y, `+${v}`, textStyle(24, COLORS.verdeHex, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(1, 0.5));
+      const t = this.add.text(330, y, '+0', textStyle(24, COLORS.verdeHex, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(1, 0.5);
+      counters.push({ t, v });
+      items.push(t);
       y += 34;
     }
     if (y === -135) {
@@ -68,7 +74,9 @@ export default class GameOverScene extends Phaser.Scene {
       y += 34;
     }
     items.push(this.add.text(40, y + 14, 'Ganaste', textStyle(30, COLORS.negro, { stroke: COLORS.cremaHex, strokeThickness: 2 })).setOrigin(0, 0.5));
-    items.push(this.add.text(290, y + 14, `+${total}`, textStyle(44, COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 6 })).setOrigin(1, 0.5));
+    const totalText = this.add.text(290, y + 14, '+0', textStyle(44, COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 6 })).setOrigin(1, 0.5);
+    counters.push({ t: totalText, v: total });
+    items.push(totalText);
     items.push(svgImage(this, 332, y + 14, 'elote').setScale(0.8));
 
     missions.forEach((m, i) => {
@@ -82,6 +90,21 @@ export default class GameOverScene extends Phaser.Scene {
     card.add(items);
     this.tweens.add({ targets: card, scale: 1, alpha: 1, duration: 350, ease: 'Back.easeOut', delay: 150 });
     if (isRecord) this.tweens.add({ targets: recordText, scale: 1.1, duration: 400, yoyo: true, repeat: -1 });
+    const prog = { k: 0 };
+    this.tweens.add({
+      targets: prog,
+      k: 1,
+      duration: 900,
+      delay: 450,
+      ease: 'Cubic.easeOut',
+      onUpdate: () => counters.forEach((c) => c.t.setText(`+${Math.round(c.v * prog.k)}`)),
+    });
+    if (isRecord) {
+      this.time.delayedCall(500, () => {
+        confettiBurst(this, cx - 180, cy - 120, 70, { depth: 60, speed: 340 });
+        Sfx.porra();
+      });
+    }
 
     this.time.delayedCall(700, () => {
       this.again = makeButton(this, cx + 150, cy + 160, 260, 76, COLORS.verde, 'OTRA VEZ', () => this.restart(), { fontSize: 36 });
@@ -91,15 +114,10 @@ export default class GameOverScene extends Phaser.Scene {
 
   restart() {
     const data = this.scene.get('Game').startData || {};
-    this.scene.stop('UI');
-    this.scene.stop('GameOver');
-    this.scene.start('Game', data);
+    wipeTo(this, 'Game', data, ['UI', 'Game']);
   }
 
   shop() {
-    this.scene.stop('UI');
-    this.scene.stop('GameOver');
-    this.scene.stop('Game');
-    this.scene.start('Garage');
+    wipeTo(this, 'Garage', undefined, ['UI', 'Game']);
   }
 }

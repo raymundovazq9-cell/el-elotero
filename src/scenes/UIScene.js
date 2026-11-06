@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 import { COLORS, textStyle } from '../theme.js';
 import { svgImage } from '../assets.js';
-import { makePanel, makeIconButton, iconPause } from '../ui/widgets.js';
+import { makePanel, makeIconButton, iconPause, makeCard } from '../ui/widgets.js';
+import { Save } from '../save.js';
 
 export default class UIScene extends Phaser.Scene {
   constructor() {
@@ -37,6 +38,17 @@ export default class UIScene extends Phaser.Scene {
 
     this.hint = this.add.text(cx, GAME_HEIGHT - 36, 'Izquierda frena · Derecha acelera', textStyle(22, COLORS.cremaHex)).setOrigin(0.5);
     this.time.delayedCall(4000, () => this.tweens.add({ targets: this.hint, alpha: 0, duration: 400 }));
+    // primera partida: tarjeta con los controles en el aire (se va al pisar un pedal)
+    this.firstCard = null;
+    if (Save.data.totals.runs === 0 && !this.game_.race) {
+      const dark = (size, color = COLORS.negro) => textStyle(size, color, { stroke: COLORS.cremaHex, strokeThickness: 2 });
+      this.firstCard = this.add.container(cx, GAME_HEIGHT * 0.42, [
+        makeCard(this, 0, 0, 600, 150),
+        this.add.text(0, -40, 'ACELERAR empuja y, en el aire, levanta la nariz', dark(22)).setOrigin(0.5),
+        this.add.text(0, 0, 'FRENO frena, da reversa y, en el aire, baja la nariz', dark(22)).setOrigin(0.5),
+        this.add.text(0, 44, 'Recoge elotes y no tires los del carrito', dark(20, COLORS.rosaHex)).setOrigin(0.5),
+      ]);
+    }
 
     this.floats = [];
     const ev = this.game_.events;
@@ -224,6 +236,16 @@ export default class UIScene extends Phaser.Scene {
   }
 
   setPedal(pedal, down) {
+    if (down && this.firstCard) {
+      this.tweens.add({
+        targets: this.firstCard,
+        alpha: 0,
+        y: this.firstCard.y - 40,
+        duration: 350,
+        onComplete: () => this.firstCard && this.firstCard.destroy(),
+      });
+      this.firstCard = null;
+    }
     pedal.down = down;
     if (!down) pedal.pointerId = null;
     pedal.paint(down);

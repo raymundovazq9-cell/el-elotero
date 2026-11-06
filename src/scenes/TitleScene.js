@@ -9,6 +9,9 @@ import { buildCartPreview } from '../views/CartPreview.js';
 import { cartById } from '../data/carts.js';
 import SkyCycle from '../world/SkyCycle.js';
 import { loadCartPaints } from '../paint.js';
+import { wipeTo } from '../ui/transitions.js';
+import { DEBUG } from '../debug.js';
+import { ensureParticleTextures } from '../world/Particles.js';
 import { makeButton, makeIconButton, drawPapelPicado, iconMusic } from '../ui/widgets.js';
 
 const STREET_Y = GAME_HEIGHT - 100; // línea de la banqueta
@@ -66,9 +69,24 @@ export default class TitleScene extends Phaser.Scene {
     this.tweens.add({ targets: title, scale: 1.04, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
 
     // elotero con carrito (el modelo activo)
-    const cart = buildCartPreview(this, cartById(Save.data.cart), { x: cx + 260, y: STREET_Y - 2, elotes: 7 });
-    cart.spin();
-    this.tweens.add({ targets: cart, y: STREET_Y - 6, duration: 260, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const cartData = cartById(Save.data.cart);
+    const wheelBottom = Math.max(...cartData.fisica.wheels.map((w) => w.y + w.r));
+    const cart = buildCartPreview(this, cartData, { x: -220, y: STREET_Y + 30 - wheelBottom, elotes: 7 });
+    cart.spin(900);
+    this.tweens.add({ targets: cart, y: cart.y - 4, duration: 220, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // cruza la calle en bucle, dejando polvo
+    this.tweens.add({ targets: cart, x: GAME_WIDTH + 220, duration: 9000, repeat: -1, ease: 'Linear' });
+    ensureParticleTextures(this);
+    this.dust = this.add.particles(0, 0, 'polvo', {
+      speedX: { min: -60, max: -20 },
+      speedY: { min: -40, max: -5 },
+      scale: { start: 0.5, end: 1.5 },
+      alpha: { start: 0.5, end: 0 },
+      lifespan: 600,
+      frequency: 50,
+    });
+    this.dust.setDepth(-1);
+    this.titleCart = cart;
 
     // botones
     const best = Save.bestFor(Save.data.level);
@@ -94,6 +112,10 @@ export default class TitleScene extends Phaser.Scene {
       Music.start();
     });
     this.cameras.main.fadeIn(350);
+    if (DEBUG.wipe) this.time.delayedCall(300, () => wipeTo(this, DEBUG.wipe));
+    this.events.on('update', () => {
+      if (this.titleCart && this.dust) this.dust.setPosition(this.titleCart.x - 70, STREET_Y + 26);
+    });
     this.events.once('shutdown', () => {
       this.sky.destroy();
       Music.stop();
@@ -103,7 +125,6 @@ export default class TitleScene extends Phaser.Scene {
   play() {
     unlockAudio();
     Sfx.inicio();
-    this.cameras.main.fadeOut(250);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Garage'));
+    wipeTo(this, 'Garage');
   }
 }

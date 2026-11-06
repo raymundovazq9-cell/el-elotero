@@ -4,6 +4,7 @@ import { COLORS, textStyle } from '../theme.js';
 import { makeButton, makeCard } from '../ui/widgets.js';
 import { svgImage } from '../assets.js';
 import { confettiBurst } from '../world/Particles.js';
+import { wipeTo } from '../ui/transitions.js';
 
 const PLACE_TITLES = ['¡GANASTE LA COPA!', '¡SEGUNDO LUGAR!', '¡TERCER LUGAR!', 'ÚLTIMO LUGAR'];
 const OUT_TITLES = { volcadura: '¡SE VOLTEÓ!', 'sin-elotes': '¡SIN ELOTES!', cansado: '¡SE CANSÓ!' };
@@ -32,7 +33,7 @@ export default class RaceResultScene extends Phaser.Scene {
 
     // podio: columnas por lugar, el jugador resaltado
     const base = 80;
-    const podiumX = [-60, -170, 50, 160];
+    const podiumX = [-110, -220, 0, 110];
     const order = [1, 0, 2, 3]; // 2º, 1º, 3º, 4º de izquierda a derecha
     const g = this.add.graphics();
     items.push(g);
@@ -57,14 +58,14 @@ export default class RaceResultScene extends Phaser.Scene {
     });
 
     // premio
-    const px = 240;
+    const px = 250;
     items.push(this.add.text(px, -90, 'Premio', dark(22)).setOrigin(0.5));
     const prizeText = this.add.text(px, -50, '0', textStyle(44, COLORS.amarilloHex, { fontStyle: '700', strokeThickness: 6 })).setOrigin(0.5);
     items.push(prizeText);
     items.push(this.add.text(px, -8, `+${collected} recogidos`, dark(18)).setOrigin(0.5));
     items.push(this.add.text(px, 40, 'Ganaste', dark(22)).setOrigin(0.5));
-    const totalText = this.add.text(px - 14, 78, '0', textStyle(40, COLORS.verdeHex, { fontStyle: '700', strokeThickness: 5 })).setOrigin(0.5);
-    items.push(totalText, svgImage(this, px + 44, 78, 'elote').setScale(0.7));
+    const totalText = this.add.text(px + 16, 78, '0', textStyle(40, COLORS.verdeHex, { fontStyle: '700', strokeThickness: 5 })).setOrigin(1, 0.5);
+    items.push(totalText, svgImage(this, px + 46, 78, 'elote').setScale(0.7));
     items.push(this.add.text(px, 118, `Banco: ${bank}`, dark(18)).setOrigin(0.5));
 
     card.add(items);
@@ -91,16 +92,11 @@ export default class RaceResultScene extends Phaser.Scene {
   }
 
   again() {
-    this.scene.stop('UI');
-    this.scene.stop('RaceResult');
-    this.scene.start('Game', { mode: 'copa', cup: this.cup ? this.cup.id : 'callejon' });
+    wipeTo(this, 'Game', { mode: 'copa', cup: this.cup ? this.cup.id : 'callejon' }, ['UI', 'Game']);
   }
 
   goto(key) {
-    this.scene.stop('UI');
-    this.scene.stop('RaceResult');
-    this.scene.stop('Game');
-    this.scene.start(key);
+    wipeTo(this, key, undefined, ['UI', 'Game']);
   }
 }
 void Phaser;

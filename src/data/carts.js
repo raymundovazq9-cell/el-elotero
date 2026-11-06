@@ -10,7 +10,7 @@ export const CARTS = [
   {
     id: 'carrito',
     nombre: 'Carrito',
-    descripcion: 'El clásico de madera. Lo empujas con tus piernas.',
+    descripcion: 'El clásico de madera, a pura pierna.',
     precio: 0,
     fisica: {
       bodyWidth: 110,
@@ -43,7 +43,7 @@ export const CARTS = [
   {
     id: 'triciclo',
     nombre: 'Triciclo',
-    descripcion: 'Tres ruedas y caja al frente. Pesado pero no se voltea fácil.',
+    descripcion: 'Caja al frente. Pesado y difícil de voltear.',
     precio: 600,
     fisica: {
       bodyWidth: 150,
@@ -76,7 +76,7 @@ export const CARTS = [
   {
     id: 'bici',
     nombre: 'Bici-carro',
-    descripcion: 'Bicicleta con canasta. Rápida y ligera, pero se encabrita.',
+    descripcion: 'Rápida y ligera, pero se encabrita.',
     precio: 1200,
     fisica: {
       bodyWidth: 130,
@@ -109,7 +109,7 @@ export const CARTS = [
   {
     id: 'motocarro',
     nombre: 'Motocarro',
-    descripcion: 'Con motor: ya no dependes de tus piernas. Sube casi todo.',
+    descripcion: 'Con motor: sube casi todo.',
     precio: 3000,
     motor: true,
     fisica: {
@@ -143,7 +143,7 @@ export const CARTS = [
   {
     id: 'camioneta',
     nombre: 'Camioneta',
-    descripcion: 'La troca elotera. Pesada, rápida y aguanta todo.',
+    descripcion: 'La troca elotera: pesada y aguantadora.',
     precio: 7000,
     motor: true,
     fisica: {
@@ -177,7 +177,7 @@ export const CARTS = [
   {
     id: 'cuatrimoto',
     nombre: 'Cuatrimoto',
-    descripcion: 'Ligera y brincona. Vuela en las rampas, pero lleva pocos elotes.',
+    descripcion: 'Brincona y veloz, pero lleva pocos elotes.',
     precio: 4500,
     motor: true,
     fisica: {
@@ -212,7 +212,7 @@ export const CARTS = [
   {
     id: 'combi',
     nombre: 'Combi',
-    descripcion: 'La combi elotera: parrilla enorme en el techo, pesada y rapidísima.',
+    descripcion: 'Parrilla enorme, pesada y rapidísima.',
     precio: 12000,
     motor: true,
     fisica: {
@@ -241,7 +241,7 @@ export const CARTS = [
       calcomania: { x: -60, y: 32 },
       origen: { x: 135, y: 56 },
       olla: { x: 100, y: -30 },
-      elotero: { modo: 'manejando', x: 60, y: 42 },
+      elotero: { modo: 'manejando', x: 52, y: 46 },
     },
   },
 ];

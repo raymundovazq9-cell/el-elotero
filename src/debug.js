@@ -58,6 +58,7 @@ export const DEBUG = {
   // metros fijos para el ciclo de cielo (?sky=330 = noche)
   skyMeters: params.has('sky') ? Number(params.get('sky')) : null,
   mode: params.get('mode') || '',
+  wipe: params.get('wipe') || '', // prueba de la cortina: Title → escena dada
   cup: params.get('cup') || '',
   paint: params.get('paint') || '',
   calca: params.get('calca') || '',

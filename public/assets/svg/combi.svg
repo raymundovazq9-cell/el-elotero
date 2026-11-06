@@ -7,7 +7,7 @@
   <!-- ventanas -->
   <rect x="34" y="70" width="40" height="24" rx="4" fill="#bfe3ff" stroke="#1a1a1a" stroke-width="2.5"/>
   <rect x="84" y="70" width="40" height="24" rx="4" fill="#bfe3ff" stroke="#1a1a1a" stroke-width="2.5"/>
-  <rect x="134" y="70" width="40" height="24" rx="4" fill="#bfe3ff" stroke="#1a1a1a" stroke-width="2.5"/>
+  <rect x="134" y="70" width="40" height="24" rx="4" fill="#bfe3ff" fill-opacity="0.35" stroke="#1a1a1a" stroke-width="2.5"/>
   <path d="M190 68 L218 72 L240 92 L190 92 Z" fill="#bfe3ff" fill-opacity="0.35" stroke="#1a1a1a" stroke-width="2.5" stroke-linejoin="round"/>
   <!-- la V del frente -->
   <path d="M254 100 L232 122 L254 122 Z" fill="#148f77" stroke="#1a1a1a" stroke-width="2"/>

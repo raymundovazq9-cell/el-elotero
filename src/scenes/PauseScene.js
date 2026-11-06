@@ -3,6 +3,7 @@ import { GAME_WIDTH, GAME_HEIGHT } from '../config.js';
 import { COLORS, textStyle } from '../theme.js';
 import { makeButton, makeCard, makeIconButton, iconMusic } from '../ui/widgets.js';
 import { setMuted, isMuted } from '../audio.js';
+import { wipeTo } from '../ui/transitions.js';
 
 export default class PauseScene extends Phaser.Scene {
   constructor() {
@@ -36,16 +37,10 @@ export default class PauseScene extends Phaser.Scene {
 
   restart() {
     const data = this.scene.get('Game').startData || {};
-    this.scene.stop('UI');
-    this.scene.stop();
-    this.scene.stop('Game');
-    this.scene.start('Game', data);
+    wipeTo(this, 'Game', data, ['UI', 'Game']);
   }
 
   menu() {
-    this.scene.stop('UI');
-    this.scene.stop();
-    this.scene.stop('Game');
-    this.scene.start('Garage');
+    wipeTo(this, 'Garage', undefined, ['UI', 'Game']);
   }
 }

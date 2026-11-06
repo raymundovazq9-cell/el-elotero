@@ -7,6 +7,7 @@ import { levelById } from '../data/levels.js';
 import { Save } from '../save.js';
 import { Sfx, unlockAudio } from '../audio.js';
 import { svgImage } from '../assets.js';
+import { wipeTo } from '../ui/transitions.js';
 
 const CARD_W = 270;
 const CARD_H = 300;
@@ -104,13 +105,11 @@ export default class CupScene extends Phaser.Scene {
   run() {
     unlockAudio();
     Sfx.inicio();
-    this.cameras.main.fadeOut(250);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Game', { mode: 'copa', cup: this.selected }));
+    wipeTo(this, 'Game', { mode: 'copa', cup: this.selected });
   }
 
   back() {
-    this.cameras.main.fadeOut(200);
-    this.cameras.main.once('camerafadeoutcomplete', () => this.scene.start('Garage'));
+    wipeTo(this, 'Garage');
   }
 }
 void Phaser;
